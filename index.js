@@ -6,24 +6,34 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 // import validator from "validator";
 import crypto from "crypto";
-import Joi from "joi";
+import userSchema from "./Utilities/validationSchemas.js";
+import passwordSchema from "./Utilities/passwordValidator.js";
+import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import validateAndSanitizeUserInput from "./Utilities/validator.js";
+import errorHandler from "./Utilities/errorMiddleware.js";
+import morgan from "morgan";
+// Determine the environment
+const env = process.env.NODE_ENV || "development";
 
-const loginSchema = Joi.object({
-  email: Joi.string().email().required(),
-  password: Joi.string().min(6).required(),
-});
+// Load the appropriate .env file
+dotenv.config({ path: `.env.${env}` });
 
-app.post("/api/login", async (req, res) => {
-  const { error } = loginSchema.validate(req.body);
-  if (error) return res.status(400).send(error.details[0].message);
-dotenv.config();
+console.log(`Environment: ${env}`);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: "Too many requests, please try again later.",
+  standardHeaders: true, // Include rate limit info in response headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
 
+// Apply rate limiter to all requests
 const algorithm = "aes-256-ctr";
 // const iv = crypto.randomBytes(16);
 const secretKey = process.env.ENCRYPTION_KEY;
@@ -185,9 +195,20 @@ app.get("/api/data", async (req, res) => {
   }
 });
 // Handle login logic
-app.post("/api/login", async (req, res) => {
+app.post("/api/login", limiter, async (req, res) => {
   const { email, password } = req.body;
+  const sanitizedInput = validateAndSanitizeUserInput(req.body);
 
+  const { error } = userSchema.validate(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+
+  const validationResult = passwordSchema.validate(password);
+
+  if (!validationResult) {
+    console.log("Password is not strong enough");
+  } else {
+    console.log("Password is strong");
+  }
   try {
     const result = await pool.query(
       "SELECT * FROM members WHERE email = $1", // Query by email instead of username
@@ -237,10 +258,17 @@ app.post("/api/login", async (req, res) => {
 
     const encryptedAccessToken = encrypt(accessToken);
     const encryptedRefreshToken = encrypt(refreshToken);
-
+    // Send the refresh token in a secure cookie
+    res.cookie("encryptedRefreshToken", encryptedRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Ensure it's sent only over HTTPS in production
+      sameSite: "Strict", // Prevents cross-site cookie transmission
+      maxAge: 24 * 60 * 60 * 1000, // 1 day expiry
+    });
     res.json({
       token: encryptedAccessToken,
       refreshToken: encryptedRefreshToken,
+      data: sanitizedInput,
     });
   } catch (err) {
     if (err.code === "ECONNREFUSED") {
@@ -422,3 +450,24 @@ app.get(
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+app.use(errorHandler); // Place this after all routes
+
+// Example of adding a custom CSP policy
+app.use(
+  helmet.contentSecurityPolicy({
+    useDefaults: true,
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "script-src": ["'self'", "trusted-cdn.com"], // Only allow scripts from the same origin and trusted CDN
+      "style-src": ["'self'", "trusted-cdn.com"], // Only allow styles from the same origin and trusted CDN
+      "img-src": ["'self'", "trusted-cdn.com"], // Only allow images from the same origin and trusted CDN
+      "font-src": ["'self'", "trusted-cdn.com"], // Only allow fonts from the same origin and trusted CDN
+    },
+  })
+);
+app.use(limiter);
+app.use(cors());
+app.use(express.json());
+app.use(cookieParser());
+app.use(helmet());
+app.use(morgan("combined")); // You can also use other formats, like 'tiny' or 'dev', depending on your needs

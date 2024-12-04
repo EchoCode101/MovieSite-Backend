@@ -1,16 +1,23 @@
 import express from "express";
-import pool from "../db.js";
+import passwordSchema from "../utils/passwordValidator.js";
 
 const router = express.Router();
 
-// Get User Info
-router.get("/", async (req, res) => {
-  try {
-    const users = await pool.query("SELECT * FROM members");
-    res.json(users.rows);
-  } catch (err) {
-    console.error("Error fetching users:", err.message);
-    res.status(500).send("Error retrieving data");
+router.post("/login", async (req, res) => {
+  const { password } = req.body;
+
+  // Validate password complexity
+  const validationErrors = passwordSchema.validate(password, { details: true });
+
+  if (validationErrors.length) {
+    return res.status(400).json({
+      error: "Password does not meet complexity requirements",
+      details: validationErrors,
+    });
   }
+
+  // Proceed with other signup logic
+  res.status(200).json({ message: "Signup successful" });
 });
+
 export default router;
