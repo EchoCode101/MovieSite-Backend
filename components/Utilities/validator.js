@@ -1,5 +1,5 @@
 import validationSchemas from "./validationSchemas.js";
-const { userSchema, loginSchema } = validationSchemas;
+const { loginSchema } = validationSchemas;
 import validator from "validator"; // CommonJS-style import for validator
 const { escape } = validator; // Destructure escape method
 

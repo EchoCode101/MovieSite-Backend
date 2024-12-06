@@ -27,10 +27,11 @@ const limiter = rateLimit({
   max: 100,
   message: "Too many requests",
 });
-// Apply CORS policy globally (allow all origins)
+
 app.use(
   cors({
-    origin: "*", // Allows requests from any origin
+    origin: "http://localhost:6100", // Replace with your frontend's URL
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"], // Allow specific HTTP methods
     allowedHeaders: ["Content-Type", "Authorization"], // Allow specific headers
   })
@@ -40,7 +41,9 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(helmet());
 app.use(morgan("combined", { stream: logStream }));
-
+app.get("/test", (req, res) => {
+  res.send("Hello from Express!");
+});
 // Routes
 // app.post("/api/login", login);
 app.use("/api", userRoutes);
@@ -50,8 +53,9 @@ app.use("/api/token", tokenRoutes); // Prefix token routes with '/api/token'
 
 // Protect sensitive routes
 app.use("/api/*", authenticateToken);
+
 // Start the server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0' , () => {
+  console.log(`Server running on http://46.202.154.203:${PORT}`);
 });
 app.use(errorHandler);

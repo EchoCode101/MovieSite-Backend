@@ -5,23 +5,25 @@ import { encrypt, decrypt } from "../Utilities/encryptionUtils.js";
 import {
   generateAccessToken,
   generateRefreshToken,
+  extractToken,
 } from "../Utilities/tokenUtils.js";
+
 import passwordSchema from "../Utilities/passwordValidator.js";
 import {
   hashPassword,
   comparePassword,
 } from "../Utilities/encryptionPassword.js";
 import validationSchemas from "../Utilities/validationSchemas.js";
-const { userSchema, loginSchema } = validationSchemas;
-import validateAndSanitizeUserInput from "../Utilities/validator.js";
+const { userSignupSchema, loginSchema } = validationSchemas;
+// import validateAndSanitizeUserInput from "../Utilities/validator.js";
 
 // Handle user signup
 export const signup = async (req, res) => {
   // Signup Endpoint+
 
-  const { error } = userSchema.validate(req.body);
+  const { error } = userSignupSchema.validate(req.body);
   if (error) return res.status(400).json({ message: error.details[0].message });
-  const { username, password, email, subscription_plan } = req.body;
+  const { username, password, email, subscription_plan = "free" } = req.body;
 
   if (!username || !password || !email) {
     return res.status(400).send("Username, password, and email are required.");
@@ -29,6 +31,13 @@ export const signup = async (req, res) => {
 
   if (password.length < 6) {
     return res.status(400).send("Password must be at least 6 characters long.");
+  }
+  const validationResult = passwordSchema.validate(password);
+
+  if (!validationResult) {
+    console.log("Password is not strong enough");
+  } else {
+    console.log("Password is strong");
   }
 
   try {
@@ -66,19 +75,12 @@ export const signup = async (req, res) => {
 
 // Handle user login
 export const login = async (req, res) => {
-  const sanitizedInput = validateAndSanitizeUserInput(req.body);
+  // const sanitizedInput = validateAndSanitizeUserInput(req.body);
 
   const { error } = loginSchema.validate(req.body); // Joi validation schema for login
   if (error) return res.status(400).send(error.details[0].message);
 
   const { email, password } = req.body;
-  const validationResult = passwordSchema.validate(password);
-
-  if (!validationResult) {
-    console.log("Password is not strong enough");
-  } else {
-    console.log("Password is strong");
-  }
 
   try {
     const result = await pool.query(
@@ -125,7 +127,7 @@ export const login = async (req, res) => {
     //   process.env.REFRESH_SECRET,
     //   { expiresIn: "7d" } // Refresh token should have a longer expiration
     // );
-    
+
     // Generate tokens
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
@@ -143,7 +145,12 @@ export const login = async (req, res) => {
     res.json({
       token: encryptedAccessToken,
       refreshToken: encryptedRefreshToken,
-      data: sanitizedInput,
+      data: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+      },
     });
   } catch (err) {
     if (err.code === "ECONNREFUSED") {
@@ -173,14 +180,9 @@ export const logout = async (req, res) => {
     // Set the token expiration time to 30 seconds in the blacklist
     const expiryTime = new Date();
     expiryTime.setSeconds(expiryTime.getSeconds() + 30); // 30 seconds expiry
+    const token = extractToken(req); // Extract token using the utility
 
-    // Capture and blacklist the access token from the Authorization header
-    const authToken = req.headers["authorization"]?.split(" ")[1];
-    if (!authToken) {
-      return res.status(400).send("No token provided");
-    }
-
-    const decryptedToken = await decrypt(authToken); // Decrypt the token for storage
+    const decryptedToken = await decrypt(token); // Decrypt the token for storage
 
     // Insert the token into the blacklist
     await pool.query(

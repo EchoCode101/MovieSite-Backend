@@ -2,6 +2,9 @@ import { extractToken } from "../Utilities/tokenUtils.js";
 import pool from "../../db/db.js";
 import { encrypt, decrypt } from "../Utilities/encryptionUtils.js";
 import { verifyAccessToken } from "../Utilities/tokenUtils.js";
+import validationSchemas from "../Utilities/validationSchemas.js";
+const { subscriptionSchema } = validationSchemas;
+
 export const profileRoutes = async (req, res) => {
   try {
     // Get user data from the database based on the authenticated user (req.user)
@@ -104,5 +107,36 @@ export const fetchVideoUrl = async (req, res) => {
   } catch (err) {
     console.error("Error details:", err);
     res.status(500).send("Error fetching video.");
+  }
+};
+
+// PUT /api/subscription (protected route)
+export const subscription_plan = async (req, res) => {
+  // Validate the request body
+  const { error } = subscriptionSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
+
+  const { subscription_plan } = req.body;
+
+  try {
+    // Update the user's subscription plan in the database
+    const result = await pool.query(
+      "UPDATE members SET subscription_plan = $1 WHERE id = $2 RETURNING subscription_plan",
+      [subscription_plan, req.user.id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      message: "Subscription updated successfully",
+      subscription_plan: result.rows[0].subscription_plan,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
