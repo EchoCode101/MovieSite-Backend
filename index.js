@@ -12,7 +12,7 @@ import userRoutes from "./components/user/userRoutes.js";
 import adminRoutes from "./components/admin/adminRoutes.js";
 import tokenRoutes from "./components/token/tokenRoutes.js";
 import { refreshToken } from "./components/token/tokenController.js";
-
+import { limiter } from "./components/auth/authMiddleware.js";
 // Determine the environment
 const env = process.env.NODE_ENV || "development";
 // Load the appropriate .env file
@@ -20,13 +20,6 @@ dotenv.config({ path: `.env.${env}` });
 console.log(`Environment: ${env}`);
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// Rate limiter and other middleware
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: "Too many requests",
-});
 
 app.use(
   cors({
@@ -55,7 +48,12 @@ app.use("/api/token", tokenRoutes); // Prefix token routes with '/api/token'
 app.use("/api/*", authenticateToken);
 
 // Start the server
-app.listen(PORT, '0.0.0.0' , () => {
-  console.log(`Server running on http://46.202.154.203:${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
+
+// // Start the server
+// app.listen(PORT, "0.0.0.0", () => {
+//   console.log(`Server running on 46.202.154.203:${PORT}`);
+// });
 app.use(errorHandler);
