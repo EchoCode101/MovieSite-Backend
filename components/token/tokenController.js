@@ -7,18 +7,19 @@ import {
   verifyAccessToken,
   generateAccessToken,
 } from "../Utilities/tokenUtils.js";
+import { TokenBlacklist } from "../../SequelizeSchemas/schemas.js";
 // Refresh token route to generate a new access token
 export const refreshToken = async (req, res) => {
-  const token = extractToken(req); // Extract token using the utility
-
   try {
+    const token = extractToken(req); // Extract token using the utility
     const decryptedToken = await decrypt(token);
 
-    const result = await pool.query(
-      "SELECT * FROM token_blacklist WHERE token = $1",
-      [decryptedToken]
-    );
-    if (result.rows.length > 0) {
+    // Check if the token exists in the blacklist
+    const isBlacklisted = await TokenBlacklist.findOne({
+      where: { token: decryptedToken },
+    });
+
+    if (isBlacklisted) {
       return res.status(403).send("Refresh token has been revoked");
     }
     // Verify the refresh token

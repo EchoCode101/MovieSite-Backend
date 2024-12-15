@@ -1,12 +1,18 @@
 import express from "express";
-import membersController from "./members.controller.js";
-
+import {
+  getAllMembers,
+  getMemberById,
+  createMember,
+  updateMember,
+  deleteMember,
+} from "./members.controller.js";
+import { authenticateAdminToken } from "../auth/authMiddleware.js";
 const router = express.Router();
 
-router.get("/", membersController.getAllMembers);
-router.get("/:id", membersController.getMemberById);
-router.post("/", membersController.createMember);
-router.put("/:id", membersController.updateMember);
-router.delete("/:id", membersController.deleteMember);
+router.get("/", authenticateAdminToken, getAllMembers);
+router.get("/:id", getMemberById);
+router.post("/", authenticateAdminToken, createMember);
+router.put("/:id", updateMember);
+router.delete("/:id", authenticateAdminToken, deleteMember);
 
 export default router;

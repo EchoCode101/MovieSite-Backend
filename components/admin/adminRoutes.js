@@ -9,7 +9,7 @@ import {
   forgotPassword,
 } from "./adminController.js";
 import { authenticateAdminToken, limiter } from "../auth/authMiddleware.js";
-import { restPasswordRoute } from "./restPasswordRoute.js";
+import { restPasswordRoute } from "./restAdminPasswordRoute.js";
 
 const router = express.Router();
 

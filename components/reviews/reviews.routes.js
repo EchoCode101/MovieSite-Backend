@@ -1,12 +1,17 @@
 import express from "express";
 
-import reviewsController from "./reviews.controller.js";
+import {
+  addReview,
+  getReviewsByVideoId,
+  updateReview,
+  deleteReview,
+} from "./reviews.controller.js";
 
 const router = express.Router();
 
-router.post("/", reviewsController.addReview);
-router.get("/video/:videoId", reviewsController.getReviewsByVideoId);
-router.put("/:reviewId", reviewsController.updateReview);
-router.delete("/:reviewId", reviewsController.deleteReview);
+router.post("/", addReview);
+router.get("/video/:videoId", getReviewsByVideoId);
+router.put("/:reviewId", updateReview);
+router.delete("/:reviewId", deleteReview);
 
 export default router;

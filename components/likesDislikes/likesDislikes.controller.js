@@ -1,24 +1,60 @@
-import likesDislikesService from "./likesDislikes.service.js";
+import { LikesDislikes } from "../../SequelizeSchemas/schemas.js";
+// Add or update like/dislike
+export const addOrUpdateLikeDislike = async (req, res) => {
+  const { user_id, target_id, target_type, is_like } = req.body;
 
-const addOrUpdateLikeDislike = async (req, res) => {
   try {
-    const data = await likesDislikesService.addOrUpdateLikeDislike(req.body);
-    res.status(201).json(data);
+    const [likeDislike] = await LikesDislikes.upsert(
+      {
+        user_id,
+        target_id,
+        target_type,
+        is_like,
+      },
+      {
+        returning: true,
+        conflictFields: ["user_id", "target_id", "target_type"],
+      }
+    );
+
+    res.status(201).json(likeDislike);
   } catch (error) {
+    console.error("Error adding or updating like/dislike:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
-const getLikesDislikesCount = async (req, res) => {
+// Get likes and dislikes count for a target
+export const getLikesDislikesCount = async (req, res) => {
+  const { target_id, target_type } = req.params;
+
   try {
-    const { target_id, target_type } = req.params;
-    const counts = await likesDislikesService.getLikesDislikesCount(
-      target_id,
-      target_type
-    );
+    const counts = await LikesDislikes.findOne({
+      where: { target_id, target_type },
+      attributes: [
+        [
+          LikesDislikes.sequelize.fn(
+            "SUM",
+            LikesDislikes.sequelize.literal(
+              "CASE WHEN is_like THEN 1 ELSE 0 END"
+            )
+          ),
+          "likes",
+        ],
+        [
+          LikesDislikes.sequelize.fn(
+            "SUM",
+            LikesDislikes.sequelize.literal(
+              "CASE WHEN NOT is_like THEN 1 ELSE 0 END"
+            )
+          ),
+          "dislikes",
+        ],
+      ],
+    });
     res.status(200).json(counts);
   } catch (error) {
+    console.error("Error fetching likes/dislikes count:", error);
     res.status(500).json({ error: error.message });
   }
 };
-export default { addOrUpdateLikeDislike, getLikesDislikesCount };

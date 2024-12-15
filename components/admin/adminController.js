@@ -14,6 +14,12 @@ import {
 import validationSchemas from "../Utilities/validationSchemas.js";
 import passwordSchema from "../Utilities/passwordValidator.js";
 import nodemailer from "nodemailer";
+import {
+  TokenBlacklist,
+  Admins,
+  PasswordResets,
+} from "../../SequelizeSchemas/schemas.js";
+import Sequelize from "sequelize";
 // import validateAndSanitizeUserInput from "../Utilities/validator.js";
 
 const { adminSignupSchema, loginSchema } = validationSchemas;
@@ -30,24 +36,33 @@ export const adminSignup = async (req, res) => {
     return res.status(400).send("Password is not strong enough");
   } else {
     try {
-      const adminExists = await pool.query(
-        "SELECT * FROM admins WHERE username = $1 OR email = $2",
-        [username, email]
-      );
+      // Check if admin already exists
+      const adminExists = await Admins.findOne({
+        where: {
+          [Sequelize.Op.or]: [{ username }, { email }],
+        },
+      });
 
-      if (adminExists.rows.length > 0) {
+      if (adminExists) {
         return res.status(400).json({ message: "Admin already exists." });
       }
 
       const hashedPassword = await hashPassword(password);
-      const result = await pool.query(
-        "INSERT INTO admins (username, email, password) VALUES ($1, $2, $3) RETURNING id, username, email, role",
-        [username, email, hashedPassword]
-      );
+      // Create new admin
+      const newAdmin = await Admins.create({
+        username,
+        email,
+        password: hashedPassword,
+      });
 
       res.status(201).json({
         message: "Admin registered successfully!",
-        admin: result.rows[0],
+        admin: {
+          id: newAdmin.id,
+          username: newAdmin.username,
+          email: newAdmin.email,
+          role: newAdmin.role,
+        },
         Security: "Password is strong!",
       });
     } catch (err) {
@@ -64,18 +79,15 @@ export const adminLogin = async (req, res) => {
   if (error) return res.status(400).send(error.details[0].message);
 
   try {
-    const result = await pool.query("SELECT * FROM admins WHERE email = $1", [
-      email,
-    ]);
+    const admin = await Admins.findOne({ where: { email } });
 
-    const admin = result.rows[0];
     if (!admin) {
-      return res.status(400).send("Invalid email or password.");
+      return res.status(400).json({ message: "Invalid email or password." });
     }
 
     const match = await comparePassword(password, admin.password);
     if (!match) {
-      return res.status(400).send("Invalid email or password.");
+      return res.status(400).json({ message: "Invalid email or password." });
     }
 
     const accessToken = generateAccessToken(admin);
@@ -96,7 +108,6 @@ export const adminLogin = async (req, res) => {
       message: "Login Successful",
       token: encryptedAccessToken,
       refreshToken: encryptedRefreshToken,
-
       admin: {
         id: admin.id,
         username: admin.username,
@@ -106,7 +117,7 @@ export const adminLogin = async (req, res) => {
     });
   } catch (err) {
     console.error("Admin login error:", err.message);
-    res.status(500).send("Internal server error.");
+    res.status(500).json({ message: "Internal server error." });
   }
 };
 
@@ -119,10 +130,10 @@ export const adminLogout = async (req, res) => {
     const expiryTime = new Date();
     expiryTime.setSeconds(expiryTime.getSeconds() + 30);
 
-    await pool.query(
-      "INSERT INTO token_blacklist (token, expires_at) VALUES ($1, $2)",
-      [decryptedToken, expiryTime]
-    );
+    await TokenBlacklist.create({
+      token: decryptedToken,
+      expires_at: expiryTime,
+    });
 
     res.status(200).send("Admin logged out successfully.");
   } catch (err) {
@@ -137,31 +148,8 @@ export const forgotPassword = async (req, res) => {
     return res.status(400).json({ message: "Email is required" });
   }
   try {
-    // Check if email belongs to an admin or member
-    let user;
-    let userType;
-
-    // Check in the admin table first
-    const adminQuery = await pool.query(
-      "SELECT * FROM admins WHERE email = $1",
-      [email]
-    );
-    if (adminQuery.rows.length > 0) {
-      user = adminQuery.rows[0];
-      userType = "admin";
-    }
-
-    // Check in the member table if not found in the admin table
-    if (!user) {
-      const memberQuery = await pool.query(
-        "SELECT * FROM members WHERE email = $1",
-        [email]
-      );
-      if (memberQuery.rows.length > 0) {
-        user = memberQuery.rows[0];
-        userType = "member";
-      }
-    }
+    // Check if email belongs to an admin
+    const user = await Admins.findOne({ where: { email } });
 
     if (!user) {
       return res
@@ -174,19 +162,16 @@ export const forgotPassword = async (req, res) => {
     const resetTokenExpiration = new Date(Date.now() + 1800000); // 30min expiration time
 
     // Insert into password_resets table
-    await pool.query(
-      "INSERT INTO password_resets (reset_token, reset_token_expiration, user_id, username, email, user_type) VALUES ($1, $2, $3, $4, $5, $6)",
-      [
-        resetToken,
-        resetTokenExpiration,
-        user.id,
-        user.username,
-        user.email,
-        userType,
-      ]
-    );
+    await PasswordResets.create({
+      reset_token: resetToken,
+      reset_token_expiration: resetTokenExpiration,
+      user_id: user.id,
+      username: user.username,
+      email: user.email,
+      user_type: "admin",
+    });
     // Create the reset password link
-    const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
+    const resetLink = `${process.env.ORIGIN_LINK}/reset-admin-password/${resetToken}`;
 
     // Send reset email to user
     const transporter = nodemailer.createTransport({
@@ -212,18 +197,22 @@ export const forgotPassword = async (req, res) => {
       message: "Please check your inbox, a password reset link has been sent.",
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error in forgotPassword:", error);
     res
       .status(500)
       .json({ message: "Something went wrong. Please try again." });
   }
 };
-// Example: Get all users (admin view)
+
+// Get all users (admin view)
 export const getAllUsers = async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM users");
-    res.status(200).json(result.rows);
+    // Fetch all members from the database
+    const users = await Members.findAll();
+
+    res.status(200).json(users);
   } catch (error) {
+    console.error("Error fetching users:", error);
     res.status(500).send("Error fetching users");
   }
 };

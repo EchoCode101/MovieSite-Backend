@@ -1,9 +1,9 @@
-import commentsService from "./comments.service.js";
+import { Comments } from "../../SequelizeSchemas/schemas.js";
 
 // Create a new comment
-const createComment = async (req, res) => {
+export const createComment = async (req, res) => {
   try {
-    const comment = await commentsService.createComment(req.body);
+    const comment = await Comments.create(req.body);
     res.status(201).json(comment);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -11,9 +11,11 @@ const createComment = async (req, res) => {
 };
 
 // Get all comments
-const getAllComments = async (req, res) => {
+export const getAllComments = async (req, res) => {
   try {
-    const comments = await commentsService.getAllComments();
+    const comments = await Comments.findAll({
+      order: [["date_of_creation", "DESC"]],
+    });
     res.status(200).json(comments);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -21,9 +23,9 @@ const getAllComments = async (req, res) => {
 };
 
 // Get a specific comment by ID
-const getCommentById = async (req, res) => {
+export const getCommentById = async (req, res) => {
   try {
-    const comment = await commentsService.getCommentById(req.params.id);
+    const comment = await Comments.findByPk(req.params.id);
     if (!comment) {
       return res.status(404).json({ error: "Comment not found" });
     }
@@ -34,38 +36,31 @@ const getCommentById = async (req, res) => {
 };
 
 // Update a comment
-const updateComment = async (req, res) => {
+export const updateComment = async (req, res) => {
   try {
-    const comment = await commentsService.updateComment(
-      req.params.id,
-      req.body
-    );
+    const comment = await Comments.findByPk(req.params.id);
     if (!comment) {
       return res.status(404).json({ error: "Comment not found" });
     }
-    res.status(200).json(comment);
+
+    const updatedComment = await comment.update(req.body);
+    res.status(200).json(updatedComment);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
 // Delete a comment
-const deleteComment = async (req, res) => {
+export const deleteComment = async (req, res) => {
   try {
-    const comment = await commentsService.deleteComment(req.params.id);
+    const comment = await Comments.findByPk(req.params.id);
     if (!comment) {
       return res.status(404).json({ error: "Comment not found" });
     }
+
+    await comment.destroy();
     res.status(200).json({ message: "Comment deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-};
-
-export default {
-  createComment,
-  getAllComments,
-  getCommentById,
-  updateComment,
-  deleteComment,
 };

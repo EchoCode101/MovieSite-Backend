@@ -1,32 +1,57 @@
-import repliesService from "./commentReplies.service.js";
 
-const addReply = async (req, res) => {
+import { CommentReplies } from "../../SequelizeSchemas/schemas.js";
+// Add a reply
+export const addReply = async (req, res) => {
+  const { comment_id, user_id, content } = req.body;
+
   try {
-    const data = await repliesService.addReply(req.body);
-    res.status(201).json(data);
+    const newReply = await CommentReplies.create({
+      comment_id,
+      user_id,
+      content,
+    });
+
+    res.status(201).json(newReply);
   } catch (error) {
+    console.error("Error adding reply:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
-const getRepliesByCommentId = async (req, res) => {
+// Get replies for a comment
+export const getRepliesByCommentId = async (req, res) => {
+  const { comment_id } = req.params;
+
   try {
-    const replies = await repliesService.getRepliesByCommentId(
-      req.params.comment_id
-    );
+    const replies = await CommentReplies.findAll({
+      where: { comment_id },
+      order: [["created_at", "ASC"]],
+    });
+
     res.status(200).json(replies);
   } catch (error) {
+    console.error("Error fetching replies:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
-const deleteReply = async (req, res) => {
+// Delete a reply
+export const deleteReply = async (req, res) => {
+  const { reply_id } = req.params;
+
   try {
-    const reply = await repliesService.deleteReply(req.params.reply_id);
-    res.status(200).json({ message: "Reply deleted successfully", reply });
+    const deletedReply = await CommentReplies.destroy({
+      where: { reply_id },
+      returning: true,
+    });
+
+    if (!deletedReply) {
+      return res.status(404).json({ message: "Reply not found" });
+    }
+
+    res.status(200).json({ message: "Reply deleted successfully" });
   } catch (error) {
+    console.error("Error deleting reply:", error);
     res.status(500).json({ error: error.message });
   }
 };
-
-export default { addReply, getRepliesByCommentId, deleteReply };

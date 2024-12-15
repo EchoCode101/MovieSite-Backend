@@ -1,6 +1,9 @@
 import pool from "../../db/db.js";
-import jwt from "jsonwebtoken";
-
+import {
+  Members,
+  PasswordResets,
+  TokenBlacklist,
+} from "../../SequelizeSchemas/schemas.js";
 import { encrypt, decrypt } from "../Utilities/encryptionUtils.js";
 import {
   generateAccessToken,
@@ -13,6 +16,7 @@ import {
   hashPassword,
   comparePassword,
 } from "../Utilities/encryptionPassword.js";
+import { Sequelize } from "sequelize";
 import validationSchemas from "../Utilities/validationSchemas.js";
 const { userSignupSchema, loginSchema } = validationSchemas;
 // import validateAndSanitizeUserInput from "../Utilities/validator.js";
@@ -26,7 +30,7 @@ export const signup = async (req, res) => {
   const { username, password, email, subscription_plan = "free" } = req.body;
 
   if (!username || !password || !email) {
-    return res.status(400).send("Username, password, and email are required.");
+    return res.status(400).json({ message: "All fields are required." });
   }
 
   if (password.length < 6) {
@@ -41,35 +45,39 @@ export const signup = async (req, res) => {
   }
 
   try {
-    const userExists = await pool.query(
-      "SELECT * FROM members WHERE username = $1 OR email = $2",
-      [username, email]
-    );
+    // Check if user exists
+    const userExists = await Members.findOne({
+      where: {
+        [Sequelize.Op.or]: [{ username }, { email }],
+      },
+    });
 
-    if (userExists.rows.length > 0) {
+    if (userExists) {
       return res
         .status(400)
-        .json({ message: "Username or email already exists" });
+        .json({ message: "Username or email already exists." });
     }
 
     const hashedPassword = await hashPassword(password);
-    const result = await pool.query(
-      "INSERT INTO members (username, email, password, subscription_plan) VALUES ($1, $2, $3, $4) RETURNING id, username, email, subscription_plan",
-      [username, email, hashedPassword, subscription_plan]
-    );
+    const newUser = await Members.create({
+      username,
+      email,
+      password: hashedPassword,
+      subscription_plan,
+    });
 
     res.status(201).json({
       message: "User registered successfully!",
       user: {
-        id: result.rows[0].id,
-        username: result.rows[0].username,
-        email: result.rows[0].email,
-        subscription_plan: result.rows[0].subscription_plan,
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        subscription_plan: newUser.subscription_plan,
       },
     });
   } catch (err) {
-    console.error("Error details:", err);
-    res.status(500).send("Error registering user.");
+    console.error("Error registering user:", err);
+    res.status(500).json({ message: "Error registering user." });
   }
 };
 
@@ -83,12 +91,7 @@ export const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const result = await pool.query(
-      "SELECT * FROM members WHERE email = $1", // Query by email instead of email
-      [email]
-    );
-    console.log(result);
-    const user = result.rows[0];
+    const user = await Members.findOne({ where: { email } });
     if (!user) {
       return res.status(400).json({ message: "Invalid email or password" });
     }
@@ -102,10 +105,7 @@ export const login = async (req, res) => {
     const match = await comparePassword(password, user.password);
     if (!match) return res.status(400).send("Invalid email or password");
 
-    await pool.query(
-      "UPDATE members SET device_logged_in = true WHERE email = $1", // Update query with email
-      [email]
-    );
+    await user.update({ device_logged_in: true });
 
     // const accessToken = jwt.sign(
     //   {
@@ -170,11 +170,8 @@ export const logout = async (req, res) => {
 
     const { username } = req.user;
 
-    // Update the database to set device_logged_in to false
-    await pool.query(
-      "UPDATE members SET device_logged_in = false WHERE username = $1",
-      [username]
-    );
+    // Update device_logged_in to false
+    await Members.update({ device_logged_in: false }, { where: { username } });
 
     // Set the token expiration time to 30 seconds in the blacklist
     const expiryTime = new Date();
@@ -183,15 +180,72 @@ export const logout = async (req, res) => {
 
     const decryptedToken = await decrypt(token); // Decrypt the token for storage
 
-    // Insert the token into the blacklist
-    await pool.query(
-      "INSERT INTO token_blacklist (token, expires_at) VALUES ($1, $2)",
-      [decryptedToken, expiryTime]
-    );
+    // Insert token into blacklist
+    await TokenBlacklist.create({
+      token: decryptedToken,
+      expires_at: expiryTime,
+    });
 
     res.status(200).send("Logged out successfully");
   } catch (err) {
     console.error("Logout error:", err.message);
     res.status(500).send("Error logging out");
+  }
+};
+
+export const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  try {
+    const user = await Members.findOne({ where: { email } });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "No account found with that email" });
+    }
+
+    const resetToken = generateAccessToken(user);
+    const resetTokenExpiration = new Date(Date.now() + 1800000); // 30min expiration
+
+    await PasswordResets.create({
+      reset_token: resetToken,
+      reset_token_expiration: resetTokenExpiration,
+      user_id: user.id,
+      username: user.username,
+      email: user.email,
+      user_type: "member",
+    });
+
+    const resetLink = `${process.env.ORIGIN_LINK}/reset-password/${resetToken}`;
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.MY_EMAIL,
+        pass: process.env.MY_PASSWORD,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+
+    await transporter.sendMail({
+      from: process.env.MY_EMAIL,
+      to: user.email,
+      subject: "Password Reset Request",
+      text: `You requested a password reset. It has a short expiry time so hurry up! Click the link below to reset your password:\n\n${resetLink}`,
+    });
+
+    res.status(200).json({
+      message: "Please check your inbox, a password reset link has been sent.",
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Something went wrong. Please try again." });
   }
 };

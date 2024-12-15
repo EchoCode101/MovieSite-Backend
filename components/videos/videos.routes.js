@@ -1,12 +1,18 @@
 import express from "express";
-import videosController from "./videos.controller.js";
-
+import {
+  getAllVideos,
+  getVideoById,
+  createVideo,
+  updateVideo,
+  deleteVideo,
+} from "./videos.controller.js";
+import { authenticateAdminToken } from "../auth/authMiddleware.js";
 const router = express.Router();
 
-router.get("/", videosController.getAllVideos);
-router.get("/:id", videosController.getVideoById);
-router.post("/", videosController.createVideo);
-router.put("/:id", videosController.updateVideo);
-router.delete("/:id", videosController.deleteVideo);
+router.get("/", authenticateAdminToken, getAllVideos);
+router.get("/:id", getVideoById);
+router.post("/", authenticateAdminToken, createVideo);
+router.put("/:id", authenticateAdminToken, updateVideo);
+router.delete("/:id", authenticateAdminToken, deleteVideo);
 
 export default router;

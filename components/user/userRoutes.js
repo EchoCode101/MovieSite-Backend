@@ -1,5 +1,5 @@
 import express from "express";
-import { signup, login, logout } from "./userController.js";
+import { signup, login, logout, forgotPassword } from "./userController.js";
 import {
   authenticateAdminToken,
   authenticateToken,
@@ -11,9 +11,11 @@ import {
   saveVideoUrl,
   subscription_plan,
 } from "./profileRoutes.js";
+import { restPasswordRoute } from "./restUserPasswordRoute.js";
 
 const router = express.Router();
-
+router.post("/forgotPassword", limiter, forgotPassword);
+router.post("/forgotPassword/reset/:token", limiter, restPasswordRoute);
 router.post("/signup", limiter, signup);
 router.post("/login", limiter, login);
 router.get("/profile", authenticateToken, limiter, profileRoutes);

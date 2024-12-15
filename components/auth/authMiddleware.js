@@ -1,6 +1,7 @@
 import rateLimit from "express-rate-limit";
 import { decrypt } from "../Utilities/encryptionUtils.js";
 import pool from "../../db/db.js";
+import { TokenBlacklist } from "../../SequelizeSchemas/schemas.js";
 import jwt from "jsonwebtoken";
 import { extractToken, verifyAccessToken } from "../Utilities/tokenUtils.js";
 const authenticateToken = async (req, res, next) => {
@@ -8,14 +9,12 @@ const authenticateToken = async (req, res, next) => {
     const token = extractToken(req); // Extract token using the utility
     const decryptedToken = await decrypt(token);
 
-    const result = await pool.query(
-      "SELECT * FROM token_blacklist WHERE token = $1",
-      [decryptedToken]
-    );
-    if (result.rows.length > 0) {
+    const blacklistedToken = await TokenBlacklist.findOne({
+      where: { token: decryptedToken },
+    });
+    if (blacklistedToken) {
       return res.status(403).send("Token has been revoked");
     }
-
     const decoded = verifyAccessToken(decryptedToken);
     if (!decoded) {
       return res.status(401).json({ isValid: false });
@@ -34,11 +33,10 @@ const authenticateAdminToken = async (req, res, next) => {
     const token = extractToken(req); // Extract token using the utility
     const decryptedToken = await decrypt(token);
 
-    const result = await pool.query(
-      "SELECT * FROM token_blacklist WHERE token = $1",
-      [decryptedToken]
-    );
-    if (result.rows.length > 0) {
+    const blacklistedToken = await TokenBlacklist.findOne({
+      where: { token: decryptedToken },
+    });
+    if (blacklistedToken) {
       return res.status(403).send("Token has been revoked");
     }
 
@@ -46,21 +44,20 @@ const authenticateAdminToken = async (req, res, next) => {
       if (err) {
         return res.status(403).send("Invalid or expired token");
       }
-      if (!user) {
-        return res.status(401).send("Unauthorized access");
-      }
-      // Check the role of the user
-      if (user.role !== "admin") {
-        return res.status(403).send("Access denied: Admins only");
-      }
       if (!user || !user.username || !user.email || !user.role || !user.id) {
         return res.status(400).send("Invalid token structure");
+      }
+      if (user.role !== "admin") {
+        return res.status(403).send("Access denied: Admins only");
       }
       req.user = user;
       next();
     });
   } catch (error) {
-    console.error("Error in authenticateAdminToken middleware:", error.message);
+    console.error(
+      "Error in authenticate Admin Token middleware:",
+      error.message
+    );
     res.status(403).send("Invalid token format or verification failed");
   }
 };
@@ -71,7 +68,7 @@ export const limiter = rateLimit({
   max: 100, // Limit to 100 requests per windowMs
   message: "Too many requests, please try again later.",
   keyGenerator: (req, res) => {
-    console.log(req.user, req.ip, req.email);
+    // console.log(req.user, req.ip, req.email);
     // Use the authenticated user's ID/email, or fallback to IP address
     return req.user?.id || req.user?.email || req.ip;
   },
