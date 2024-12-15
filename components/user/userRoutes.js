@@ -17,7 +17,6 @@ const router = express.Router();
 router.post("/signup", limiter, signup);
 router.post("/login", limiter, login);
 router.get("/profile", authenticateToken, limiter, profileRoutes);
-// router.post("/fetchVideoUrl", authenticateToken, limiter, fetchVideoUrl);
 router.get(
   "/fetchVideoUrl/:video_id",
   authenticateToken,

@@ -1,11 +1,10 @@
 import pkg from "pg";
 import dotenv from "dotenv";
 import clnupjb from "../components/Utilities/clnpjb.js";
-const {  Client } = pkg;
+const { Client } = pkg;
 const env = process.env.NODE_ENV || "development";
 dotenv.config({ path: `.env.${env}` });
 // console.log(`Environment: ${env}`);
-
 
 const pool = new Client({
   user: process.env.PG_USER,
@@ -14,15 +13,37 @@ const pool = new Client({
   password: process.env.PG_PASSWORD,
   port: process.env.DB_PORT || 5432,
 });
-// Connect to the database
+// Connect to the Online database
+// pool
+//   .connect()
+//   .then(() => {
+//     console.log("Connected to Supabase PostgreSQL database");
+
+// client.release(); // Release the connection
+
+//   })
+//   .catch((err) => {
+//     console.error("Connection error", err.stack);
+//   });
+
+// Connect to the Local database
+
 pool
   .connect()
   .then(() => {
-    console.log("Connected to Supabase PostgreSQL database");
+    console.log("Local Database connected successfully");
   })
-  .catch((err) => {
-    console.error("Connection error", err.stack);
-  });
+  .catch((err) => console.error("Database connection failed", err.stack));
+
+export default pool;
+// Define your connection string
+// const connectionString =
+//   "postgresql://postgres.hkanzffpltbywhnpenwy:postgresdatabase@aws-0-ap-south-1.pooler.supabase.com:6543/postgres";
+
+// // Create a new client instance
+// const client = new Client({
+//   connectionString: connectionString,
+// });
 // You can now query the database
 // pool.query("SELECT * FROM admins", (err, res) => {
 //   if (err) {
@@ -32,27 +53,3 @@ pool
 //   }
 //   pool.end();
 // });
-// 
-export default pool;
-
-
-
-// pool
-//   .connect()
-//   .then((client) => {
-//     console.log("Database connected successfully");
-
-//     client.release(); // Release the connection
-//   })
-//   .catch((err) => console.error("Database connection failed", err.stack));
-
-// Define your connection string
-// const connectionString =
-//   "postgresql://postgres.hkanzffpltbywhnpenwy:postgresdatabase@aws-0-ap-south-1.pooler.supabase.com:6543/postgres";
-
-// // Create a new client instance
-// const client = new Client({
-//   connectionString: connectionString,
-// });
-
-

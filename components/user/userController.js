@@ -87,7 +87,7 @@ export const login = async (req, res) => {
       "SELECT * FROM members WHERE email = $1", // Query by email instead of email
       [email]
     );
-
+    console.log(result);
     const user = result.rows[0];
     if (!user) {
       return res.status(400).json({ message: "Invalid email or password" });
@@ -138,7 +138,7 @@ export const login = async (req, res) => {
     // Send the refresh token in a secure cookie
     res.cookie("encryptedRefreshToken", encryptedRefreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Ensure it's sent only over HTTPS in production
+      secure: process.env.NODE_ENV === "production" || true, // Ensure it's sent only over HTTPS in production
       sameSite: "Strict", // Prevents cross-site cookie transmission
       maxAge: 24 * 60 * 60 * 1000, // 1 day expiry
     });
@@ -149,7 +149,6 @@ export const login = async (req, res) => {
         id: user.id,
         email: user.email,
         username: user.username,
-        role: user.role,
       },
     });
   } catch (err) {

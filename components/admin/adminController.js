@@ -87,7 +87,7 @@ export const adminLogin = async (req, res) => {
 
     res.cookie("encryptedRefreshToken", encryptedRefreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production" || true,
       sameSite: "Strict",
       maxAge: 24 * 60 * 60 * 1000,
     });

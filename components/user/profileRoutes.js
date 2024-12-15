@@ -20,6 +20,12 @@ export const profileRoutes = async (req, res) => {
       id: user.id,
       username: user.username,
       subscription_plan: user.subscription_plan,
+      role: user.role,
+      subscription_plan: user.subscription_plan,
+      profile_pic: user.profile_pic,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      status: user.status,
     });
   } catch (err) {
     console.error(err);

@@ -4,7 +4,12 @@ import dotenv from "dotenv";
 const env = process.env.NODE_ENV || "development";
 dotenv.config({ path: `.env.${env}` });
 
-const { JWT_SECRET, REFRESH_SECRET } = process.env;
+const {
+  JWT_SECRET,
+  REFRESH_SECRET,
+  TOKEN_EXPIRY_TIME,
+  REFRESH_TOKEN_EXPIRY_TIME,
+} = process.env;
 
 // Generate a new access token
 export const generateAccessToken = (user) => {
@@ -16,7 +21,7 @@ export const generateAccessToken = (user) => {
       role: user.role,
     },
     JWT_SECRET,
-    { expiresIn: "30m" }
+    { expiresIn: TOKEN_EXPIRY_TIME }
   );
 };
 
@@ -30,7 +35,7 @@ export const generateRefreshToken = (user) => {
       role: user.role,
     },
     REFRESH_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: REFRESH_TOKEN_EXPIRY_TIME }
   );
 };
 
@@ -56,15 +61,13 @@ export const extractToken = (req) => {
   const authHeader = req.headers["authorization"];
 
   if (!authHeader) {
-    return res.status(401).send("Access Denied");
-    // throw new Error("Access token required");
+    throw new Error("Access token required");
   }
 
   const token = authHeader.split(" ")[1];
 
   if (!token) {
-    return res.status(401).send("Access token missing");
-    // throw new Error("Access token missing");
+    throw new Error("Access token missing");
   }
 
   return token;
