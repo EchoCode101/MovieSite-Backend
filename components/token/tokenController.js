@@ -7,7 +7,7 @@ import {
   verifyAccessToken,
   generateAccessToken,
 } from "../Utilities/tokenUtils.js";
-import { TokenBlacklist } from "../../SequelizeSchemas/schemas.js";
+import { TokenBlacklist } from "../../models/index.js";
 // Refresh token route to generate a new access token
 export const refreshToken = async (req, res) => {
   try {

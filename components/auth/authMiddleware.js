@@ -1,7 +1,7 @@
 import rateLimit from "express-rate-limit";
 import { decrypt } from "../Utilities/encryptionUtils.js";
 import pool from "../../db/db.js";
-import { TokenBlacklist } from "../../SequelizeSchemas/schemas.js";
+import { TokenBlacklist } from "../../models/index.js";
 import jwt from "jsonwebtoken";
 import { extractToken, verifyAccessToken } from "../Utilities/tokenUtils.js";
 const authenticateToken = async (req, res, next) => {

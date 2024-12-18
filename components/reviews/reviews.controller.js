@@ -1,4 +1,38 @@
-import { Reviews, Videos } from "../../SequelizeSchemas/schemas.js";
+import { Reviews, Videos, Members } from "../../models/index.js";
+import { Op } from "sequelize";
+// Get reviews within a date range
+export const getRecentReviews = async (req, res) => {
+  const { startDate, endDate } = req.query;
+
+  try {
+    const reviews = await Reviews.findAll({
+      where: {
+        created_at: {
+          [Op.between]: [startDate, endDate],
+        },
+      },
+      include: [
+        {
+          model: Videos,
+          as: "video", // Correct alias as defined in the association
+          attributes: ["title"],
+        },
+        {
+          model: Members,
+          as: "member", // Correct alias as defined in the association
+          attributes: ["username", "first_name", "last_name"],
+        },
+      ],
+      order: [["created_at", "DESC"]],
+    });
+
+    res.status(200).json(reviews);
+  } catch (error) {
+    console.error("Error fetching recent reviews:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Add a new review
 export const addReview = async (req, res) => {
   const { video_id, member_id, rating, content } = req.body;
@@ -30,7 +64,7 @@ export const addReview = async (req, res) => {
   }
 };
 
-// Get all reviews for a video
+// Get all reviews for a video, including related data
 export const getReviewsByVideoId = async (req, res) => {
   const { videoId } = req.params;
 
@@ -38,6 +72,16 @@ export const getReviewsByVideoId = async (req, res) => {
     const reviews = await Reviews.findAll({
       where: { video_id: videoId },
       order: [["created_at", "DESC"]],
+      include: [
+        {
+          model: Videos,
+          attributes: ["title", "category", "rating"],
+        },
+        {
+          model: Members,
+          attributes: ["username", "email", "first_name", "last_name"],
+        },
+      ],
     });
 
     res.status(200).json(reviews);
@@ -110,4 +154,3 @@ export const deleteReview = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-

@@ -1,6 +1,6 @@
 import pool from "../../db/db.js";
 import { hashPassword } from "../Utilities/encryptionPassword.js";
-import { Admins, PasswordResets } from "../../SequelizeSchemas/schemas.js";
+import { Admins, PasswordResets } from "../../models/index.js";
 // Reset Password Route
 export const restPasswordRoute = async (req, res) => {
   const { token } = req.params;

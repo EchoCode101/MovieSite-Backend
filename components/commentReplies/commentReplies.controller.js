@@ -1,8 +1,12 @@
-
-import { CommentReplies } from "../../SequelizeSchemas/schemas.js";
+import { CommentReplies } from "../../models/index.js";
 // Add a reply
 export const addReply = async (req, res) => {
   const { comment_id, user_id, content } = req.body;
+  if (!comment_id || !user_id || !content) {
+    return res.status(400).json({
+      error: "All fields are required: comment_id, user_id, and content.",
+    });
+  }
 
   try {
     const newReply = await CommentReplies.create({

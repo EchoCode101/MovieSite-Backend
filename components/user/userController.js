@@ -1,9 +1,5 @@
 import pool from "../../db/db.js";
-import {
-  Members,
-  PasswordResets,
-  TokenBlacklist,
-} from "../../SequelizeSchemas/schemas.js";
+import { Members, PasswordResets, TokenBlacklist } from "../../models/index.js";
 import { encrypt, decrypt } from "../Utilities/encryptionUtils.js";
 import {
   generateAccessToken,

@@ -1,10 +1,10 @@
-import { Videos } from "../../SequelizeSchemas/schemas.js";
+import { Videos } from "../../models/index.js";
 
 // Get all videos
 export const getAllVideos = async (req, res) => {
   try {
     const videos = await Videos.findAll({
-      order: [["date_of_creation", "DESC"]],
+      order: [["last_updated", "DESC"]],
     });
     res.status(200).json(videos);
   } catch (error) {
@@ -20,6 +20,34 @@ export const getVideoById = async (req, res) => {
       return res.status(404).json({ message: "Video not found" });
     }
     res.status(200).json(video);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+// Get paginated videos
+export const getPaginatedVideos = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      sort = "last_updated",
+      order = "DESC",
+    } = req.query;
+
+    const offset = (page - 1) * limit;
+
+    const { count, rows: videos } = await Videos.findAndCountAll({
+      limit: parseInt(limit, 10),
+      offset: parseInt(offset, 10),
+      order: [[sort, order]],
+    });
+
+    res.status(200).json({
+      currentPage: parseInt(page, 10),
+      totalPages: Math.ceil(count / limit),
+      totalItems: count,
+      videos,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

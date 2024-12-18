@@ -14,11 +14,7 @@ import {
 import validationSchemas from "../Utilities/validationSchemas.js";
 import passwordSchema from "../Utilities/passwordValidator.js";
 import nodemailer from "nodemailer";
-import {
-  TokenBlacklist,
-  Admins,
-  PasswordResets,
-} from "../../SequelizeSchemas/schemas.js";
+import { TokenBlacklist, Admins, PasswordResets } from "../../models/index.js";
 import Sequelize from "sequelize";
 // import validateAndSanitizeUserInput from "../Utilities/validator.js";
 

@@ -1,4 +1,4 @@
-import { LikesDislikes } from "../../SequelizeSchemas/schemas.js";
+import { LikesDislikes } from "../../models/index.js";
 // Add or update like/dislike
 export const addOrUpdateLikeDislike = async (req, res) => {
   const { user_id, target_id, target_type, is_like } = req.body;

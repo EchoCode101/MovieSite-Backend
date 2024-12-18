@@ -3,7 +3,7 @@ import pool from "../../db/db.js";
 import { encrypt, decrypt } from "../Utilities/encryptionUtils.js";
 import { verifyAccessToken } from "../Utilities/tokenUtils.js";
 import validationSchemas from "../Utilities/validationSchemas.js";
-import { Members, Videos } from "../../SequelizeSchemas/schemas.js";
+import { Members, Videos } from "../../models/index.js";
 const { subscriptionSchema } = validationSchemas;
 
 export const profileRoutes = async (req, res) => {

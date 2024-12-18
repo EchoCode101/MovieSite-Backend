@@ -1,4 +1,4 @@
-import { Members } from "../../SequelizeSchemas/schemas.js";
+import { Members } from "../../models/index.js";
 
 export const getAllMembers = async (req, res) => {
   try {
@@ -6,6 +6,33 @@ export const getAllMembers = async (req, res) => {
       order: [["date_of_creation", "DESC"]],
     });
     res.status(200).json(members);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+export const getPaginatedUsers = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      sort = "date_of_creation",
+      order = "DESC",
+    } = req.query;
+
+    const offset = (page - 1) * limit;
+
+    const { count, rows: users } = await Members.findAndCountAll({
+      limit: parseInt(limit, 10),
+      offset: parseInt(offset, 10),
+      order: [[sort, order]],
+    });
+
+    res.status(200).json({
+      currentPage: parseInt(page, 10),
+      totalPages: Math.ceil(count / limit),
+      totalItems: count,
+      users,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

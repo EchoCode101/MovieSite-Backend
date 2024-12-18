@@ -13,10 +13,14 @@ const clnupjb = cron.schedule("0 * * * *", async () => {
       "DELETE FROM password_resets WHERE reset_token_expiration < NOW()"
     );
     console.log(
-      `Cleanup completed from token_blacklist table: ${result.rowCount} expired token(s) removed`
+      `Cleanup completed from token_blacklist table: ${
+        result.rowCount || 0
+      } expired token(s) removed`
     );
     console.log(
-      `Cleanup completed from password_resets table: ${result1.rowCount} expired token(s) removed`
+      `Cleanup completed from password_resets table: ${
+        result1.rowCount || 0
+      } expired token(s) removed`
     );
   } catch (err) {
     console.error("Error during token blacklist cleanup:", err);
