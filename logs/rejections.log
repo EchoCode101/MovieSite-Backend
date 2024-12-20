@@ -21,3 +21,6 @@
     at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
     at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5
+2024-12-20 17:22:02 [ERROR]: ReferenceError: createError is not defined
+    at authenticateToken (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/auth/authMiddleware.js:23:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)

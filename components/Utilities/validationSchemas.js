@@ -23,12 +23,14 @@ const passwordValidation = (value, helpers) => {
       .map((key) => messages[key] || "Password validation failed.")
       .join(" ");
 
-    return helpers.error("any.invalid", { message });
+    // Properly return a Joi validation error
+    return helpers.message(message);
   }
 
-  // If password is valid
+  // If password is valid, return it
   return value;
 };
+
 const userSignupSchema = Joi.object({
   username: Joi.string().min(3).max(30).alphanum().required(),
   password: Joi.string()

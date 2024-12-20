@@ -29,7 +29,11 @@ export const refreshToken = async (req, res, next) => {
     res.json({ token: encryptedAccessToken });
   } catch (error) {
     logger.error("Error in refresh token logic:", error.message);
-    next(createError(403, "Invalid Refresh Token Format"));
+    next(
+      error.status
+        ? error // Use the existing error if already set
+        : createError(403, "Invalid token format or verification failed")
+    );
   }
 };
 
@@ -43,6 +47,10 @@ export const validateToken = async (req, res, next) => {
     res.json({ isValid: true, user: decoded });
   } catch (error) {
     logger.error("Error in validateToken middleware:", error.message);
-    next(createError(403, "Invalid token format or verification failed"));
+    next(
+      error.status
+        ? error // Use the existing error if already set
+        : createError(403, "Invalid token format or verification failed")
+    );
   }
 };

@@ -126,7 +126,11 @@ export const adminLogout = async (req, res, next) => {
     res.status(200).send("Admin logged out successfully.");
   } catch (err) {
     logger.error("Admin logout error:", err.message);
-    next(createError(500, "Internal server error."));
+    next(
+      err.status
+        ? error // Use the existing error if already set
+        : createError(500, "Internal server error.")
+    );
   }
 };
 

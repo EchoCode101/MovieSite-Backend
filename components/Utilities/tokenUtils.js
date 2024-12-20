@@ -1,4 +1,5 @@
 // tokenUtils.js
+import createError from "http-errors";
 import jwt from "jsonwebtoken";
 const {
   JWT_SECRET,
@@ -40,7 +41,7 @@ export const verifyAccessToken = (token) => {
   try {
     return jwt.verify(token, JWT_SECRET);
   } catch (err) {
-    throw new Error("Invalid or expired access token");
+    throw createError(401, "Invalid or expired access token");
   }
 };
 
@@ -49,7 +50,7 @@ export const verifyRefreshToken = (token) => {
   try {
     return jwt.verify(token, REFRESH_SECRET);
   } catch (err) {
-    throw new Error("Invalid or expired refresh token");
+    throw createError(401, "Invalid or expired refresh token");
   }
 };
 // Utility to extract token from Authorization header
@@ -57,13 +58,13 @@ export const extractToken = (req) => {
   const authHeader = req.headers["authorization"];
 
   if (!authHeader) {
-    throw new Error("Access token required");
+    throw createError(401, "Access token required");
   }
 
   const token = authHeader.split(" ")[1];
 
   if (!token) {
-    throw new Error("Access token missing");
+    throw createError(401, "Access token missing");
   }
 
   return token;

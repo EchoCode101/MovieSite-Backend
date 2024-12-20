@@ -623,3 +623,141 @@
     at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5
 2024-12-20 17:09:27 [INFO]: 🌐 Environment: development
 2024-12-20 17:09:27 [INFO]: ✅ Database connected successfully!
+2024-12-20 17:16:21 [ERROR]: {
+  "method": "POST",
+  "url": "/api/user/signup",
+  "status": 400,
+  "message": "\"password\" contains an invalid value",
+  "stack": "BadRequestError: \"password\" contains an invalid value\n    at signup (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/userController.js:31:26)\n    at Layer.handle [as handle_request] (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5",
+  "requestBody": {
+    "username": "ham",
+    "email": "hamzasajjad16615a@gmail.com",
+    "password": "a"
+  }
+}
+2024-12-20 17:17:01 [ERROR]: {
+  "method": "POST",
+  "url": "/api/user/signup",
+  "status": 400,
+  "message": "\"password\" contains an invalid value",
+  "stack": "BadRequestError: \"password\" contains an invalid value\n    at signup (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/userController.js:31:26)\n    at Layer.handle [as handle_request] (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5",
+  "requestBody": {
+    "username": "ham",
+    "email": "hamzasajjad16615a@gmail.com",
+    "password": "321a"
+  }
+}
+2024-12-20 17:17:07 [ERROR]: {
+  "method": "POST",
+  "url": "/api/user/signup",
+  "status": 400,
+  "message": "\"password\" contains an invalid value",
+  "stack": "BadRequestError: \"password\" contains an invalid value\n    at signup (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/userController.js:31:26)\n    at Layer.handle [as handle_request] (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5",
+  "requestBody": {
+    "username": "ham",
+    "email": "hamzasajjad16615a@gmail.com",
+    "password": "321aewf"
+  }
+}
+2024-12-20 17:17:11 [ERROR]: {
+  "method": "POST",
+  "url": "/api/user/signup",
+  "status": 400,
+  "message": "\"password\" contains an invalid value",
+  "stack": "BadRequestError: \"password\" contains an invalid value\n    at signup (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/userController.js:31:26)\n    at Layer.handle [as handle_request] (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5",
+  "requestBody": {
+    "username": "ham",
+    "email": "hamzasajjad16615a@gmail.com",
+    "password": "321sdfa23r23t2taewf"
+  }
+}
+2024-12-20 17:17:11 [ERROR]: {
+  "method": "POST",
+  "url": "/api/user/signup",
+  "status": 400,
+  "message": "\"password\" contains an invalid value",
+  "stack": "BadRequestError: \"password\" contains an invalid value\n    at signup (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/userController.js:31:26)\n    at Layer.handle [as handle_request] (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5",
+  "requestBody": {
+    "username": "ham",
+    "email": "hamzasajjad16615a@gmail.com",
+    "password": "321sdfa23r23t2taewf"
+  }
+}
+2024-12-20 17:17:11 [ERROR]: {
+  "method": "POST",
+  "url": "/api/user/signup",
+  "status": 400,
+  "message": "\"password\" contains an invalid value",
+  "stack": "BadRequestError: \"password\" contains an invalid value\n    at signup (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/userController.js:31:26)\n    at Layer.handle [as handle_request] (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5",
+  "requestBody": {
+    "username": "ham",
+    "email": "hamzasajjad16615a@gmail.com",
+    "password": "321sdfa23r23t2taewf"
+  }
+}
+2024-12-20 17:17:11 [ERROR]: {
+  "method": "POST",
+  "url": "/api/user/signup",
+  "status": 400,
+  "message": "\"password\" contains an invalid value",
+  "stack": "BadRequestError: \"password\" contains an invalid value\n    at signup (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/userController.js:31:26)\n    at Layer.handle [as handle_request] (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5",
+  "requestBody": {
+    "username": "ham",
+    "email": "hamzasajjad16615a@gmail.com",
+    "password": "321sdfa23r23t2taewf"
+  }
+}
+2024-12-20 17:19:51 [INFO]: 🌐 Environment: development
+2024-12-20 17:19:51 [INFO]: ✅ Database connected successfully!
+2024-12-20 17:19:56 [ERROR]: {
+  "method": "POST",
+  "url": "/api/user/signup",
+  "status": 400,
+  "message": "Password must contain at least one uppercase letter.",
+  "stack": "BadRequestError: Password must contain at least one uppercase letter.\n    at signup (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/userController.js:31:26)\n    at Layer.handle [as handle_request] (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5",
+  "requestBody": {
+    "username": "ham",
+    "email": "hamzasajjad16615a@gmail.com",
+    "password": "321sdfa23r23t2taewf"
+  }
+}
+2024-12-20 17:20:02 [ERROR]: {
+  "method": "POST",
+  "url": "/api/user/signup",
+  "status": 400,
+  "message": "Password must be at least 8 characters long. Password must contain at least one uppercase letter. Password must contain at least one lowercase letter.",
+  "stack": "BadRequestError: Password must be at least 8 characters long. Password must contain at least one uppercase letter. Password must contain at least one lowercase letter.\n    at signup (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/userController.js:31:26)\n    at Layer.handle [as handle_request] (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5",
+  "requestBody": {
+    "username": "ham",
+    "email": "hamzasajjad16615a@gmail.com",
+    "password": "1"
+  }
+}
+2024-12-20 17:20:20 [ERROR]: {
+  "method": "POST",
+  "url": "/api/user/signup",
+  "status": 400,
+  "message": "Password must be at least 8 characters long. Password must contain at least one uppercase letter.",
+  "stack": "BadRequestError: Password must be at least 8 characters long. Password must contain at least one uppercase letter.\n    at signup (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/userController.js:31:26)\n    at Layer.handle [as handle_request] (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5",
+  "requestBody": {
+    "username": "ham",
+    "email": "hamzasajjad16615a@gmail.com",
+    "password": "18a"
+  }
+}
+2024-12-20 17:20:28 [ERROR]: {
+  "method": "POST",
+  "url": "/api/user/signup",
+  "status": 400,
+  "message": "Password must be at least 8 characters long.",
+  "stack": "BadRequestError: Password must be at least 8 characters long.\n    at signup (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/userController.js:31:26)\n    at Layer.handle [as handle_request] (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5",
+  "requestBody": {
+    "username": "ham",
+    "email": "hamzasajjad16615a@gmail.com",
+    "password": "1A8a"
+  }
+}
+2024-12-20 17:22:02 [ERROR]: Error: Invalid or expired access token
+    at verifyAccessToken (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/Utilities/tokenUtils.js:43:11)
+    at authenticateToken (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/auth/authMiddleware.js:18:27)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)

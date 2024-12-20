@@ -20,7 +20,11 @@ const authenticateToken = async (req, res, next) => {
     next();
   } catch (error) {
     logger.error("Error in authentication of Token middleware:", error);
-    next(createError(403, "Invalid token format or verification failed"));
+    next(
+      error.status
+        ? error // Use the existing error if already set
+        : createError(403, "Invalid token format or verification failed")
+    );
   }
 };
 
@@ -45,7 +49,11 @@ const authenticateAdminToken = async (req, res, next) => {
     });
   } catch (error) {
     logger.error("Error in authentication of Admin Token  middleware:", error);
-    next(createError(403, "Invalid token format or verification failed"));
+    next(
+      error.status
+        ? error // Use the existing error if already set
+        : createError(403, "Invalid token format or verification failed")
+    );
   }
 };
 
