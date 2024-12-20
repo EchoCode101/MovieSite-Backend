@@ -1,26 +1,22 @@
-import jwt from "jsonwebtoken";
-import pool from "../../db/db.js"; // Ensure you have a proper db connection
-import { encrypt, decrypt } from "../Utilities/encryptionUtils.js";
+import logger from "../Utilities/logger.js";
+import { encrypt } from "../Utilities/encryptionUtils.js";
 import {
   verifyRefreshToken,
-  extractToken,
   verifyAccessToken,
   generateAccessToken,
 } from "../Utilities/tokenUtils.js";
-import { TokenBlacklist } from "../../models/index.js";
+import {
+  blacklistTokenCheck,
+  extractAndDecryptToken,
+} from "../Utilities/helpers.js";
 // Refresh token route to generate a new access token
-export const refreshToken = async (req, res) => {
+export const refreshToken = async (req, res, next) => {
   try {
-    const token = extractToken(req); // Extract token using the utility
-    const decryptedToken = await decrypt(token);
-
-    // Check if the token exists in the blacklist
-    const isBlacklisted = await TokenBlacklist.findOne({
-      where: { token: decryptedToken },
-    });
+    const decryptedToken = await extractAndDecryptToken(req);
+    const isBlacklisted = await blacklistTokenCheck(decryptedToken);
 
     if (isBlacklisted) {
-      return res.status(403).send("Refresh token has been revoked");
+      return next(createError(403, "Refresh token has been revoked"));
     }
     // Verify the refresh token
     const user = verifyRefreshToken(decryptedToken);
@@ -32,22 +28,21 @@ export const refreshToken = async (req, res) => {
     const encryptedAccessToken = await encrypt(accessToken);
     res.json({ token: encryptedAccessToken });
   } catch (error) {
-    console.error("Error in refresh token logic:", error.message);
-    res.status(403).send("Invalid Refresh Token Format");
+    logger.error("Error in refresh token logic:", error.message);
+    next(createError(403, "Invalid Refresh Token Format"));
   }
 };
 
 export const validateToken = async (req, res, next) => {
   try {
-    const token = extractToken(req); // Extract token using the utility
-    const decryptedToken = await decrypt(token);
+    const decryptedToken = await extractAndDecryptToken(req);
     const decoded = verifyAccessToken(decryptedToken);
     if (!decoded) {
-      return res.status(401).json({ isValid: false });
+      return next(createError(401, "Invalid or Expired Token"));
     }
     res.json({ isValid: true, user: decoded });
   } catch (error) {
-    console.error("Error in validateToken middleware:", error.message);
-    res.status(403).send("Invalid token format or verification failed");
+    logger.error("Error in validateToken middleware:", error.message);
+    next(createError(403, "Invalid token format or verification failed"));
   }
 };

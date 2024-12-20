@@ -9,12 +9,11 @@ import {
   forgotPassword,
 } from "./adminController.js";
 import { authenticateAdminToken, limiter } from "../auth/authMiddleware.js";
-import { restPasswordRoute } from "./restAdminPasswordRoute.js";
+import { restAdminPassword } from "./restAdminPasswordRoute.js";
 
 const router = express.Router();
 
 router.post("/forgotPassword", limiter, forgotPassword);
-router.post("/forgotPassword/reset/:token", limiter, restPasswordRoute);
 router.post("/signup", limiter, adminSignup);
 router.post("/login", adminLogin);
 router.post("/logout", authenticateAdminToken, adminLogout);
@@ -26,5 +25,6 @@ router.put(
   limiter,
   updateSubscription
 );
+router.post("/forgotPassword/reset/:token", limiter, restAdminPassword);
 
 export default router;

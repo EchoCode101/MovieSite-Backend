@@ -1,9 +1,40 @@
 import Joi from "joi";
-// Joi validation schema for siginup
+import passwordSchema from "./passwordValidator.js";
 
+// Custom Password Validation with Feedback
+const passwordValidation = (value, helpers) => {
+  const validationResults = passwordSchema.validate(value, { list: true });
+
+  // If password fails validation
+  if (validationResults.length > 0) {
+    // Generate a custom error message
+    const messages = {
+      min: "Password must be at least 8 characters long.",
+      max: "Password must be no more than 100 characters.",
+      uppercase: "Password must contain at least one uppercase letter.",
+      lowercase: "Password must contain at least one lowercase letter.",
+      digits: "Password must contain at least one digit.",
+      spaces: "Password must not contain spaces.",
+      oneOf: "Password is too common. Please choose a more secure password.",
+    };
+
+    // Map validation results to messages
+    const message = validationResults
+      .map((key) => messages[key] || "Password validation failed.")
+      .join(" ");
+
+    return helpers.error("any.invalid", { message });
+  }
+
+  // If password is valid
+  return value;
+};
 const userSignupSchema = Joi.object({
   username: Joi.string().min(3).max(30).alphanum().required(),
-  password: Joi.string().min(6).required(),
+  password: Joi.string()
+    .custom(passwordValidation, "Password Validation")
+    .required(),
+  // password: Joi.string().min(6).required(),
   email: Joi.string().email().required(),
   subscription_plan: Joi.string()
     .valid("Free", "Basic", "Premium", "Ultimate")

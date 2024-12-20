@@ -1,22 +1,13 @@
-import { DataTypes, Sequelize } from "sequelize";
+import { DataTypes } from "sequelize";
 
-// Define TokenBlacklist Schema
 export default (sequelize) => {
-  return sequelize.define(
-    "token_blacklist",
+  const TokenBlacklist = sequelize.define(
+    "TokenBlacklist",
     {
-      id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
       token: {
-        type: DataTypes.TEXT,
+        type: DataTypes.TEXT, // Supports tokens up to several KB
         allowNull: false,
-      },
-      created_at: {
-        type: DataTypes.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        primaryKey: true, // Use token as primary key if unique
       },
       expires_at: {
         type: DataTypes.DATE,
@@ -24,8 +15,16 @@ export default (sequelize) => {
       },
     },
     {
-      tableName: "token_blacklist",
-      timestamps: false, // Disable auto timestamps to prevent Sequelize from expecting `createdAt` and `updatedAt` // Explicit table name
+      tableName: "TokenBlacklist",
+      timestamps: true,
+      indexes: [
+        {
+          name: "expires_at_idx",
+          fields: ["expires_at"], // Create index on email
+        },
+      ],
     }
   );
+
+  return TokenBlacklist;
 };

@@ -1,16 +1,16 @@
 import { Members } from "../../models/index.js";
 
-export const getAllMembers = async (req, res) => {
+export const getAllMembers = async (req, res, next) => {
   try {
     const members = await Members.findAll({
       order: [["date_of_creation", "DESC"]],
     });
     res.status(200).json(members);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(createError(500, error.message));
   }
 };
-export const getPaginatedUsers = async (req, res) => {
+export const getPaginatedUsers = async (req, res, next) => {
   try {
     const {
       page = 1,
@@ -34,21 +34,21 @@ export const getPaginatedUsers = async (req, res) => {
       users,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(createError(500, error.message));
   }
 };
 
-export const getMemberById = async (req, res) => {
+export const getMemberById = async (req, res, next) => {
   try {
     const member = await Members.findByPk(req.params.id);
-    if (!member) return res.status(404).json({ message: "Member not found" });
+    if (!member) return next(createError(404, "Member not found"));
     res.status(200).json(member);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(createError(500, error.message));
   }
 };
 
-export const createMember = async (req, res) => {
+export const createMember = async (req, res, next) => {
   try {
     const {
       username,
@@ -74,30 +74,31 @@ export const createMember = async (req, res) => {
     });
     res.status(201).json(newMember);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(createError(500, error.message));
   }
 };
 
-export const updateMember = async (req, res) => {
+export const updateMember = async (req, res, next) => {
   try {
     const member = await Members.findByPk(req.params.id);
-    if (!member) return res.status(404).json({ message: "Member not found" });
+    if (!member) return next(createError(404, "Member not found"));
     const updatedMember = await member.update(req.body);
     res.status(200).json(updatedMember);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(createError(500, error.message));
   }
 };
 
-export const deleteMember = async (req, res) => {
+export const deleteMember = async (req, res, next) => {
   try {
     const member = await Members.findByPk(req.params.id);
-    if (!member) return res.status(404).json({ message: "Member not found" });
+    if (!member) return next(createError(404, "Member not found"));
+
     const destroyedMember = await member.destroy();
     res
       .status(200)
       .json({ message: "Member deleted successfully", destroyedMember });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(createError(500, error.message));
   }
 };

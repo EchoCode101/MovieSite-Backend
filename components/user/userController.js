@@ -1,44 +1,35 @@
-import pool from "../../db/db.js";
-import { Members, PasswordResets, TokenBlacklist } from "../../models/index.js";
-import { encrypt, decrypt } from "../Utilities/encryptionUtils.js";
+import {
+  Members,
+  PasswordResets,
+  UserLoginHistory,
+} from "../../models/index.js";
+import {
+  encrypt,
+  hashPassword,
+  comparePassword,
+} from "../Utilities/encryptionUtils.js";
+import logger from "../Utilities/logger.js";
 import {
   generateAccessToken,
   generateRefreshToken,
-  extractToken,
 } from "../Utilities/tokenUtils.js";
-
-import passwordSchema from "../Utilities/passwordValidator.js";
+import createError from "http-errors"; // For more expressive error creation
 import {
-  hashPassword,
-  comparePassword,
-} from "../Utilities/encryptionPassword.js";
+  extractAndDecryptToken,
+  blacklistToken,
+  sendPasswordResetEmail,
+} from "../Utilities/helpers.js";
 import { Sequelize } from "sequelize";
 import validationSchemas from "../Utilities/validationSchemas.js";
+
 const { userSignupSchema, loginSchema } = validationSchemas;
 // import validateAndSanitizeUserInput from "../Utilities/validator.js";
 
 // Handle user signup
-export const signup = async (req, res) => {
-  // Signup Endpoint+
-
+export const signup = async (req, res, next) => {
   const { error } = userSignupSchema.validate(req.body);
-  if (error) return res.status(400).json({ message: error.details[0].message });
-  const { username, password, email, subscription_plan = "free" } = req.body;
-
-  if (!username || !password || !email) {
-    return res.status(400).json({ message: "All fields are required." });
-  }
-
-  if (password.length < 6) {
-    return res.status(400).send("Password must be at least 6 characters long.");
-  }
-  const validationResult = passwordSchema.validate(password);
-
-  if (!validationResult) {
-    console.log("Password is not strong enough");
-  } else {
-    console.log("Password is strong");
-  }
+  if (error) return next(createError(400, error.details[0].message));
+  const { username, password, email, subscription_plan } = req.body;
 
   try {
     // Check if user exists
@@ -49,9 +40,7 @@ export const signup = async (req, res) => {
     });
 
     if (userExists) {
-      return res
-        .status(400)
-        .json({ message: "Username or email already exists." });
+      return next(createError(400, "Username or email already exists."));
     }
 
     const hashedPassword = await hashPassword(password);
@@ -72,57 +61,33 @@ export const signup = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Error registering user:", err);
-    res.status(500).json({ message: "Error registering user." });
+    next(createError(500, "Error registering user."));
   }
 };
 
 // Handle user login
-export const login = async (req, res) => {
-  // const sanitizedInput = validateAndSanitizeUserInput(req.body);
-
+export const login = async (req, res, next) => {
   const { error } = loginSchema.validate(req.body); // Joi validation schema for login
-  if (error) return res.status(400).send(error.details[0].message);
+  if (error) return next(createError(400, error.details[0].message));
 
   const { email, password } = req.body;
 
   try {
     const user = await Members.findOne({ where: { email } });
     if (!user) {
-      return res.status(400).json({ message: "Invalid email or password" });
+      return next(createError(400, "Invalid email or password"));
     }
-
-    if (user.device_logged_in === true) {
-      return res
-        .status(400)
-        .json({ message: "You are already logged in on another device" });
-    }
-
     const match = await comparePassword(password, user.password);
-    if (!match) return res.status(400).send("Invalid email or password");
 
-    await user.update({ device_logged_in: true });
+    if (!match) return next(createError(400, "Invalid email or password"));
 
-    // const accessToken = jwt.sign(
-    //   {
-    //     id: user.id,
-    //     email: user.email,
-    //     username: user.username,
-    //     role: user.role,
-    //   }, // Include email instead of username
-    //   process.env.JWT_SECRET,
-    //   { expiresIn: "30m" }
-    // );
-    // const refreshToken = jwt.sign(
-    //   {
-    //     id: user.id,
-    //     email: user.email,
-    //     username: user.username,
-    //     role: user.role,
-    //   }, // Include email instead of username
-    //   process.env.REFRESH_SECRET,
-    //   { expiresIn: "7d" } // Refresh token should have a longer expiration
-    // );
+    // Save login history
+    await UserLoginHistory.create({
+      user_id: user.member_id,
+      login_time: new Date(),
+      ip_address: req.ip || req.headers["x-forwarded-for"] || "Unknown",
+      device_info: req.headers["user-agent"] || "Unknown",
+    });
 
     // Generate tokens
     const accessToken = generateAccessToken(user);
@@ -131,76 +96,83 @@ export const login = async (req, res) => {
     // Encrypt tokens before sending
     const encryptedAccessToken = await encrypt(accessToken);
     const encryptedRefreshToken = await encrypt(refreshToken);
-    // Send the refresh token in a secure cookie
+    // Send secure cookies
     res.cookie("encryptedRefreshToken", encryptedRefreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production" || true, // Ensure it's sent only over HTTPS in production
-      sameSite: "Strict", // Prevents cross-site cookie transmission
-      maxAge: 24 * 60 * 60 * 1000, // 1 day expiry
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
-    res.json({
+    // Respond to client
+    res.status(200).json({
       token: encryptedAccessToken,
       refreshToken: encryptedRefreshToken,
       data: {
-        id: user.id,
+        id: user.member_id,
         email: user.email,
         username: user.username,
       },
     });
   } catch (err) {
-    if (err.code === "ECONNREFUSED") {
-      console.error("Database connection error:", err.message);
-      return res.status(500).send("Database connection error");
-    }
-    console.error("Login error:", err.message);
-    res.status(500).send("Internal Server Error");
+    logger.error("Login error:", err);
+    next(createError(500, "Internal Server Error"));
   }
 };
 
 // Handle user logout
-export const logout = async (req, res) => {
+export const logout = async (req, res, next) => {
   try {
-    if (!req.user || !req.user.username) {
-      return res.status(400).send("Please login first");
+    // Ensure user is logged in
+    if (!req.user || !req.user.id) {
+      return next(createError(400, "Please login first"));
+    }
+    const member_id = req.user.id;
+
+    // Destroy the current session
+    const deletedSession = await UserLoginHistory.destroy({
+      where: { user_id: member_id },
+    });
+    if (!deletedSession) {
+      return next(createError(400, "No active session found"));
     }
 
-    const { username } = req.user;
+    // Record logout time in login history
+    await UserLoginHistory.update(
+      { logout_time: new Date() },
+      {
+        where: {
+          user_id: member_id,
+          logout_time: null, // Ensure only active sessions are updated
+        },
+      }
+    );
+    const decryptedToken = await extractAndDecryptToken(req);
+    await blacklistToken(decryptedToken);
 
-    // Update device_logged_in to false
-    await Members.update({ device_logged_in: false }, { where: { username } });
-
-    // Set the token expiration time to 30 seconds in the blacklist
-    const expiryTime = new Date();
-    expiryTime.setSeconds(expiryTime.getSeconds() + 30); // 30 seconds expiry
-    const token = extractToken(req); // Extract token using the utility
-
-    const decryptedToken = await decrypt(token); // Decrypt the token for storage
-
-    // Insert token into blacklist
-    await TokenBlacklist.create({
-      token: decryptedToken,
-      expires_at: expiryTime,
+    // Clear cookies
+    res.clearCookie("encryptedRefreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
     });
-
-    res.status(200).send("Logged out successfully");
+    res.status(200).json({ message: "Logged out successfully" });
   } catch (err) {
-    console.error("Logout error:", err.message);
-    res.status(500).send("Error logging out");
+    logger.error("Logout error:", err);
+    next(createError(500, "Error logging out"));
   }
 };
 
-export const forgotPassword = async (req, res) => {
+export const forgotPassword = async (req, res, next) => {
   const { email } = req.body;
+  // Validate input
   if (!email) {
-    return res.status(400).json({ message: "Email is required" });
+    return next(createError(400, "Email is required"));
   }
 
   try {
     const user = await Members.findOne({ where: { email } });
     if (!user) {
-      return res
-        .status(404)
-        .json({ message: "No account found with that email" });
+      return next(createError(404, "No account found with that email"));
     }
 
     const resetToken = generateAccessToken(user);
@@ -216,32 +188,12 @@ export const forgotPassword = async (req, res) => {
     });
 
     const resetLink = `${process.env.ORIGIN_LINK}/reset-password/${resetToken}`;
-
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.MY_EMAIL,
-        pass: process.env.MY_PASSWORD,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
-
-    await transporter.sendMail({
-      from: process.env.MY_EMAIL,
-      to: user.email,
-      subject: "Password Reset Request",
-      text: `You requested a password reset. It has a short expiry time so hurry up! Click the link below to reset your password:\n\n${resetLink}`,
-    });
+    await sendPasswordResetEmail(user.email, resetLink);
 
     res.status(200).json({
       message: "Please check your inbox, a password reset link has been sent.",
     });
   } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ message: "Something went wrong. Please try again." });
+    next(createError(500, "Something went wrong. Please try again."));
   }
 };

@@ -1,9 +1,5 @@
 // tokenUtils.js
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
-const env = process.env.NODE_ENV || "development";
-dotenv.config({ path: `.env.${env}` });
-
 const {
   JWT_SECRET,
   REFRESH_SECRET,
@@ -15,7 +11,7 @@ const {
 export const generateAccessToken = (user) => {
   return jwt.sign(
     {
-      id: user.id,
+      id: user.member_id || user.id,
       email: user.email,
       username: user.username,
       role: user.role,
@@ -29,7 +25,7 @@ export const generateAccessToken = (user) => {
 export const generateRefreshToken = (user) => {
   return jwt.sign(
     {
-      id: user.id,
+      id: user.member_id || user.id,
       email: user.email,
       username: user.username,
       role: user.role,

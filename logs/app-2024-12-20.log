@@ -1,0 +1,100 @@
+2024-12-20 14:07:25 [INFO]: 🌐 Environment: development
+2024-12-20 14:07:26 [INFO]: ✅ Database connected successfully!
+2024-12-20 14:17:35 [INFO]: 🌐 Environment: development
+2024-12-20 14:17:48 [INFO]: 🌐 Environment: development
+2024-12-20 14:18:26 [INFO]: 🌐 Environment: development
+2024-12-20 14:19:33 [INFO]: 🌐 Environment: development
+2024-12-20 14:20:37 [INFO]: 🌐 Environment: development
+2024-12-20 14:20:37 [INFO]: ✅ Database connected successfully!
+2024-12-20 14:20:57 [INFO]: 🌐 Environment: development
+2024-12-20 14:20:57 [INFO]: ✅ Database connected successfully!
+2024-12-20 14:21:15 [INFO]: 🌐 Environment: development
+2024-12-20 14:21:15 [INFO]: ✅ Database connected successfully!
+2024-12-20 14:21:22 [ERROR]: {
+  "method": "POST",
+  "url": "/api/user/signup",
+  "status": 400,
+  "message": "\"username\" is required",
+  "stack": "BadRequestError: \"username\" is required\n    at signup (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/userController.js:34:26)\n    at Layer.handle [as handle_request] (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5",
+  "requestBody": {
+    "email": "hazmasajjad16615@gmail.com",
+    "password": "hamza1AS@1!vv59632"
+  }
+}
+2024-12-20 14:22:30 [INFO]: 🌐 Environment: development
+2024-12-20 14:22:31 [INFO]: ✅ Database connected successfully!
+2024-12-20 14:22:35 [ERROR]: {
+  "method": "POST",
+  "url": "/api/user/signup",
+  "status": 400,
+  "message": "\"username\" is required",
+  "stack": "BadRequestError: \"username\" is required\n    at signup (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/userController.js:34:26)\n    at Layer.handle [as handle_request] (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5",
+  "requestBody": {
+    "usename": "hasjd",
+    "password": "hamza1AS@1!vv59632"
+  }
+}
+2024-12-20 14:22:42 [ERROR]: {
+  "method": "POST",
+  "url": "/api/user/signup",
+  "status": 400,
+  "message": "\"email\" is required",
+  "stack": "BadRequestError: \"email\" is required\n    at signup (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/userController.js:34:26)\n    at Layer.handle [as handle_request] (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5",
+  "requestBody": {
+    "username": "hasjd",
+    "password": "hamza1AS@1!vv59632"
+  }
+}
+2024-12-20 14:26:03 [INFO]: 🌐 Environment: development
+2024-12-20 14:26:04 [INFO]: ✅ Database connected successfully!
+2024-12-20 16:44:59 [INFO]: 🌐 Environment: development
+2024-12-20 16:45:00 [INFO]: ✅ Database connected successfully!
+2024-12-20 16:46:45 [ERROR]: {
+  "method": "POST",
+  "url": "/api/user/login",
+  "status": 400,
+  "message": "\"email\" is required",
+  "stack": "BadRequestError: \"email\" is required\n    at login (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/userController.js:70:26)\n    at Layer.handle [as handle_request] (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\hamza\\OneDrive\\Desktop\\vidstie\\backend\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5",
+  "requestBody": {
+    "emial": "hamzasajjad16615@gmail.com",
+    "password": "hamza1AS@1!vv59632"
+  }
+}
+2024-12-20 16:46:56 [ERROR]: {
+  "method": "POST",
+  "url": "/api/user/login",
+  "status": 400,
+  "message": "Invalid email or password",
+  "stack": "BadRequestError: Invalid email or password\n    at login (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/userController.js:77:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)",
+  "requestBody": {
+    "email": "hamzasajjad16615@gmail.com",
+    "password": "hamza1AS@1!vv59632"
+  }
+}
+2024-12-20 16:48:26 [ERROR]: ReferenceError: logger is not defined
+    at profileRoute (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/profileRoutes.js:24:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2024-12-20 16:56:52 [INFO]: 🌐 Environment: development
+2024-12-20 17:05:01 [INFO]: 🌐 Environment: development
+2024-12-20 17:05:02 [INFO]: ✅ Database connected successfully!
+2024-12-20 17:05:16 [ERROR]: Error
+    at Query.run (C:\Users\hamza\OneDrive\Desktop\vidstie\backend\node_modules\sequelize\lib\dialects\postgres\query.js:50:25)
+    at C:\Users\hamza\OneDrive\Desktop\vidstie\backend\node_modules\sequelize\lib\sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async PostgresQueryInterface.select (C:\Users\hamza\OneDrive\Desktop\vidstie\backend\node_modules\sequelize\lib\dialects\abstract\query-interface.js:407:12)
+    at async Members.findAll (C:\Users\hamza\OneDrive\Desktop\vidstie\backend\node_modules\sequelize\lib\model.js:1140:21)
+    at async Members.findOne (C:\Users\hamza\OneDrive\Desktop\vidstie\backend\node_modules\sequelize\lib\model.js:1240:12)
+    at async profileRoute (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/profileRoutes.js:9:18)
+2024-12-20 17:06:55 [INFO]: 🌐 Environment: development
+2024-12-20 17:06:56 [INFO]: ✅ Database connected successfully!
+2024-12-20 17:08:23 [INFO]: 🌐 Environment: development
+2024-12-20 17:08:23 [INFO]: ✅ Database connected successfully!
+2024-12-20 17:08:25 [ERROR]: ReferenceError: email is not defined
+    at profileRoute (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/profileRoutes.js:9:51)
+    at Layer.handle [as handle_request] (C:\Users\hamza\OneDrive\Desktop\vidstie\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\hamza\OneDrive\Desktop\vidstie\backend\node_modules\express\lib\router\route.js:149:13)
+    at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5
+2024-12-20 17:09:27 [INFO]: 🌐 Environment: development
+2024-12-20 17:09:27 [INFO]: ✅ Database connected successfully!

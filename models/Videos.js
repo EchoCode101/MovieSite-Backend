@@ -1,8 +1,8 @@
 import { DataTypes } from "sequelize";
-// Define Videos Model
+
 export default (sequelize) => {
-  return sequelize.define(
-    "videos",
+  const Videos = sequelize.define(
+    "Videos",
     {
       video_id: {
         type: DataTypes.INTEGER,
@@ -13,102 +13,96 @@ export default (sequelize) => {
         type: DataTypes.STRING(255),
         allowNull: false,
       },
-      description: DataTypes.TEXT,
+      description: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
       video_url: {
         type: DataTypes.TEXT,
         allowNull: false,
       },
-      duration: DataTypes.INTEGER,
-      resolution: DataTypes.STRING(20),
-      file_size: DataTypes.BIGINT,
-      uploaded_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
+      duration: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
       },
-      video_url_encrypted: DataTypes.TEXT,
+      resolution: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+      },
+      file_size: {
+        type: DataTypes.BIGINT,
+        allowNull: true,
+      },
+      video_url_encrypted: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
       access_level: {
         type: DataTypes.STRING(50),
         defaultValue: "Free",
       },
-      category: DataTypes.STRING(100),
-      tags: DataTypes.ARRAY(DataTypes.TEXT),
-      language: DataTypes.STRING(50),
-      thumbnail_url: DataTypes.TEXT,
-      likes: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
+      category: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
       },
-      dislikes: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
+      language: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
       },
-      views: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
-      },
-      comments_count: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
-      },
-      favorites_count: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
-      },
-      shares_count: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
-      },
-      is_active: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: true,
-      },
-      uploader_id: DataTypes.INTEGER,
-      uploader_name: DataTypes.STRING(100),
-      rating: {
-        type: DataTypes.DOUBLE,
-        defaultValue: 0,
-      },
-      total_ratings: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
+      thumbnail_url: {
+        type: DataTypes.TEXT,
+        allowNull: true,
       },
       age_restriction: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
-      last_updated: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
-      video_format: DataTypes.STRING(50),
-      license_type: DataTypes.STRING(100),
       published: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
       },
-      report_count: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
+      video_format: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
       },
-      subtitle_languages: DataTypes.ARRAY(DataTypes.TEXT),
-      average_watch_time: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
+      license_type: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
       },
-      video_quality: DataTypes.ARRAY(DataTypes.TEXT),
-      geo_restrictions: DataTypes.ARRAY(DataTypes.TEXT),
-      content_type: DataTypes.STRING(50),
-      seo_title: DataTypes.STRING(255),
-      seo_description: DataTypes.TEXT,
-      custom_metadata: DataTypes.JSONB,
-      review_counts: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
+      seo_title: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
+      seo_description: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      custom_metadata: {
+        type: DataTypes.JSONB,
+        allowNull: true,
       },
     },
     {
-      tableName: "videos",
-      timestamps: false, // Disable auto timestamps to prevent Sequelize from expecting `createdAt` and `updatedAt` // Explicit table name
+      tableName: "Videos",
+      timestamps: true, // Sequelize will handle createdAt & updatedAt
     }
   );
+  Videos.associate = (models) => {
+    Videos.belongsToMany(models.Tags, {
+      through: VideoTags,
+      foreignKey: "video_id",
+      as: "tags",
+    });
+    // Video Associations
+    Videos.hasMany(models.Reviews, {
+      foreignKey: "video_id",
+      as: "videoReviews",
+    });
+
+    Videos.hasMany(models.Comments, {
+      foreignKey: "video_id",
+      as: "videoComments",
+    });
+  };
+  return Videos;
 };

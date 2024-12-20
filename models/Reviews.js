@@ -1,8 +1,8 @@
 import { DataTypes } from "sequelize";
-import { Videos, Members } from "./index.js";
+
 export default (sequelize) => {
-  return sequelize.define(
-    "reviews",
+  const ReviewsAndRatings = sequelize.define(
+    "ReviewsAndRatings",
     {
       review_id: {
         type: DataTypes.INTEGER,
@@ -13,39 +13,54 @@ export default (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: Videos, // Model reference
+          model: "Videos",
           key: "video_id",
         },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
       },
       member_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: Members, // Model reference
+          model: "Members",
           key: "member_id",
         },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
       },
       rating: {
         type: DataTypes.INTEGER,
-        validate: { min: 0, max: 10 },
+        allowNull: false,
+        validate: {
+          min: 1,
+          max: 10, // Ensure rating is between 1 and 10
+          isInt: true,
+        },
       },
-      content: {
+      review_content: {
         type: DataTypes.TEXT,
-      },
-      created_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
-      updated_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
+        allowNull: true, // Optional content
       },
     },
     {
-      tableName: "reviews",
-      timestamps: true,
-      createdAt: "created_at",
-      updatedAt: "updated_at",
+      tableName: "ReviewsAndRatings",
+      timestamps: true, // Manages `createdAt` and `updatedAt`
     }
   );
+
+  // Define Model Associations
+  ReviewsAndRatings.associate = (models) => {
+    ReviewsAndRatings.belongsTo(models.Videos, {
+      foreignKey: "video_id",
+      as: "video",
+    });
+
+    ReviewsAndRatings.belongsTo(models.Members, {
+      foreignKey: "member_id",
+      as: "member",
+    });
+  };
+
+  return ReviewsAndRatings;
 };

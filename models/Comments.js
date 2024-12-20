@@ -1,7 +1,7 @@
-import { DataTypes, Sequelize } from "sequelize";
+import { DataTypes } from "sequelize";
 export default (sequelize) => {
-  return sequelize.define(
-    "comments",
+  const Comments = sequelize.define(
+    "Comments",
     {
       comment_id: {
         type: DataTypes.INTEGER,
@@ -12,31 +12,25 @@ export default (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "members", // Refers to the Members table
+          model: "Members",
           key: "member_id",
         },
+        onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
       video_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "videos", // Refers to the Videos table
+          model: "Videos",
           key: "video_id",
         },
+        onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
       content: {
         type: DataTypes.TEXT,
         allowNull: false,
-      },
-      created_at: {
-        type: DataTypes.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
-      },
-      updated_at: {
-        type: DataTypes.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
       },
       is_active: {
         type: DataTypes.BOOLEAN,
@@ -44,8 +38,32 @@ export default (sequelize) => {
       },
     },
     {
-      tableName: "comments",
-      timestamps: false, // Disable auto timestamps to prevent Sequelize from expecting `createdAt` and `updatedAt`
+      tableName: "Comments",
+      timestamps: true, // Adds `createdAt` and `updatedAt`
     }
   );
+  Comments.associate = (models) => {
+    Comments.belongsTo(models.Members, {
+      foreignKey: "member_id",
+      as: "member",
+    });
+
+    Comments.belongsTo(models.Videos, {
+      foreignKey: "video_id",
+      as: "video",
+    });
+
+    Comments.hasMany(models.CommentReplies, {
+      foreignKey: "comment_id",
+      as: "replies",
+    });
+
+    Comments.hasMany(models.LikesDislikes, {
+      foreignKey: "target_id",
+      as: "likesDislikes",
+      scope: { target_type: "comment" },
+    });
+  };
+
+  return Comments;
 };

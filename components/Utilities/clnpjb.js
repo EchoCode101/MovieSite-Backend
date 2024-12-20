@@ -1,32 +1,46 @@
 // clnpjb.js
 import cron from "node-cron";
-import pool from "../../db/db.js"; // Assuming you are using the same database connection
+import { Op } from "sequelize";
+import sequelize from "../../db/db.js";
+import TokenBlacklist from "../../models/TokenBlacklist.js";
+import PasswordResets from "../../models/PasswordResets.js";
 
-// Scheduled job to clean up expired tokens from the blacklist every day at midnight
-const clnupjb = cron.schedule("0 * * * *", async () => {
+// Scheduled job to clean up expired tokens and password resets
+const clnupjb = cron.schedule("0 0 * * *", async () => {
+  console.log("🕒 Starting cleanup job...");
+
   try {
-    // Delete expired tokens from the blacklist
-    const result = await pool.query(
-      "DELETE FROM token_blacklist WHERE expires_at < NOW()"
-    );
-    const result1 = await pool.query(
-      "DELETE FROM password_resets WHERE reset_token_expiration < NOW()"
-    );
-    console.log(
-      `Cleanup completed from token_blacklist table: ${
-        result.rowCount || 0
-      } expired token(s) removed`
-    );
-    console.log(
-      `Cleanup completed from password_resets table: ${
-        result1.rowCount || 0
-      } expired token(s) removed`
-    );
+    await sequelize.transaction(async (t) => {
+      // Delete expired tokens using Sequelize ORM
+      const deletedTokens = await TokenBlacklist.destroy({
+        where: {
+          expires_at: {
+            [Op.lt]: new Date(), // Less than the current time
+          },
+        },
+        transaction: t,
+      });
+
+      // Delete expired password resets using Sequelize ORM
+      const deletedResets = await PasswordResets.destroy({
+        where: {
+          reset_token_expiration: {
+            [Op.lt]: new Date(),
+          },
+        },
+        transaction: t,
+      });
+
+      console.log(
+        `🧹 Cleanup completed: ${deletedTokens} token(s) removed from token_blacklist`
+      );
+      console.log(
+        `🧹 Cleanup completed: ${deletedResets} record(s) removed from password_resets`
+      );
+    });
   } catch (err) {
-    console.error("Error during token blacklist cleanup:", err);
-    console.error("Error during password reset cleanup:", err);
+    console.error("❌ Cleanup job failed:", err);
   }
 });
 
-// Export the cron job instance (not the function itself)
 export default clnupjb;

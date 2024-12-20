@@ -1,7 +1,9 @@
 import { Reviews, Videos, Members } from "../../models/index.js";
+import logger from "../Utilities/logger.js";
+
 import { Op } from "sequelize";
 // Get reviews within a date range
-export const getRecentReviews = async (req, res) => {
+export const getRecentReviews = async (req, res, next) => {
   const { startDate, endDate } = req.query;
 
   try {
@@ -28,13 +30,13 @@ export const getRecentReviews = async (req, res) => {
 
     res.status(200).json(reviews);
   } catch (error) {
-    console.error("Error fetching recent reviews:", error);
-    res.status(500).json({ error: error.message });
+    logger.error("Error fetching recent reviews:", error);
+    next(createError(500, error.message));
   }
 };
 
 // Add a new review
-export const addReview = async (req, res) => {
+export const addReview = async (req, res, next) => {
   const { video_id, member_id, rating, content } = req.body;
 
   try {
@@ -59,13 +61,12 @@ export const addReview = async (req, res) => {
 
     res.status(201).json(review);
   } catch (error) {
-    console.error("Error adding review:", error);
-    res.status(500).json({ error: error.message });
+    next(createError(500, error.message));
   }
 };
 
 // Get all reviews for a video, including related data
-export const getReviewsByVideoId = async (req, res) => {
+export const getReviewsByVideoId = async (req, res, next) => {
   const { videoId } = req.params;
 
   try {
@@ -86,12 +87,11 @@ export const getReviewsByVideoId = async (req, res) => {
 
     res.status(200).json(reviews);
   } catch (error) {
-    console.error("Error fetching reviews:", error);
-    res.status(500).json({ error: error.message });
+    next(createError(500, error.message));
   }
 };
 // Update a review
-export const updateReview = async (req, res) => {
+export const updateReview = async (req, res, next) => {
   const { reviewId } = req.params;
   const { rating, content } = req.body;
 
@@ -99,7 +99,7 @@ export const updateReview = async (req, res) => {
     const review = await Reviews.findByPk(reviewId);
 
     if (!review) {
-      return res.status(404).json({ message: "Review not found" });
+      return next(createError(404, "Review not found"));
     }
 
     const video = await Videos.findByPk(review.video_id);
@@ -117,19 +117,18 @@ export const updateReview = async (req, res) => {
 
     res.status(200).json(updatedReview);
   } catch (error) {
-    console.error("Error updating review:", error);
-    res.status(500).json({ error: error.message });
+    next(createError(500, error.message));
   }
 };
 // Delete a review
-export const deleteReview = async (req, res) => {
+export const deleteReview = async (req, res, next) => {
   const { reviewId } = req.params;
 
   try {
     const review = await Reviews.findByPk(reviewId);
 
     if (!review) {
-      return res.status(404).json({ message: "Review not found" });
+      next(createError(404, "Review not found"));
     }
 
     const video = await Videos.findByPk(review.video_id);
@@ -150,7 +149,6 @@ export const deleteReview = async (req, res) => {
 
     res.status(200).json({ message: "Review deleted successfully" });
   } catch (error) {
-    console.error("Error deleting review:", error);
-    res.status(500).json({ error: error.message });
+    next(createError(500, error.message));
   }
 };

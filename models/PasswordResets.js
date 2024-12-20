@@ -1,9 +1,8 @@
-import { DataTypes, Sequelize } from "sequelize";
+import { DataTypes } from "sequelize";
 
-// Define the PasswordResets model
 export default (sequelize) => {
-  return sequelize.define(
-    "password_resets",
+  const PasswordResets = sequelize.define(
+    "PasswordResets",
     {
       id: {
         type: DataTypes.INTEGER,
@@ -13,35 +12,33 @@ export default (sequelize) => {
       reset_token: {
         type: DataTypes.STRING(255),
         allowNull: false,
+        unique: true, // Ensure tokens are unique
       },
       reset_token_expiration: {
         type: DataTypes.DATE,
-        allowNull: false,
+        allowNull: false, // Required to track expiry
       },
       user_id: {
         type: DataTypes.INTEGER,
-        allowNull: false,
-      },
-      username: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-      },
-      email: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
+        allowNull: false, // Foreign key to Members
       },
       user_type: {
         type: DataTypes.STRING(10),
         allowNull: false,
+        validate: {
+          isIn: [["admin", "user"]], // Ensure a valid user type
+        },
       },
-      created_at: {
+      used_at: {
         type: DataTypes.DATE,
-        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+        allowNull: true, // Tracks when reset is used
       },
     },
     {
-      tableName: "password_resets",
-      timestamps: false, // Disable auto timestamps to prevent Sequelize from expecting `createdAt` and `updatedAt` // Explicit table name
+      tableName: "PasswordResets",
+      timestamps: true, // Adds createdAt & updatedAt
     }
   );
+
+  return PasswordResets;
 };

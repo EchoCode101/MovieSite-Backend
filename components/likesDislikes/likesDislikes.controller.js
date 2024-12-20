@@ -1,6 +1,7 @@
 import { LikesDislikes } from "../../models/index.js";
+import logger from "../Utilities/logger.js";
 // Add or update like/dislike
-export const addOrUpdateLikeDislike = async (req, res) => {
+export const addOrUpdateLikeDislike = async (req, res, next) => {
   const { user_id, target_id, target_type, is_like } = req.body;
 
   try {
@@ -19,13 +20,13 @@ export const addOrUpdateLikeDislike = async (req, res) => {
 
     res.status(201).json(likeDislike);
   } catch (error) {
-    console.error("Error adding or updating like/dislike:", error);
-    res.status(500).json({ error: error.message });
+    logger.error("Error adding/updating like/dislike:", error);
+    next(createError(500, error.message));
   }
 };
 
 // Get likes and dislikes count for a target
-export const getLikesDislikesCount = async (req, res) => {
+export const getLikesDislikesCount = async (req, res, next) => {
   const { target_id, target_type } = req.params;
 
   try {
@@ -54,7 +55,7 @@ export const getLikesDislikesCount = async (req, res) => {
     });
     res.status(200).json(counts);
   } catch (error) {
-    console.error("Error fetching likes/dislikes count:", error);
-    res.status(500).json({ error: error.message });
+    logger.error("Error getting likes/dislikes count:", error);
+    next(createError(500, error.message));
   }
 };

@@ -6,25 +6,19 @@ import {
   limiter,
 } from "../auth/authMiddleware.js";
 import {
-  profileRoutes,
+  profileRoute,
   fetchVideoUrl,
   saveVideoUrl,
   subscription_plan,
 } from "./profileRoutes.js";
-import { restPasswordRoute } from "./restUserPasswordRoute.js";
+import { restPassword } from "./restUserPasswordRoute.js";
 
 const router = express.Router();
+
 router.post("/forgotPassword", limiter, forgotPassword);
-router.post("/forgotPassword/reset/:token", limiter, restPasswordRoute);
 router.post("/signup", limiter, signup);
 router.post("/login", limiter, login);
-router.get("/profile", authenticateToken, limiter, profileRoutes);
-router.get(
-  "/fetchVideoUrl/:video_id",
-  authenticateToken,
-  limiter,
-  fetchVideoUrl
-);
+router.get("/profile", authenticateToken, limiter, profileRoute);
 router.post("/saveVideoUrl", authenticateAdminToken, limiter, saveVideoUrl);
 router.put(
   "/subscription_plan",
@@ -33,5 +27,13 @@ router.put(
   subscription_plan
 );
 router.post("/logout", authenticateToken, limiter, logout);
+
+router.post("/forgotPassword/reset/:token", limiter, restPassword);
+router.get(
+  "/fetchVideoUrl/:video_id",
+  authenticateToken,
+  limiter,
+  fetchVideoUrl
+);
 
 export default router;

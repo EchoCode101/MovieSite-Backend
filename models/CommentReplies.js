@@ -1,8 +1,8 @@
 import { DataTypes } from "sequelize";
 
 export default (sequelize) => {
-  return sequelize.define(
-    "comment_replies",
+  const CommentReplies = sequelize.define(
+    "CommentReplies",
     {
       reply_id: {
         type: DataTypes.INTEGER,
@@ -13,34 +13,49 @@ export default (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "comments", // Ensure this matches the exact table name
+          model: "Comments",
           key: "comment_id",
         },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
       },
       user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "members", // Ensure this matches the exact table name
+          model: "Members",
           key: "member_id",
         },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
       },
-      content: {
+      reply_content: {
         type: DataTypes.TEXT,
-        allowNull: false,
-      },
-      created_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
-      updated_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
+        allowNull: false, // Replies must have content
       },
     },
     {
-      tableName: "comment_replies", // Matches the actual table name in the DB
-      timestamps: false,
+      tableName: "CommentReplies",
+      timestamps: true, // Automatically creates `createdAt` and `updatedAt`
     }
   );
+  CommentReplies.associate = (models) => {
+    CommentReplies.belongsTo(models.Comments, {
+      foreignKey: "comment_id",
+      as: "comment",
+    });
+
+    CommentReplies.belongsTo(models.Members, {
+      foreignKey: "user_id",
+      as: "user",
+    });
+
+    CommentReplies.hasMany(models.LikesDislikes, {
+      foreignKey: "target_id",
+      as: "likesDislikes",
+      scope: { target_type: "comment_reply" },
+    });
+  };
+
+  return CommentReplies;
 };

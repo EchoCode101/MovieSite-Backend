@@ -1,89 +1,86 @@
 // Import necessary modules
-import pool from "../../db/db.js";
-import { encrypt, decrypt } from "../Utilities/encryptionUtils.js";
 import {
+  encrypt,
   hashPassword,
   comparePassword,
-} from "../Utilities/encryptionPassword.js";
+} from "../Utilities/encryptionUtils.js";
 import {
   generateAccessToken,
   generateRefreshToken,
-  verifyAccessToken,
-  extractToken,
 } from "../Utilities/tokenUtils.js";
 import validationSchemas from "../Utilities/validationSchemas.js";
-import passwordSchema from "../Utilities/passwordValidator.js";
-import nodemailer from "nodemailer";
-import { TokenBlacklist, Admins, PasswordResets } from "../../models/index.js";
+
+import { Admins, PasswordResets } from "../../models/index.js";
 import Sequelize from "sequelize";
+import { extractAndDecryptToken } from "../Utilities/helpers.js";
+import logger from "../Utilities/logger.js";
+
 // import validateAndSanitizeUserInput from "../Utilities/validator.js";
 
 const { adminSignupSchema, loginSchema } = validationSchemas;
 
-export const adminSignup = async (req, res) => {
+export const adminSignup = async (req, res, next) => {
   const { username, email, password } = req.body;
-  if (!username || !email || !password) {
-    return res.status(400).send("All fields are required.");
-  }
+  // if (!username || !email || !password) {
+  //   return next(createError(400, "All fields are required."));
+  // }
   const { error } = adminSignupSchema.validate(req.body);
-  if (error) return res.status(400).json({ message: error.details[0].message });
-  const validationResult = passwordSchema.validate(password);
-  if (!validationResult) {
-    return res.status(400).send("Password is not strong enough");
-  } else {
-    try {
-      // Check if admin already exists
-      const adminExists = await Admins.findOne({
-        where: {
-          [Sequelize.Op.or]: [{ username }, { email }],
-        },
-      });
+  if (error) return next(createError(400, error.details[0].message));
+  // const validationResult = passwordSchema.validate(password);
+  // if (!validationResult) {
+  //   return next(createError(400, "Password is not strong enough"));
+  try {
+    // Check if admin already exists
+    const adminExists = await Admins.findOne({
+      where: {
+        [Sequelize.Op.or]: [{ username }, { email }],
+      },
+    });
 
-      if (adminExists) {
-        return res.status(400).json({ message: "Admin already exists." });
-      }
-
-      const hashedPassword = await hashPassword(password);
-      // Create new admin
-      const newAdmin = await Admins.create({
-        username,
-        email,
-        password: hashedPassword,
-      });
-
-      res.status(201).json({
-        message: "Admin registered successfully!",
-        admin: {
-          id: newAdmin.id,
-          username: newAdmin.username,
-          email: newAdmin.email,
-          role: newAdmin.role,
-        },
-        Security: "Password is strong!",
-      });
-    } catch (err) {
-      console.error("Error registering admin:", err.message);
-      res.status(500).send("Internal server error.");
+    if (adminExists) {
+      return next(createError(400, "Admin already exists."));
     }
+
+    const hashedPassword = await hashPassword(password);
+    // Create new admin
+    const newAdmin = await Admins.create({
+      username,
+      email,
+      password: hashedPassword,
+    });
+
+    res.status(201).json({
+      message: "Admin registered successfully!",
+      admin: {
+        id: newAdmin.id,
+        username: newAdmin.username,
+        email: newAdmin.email,
+        role: newAdmin.role,
+      },
+      Security: "Password is strong!",
+    });
+  } catch (err) {
+    logger.error("Error registering admin:", err.message);
+    next(createError(500, "Internal server error."));
   }
 };
 
-export const adminLogin = async (req, res) => {
+export const adminLogin = async (req, res, next) => {
   const { email, password } = req.body;
   // const sanitizedInput = validateAndSanitizeUserInput(req.body);
   const { error } = loginSchema.validate(req.body); // Joi validation schema for login
-  if (error) return res.status(400).send(error.details[0].message);
+  if (error) return next(createError(400, error.details[0].message));
 
   try {
     const admin = await Admins.findOne({ where: { email } });
 
     if (!admin) {
-      return res.status(400).json({ message: "Invalid email or password." });
+      return next(createError(400, "Invalid email or password."));
     }
 
     const match = await comparePassword(password, admin.password);
     if (!match) {
-      return res.status(400).json({ message: "Invalid email or password." });
+      return next(createError(400, "Invalid email or password."));
     }
 
     const accessToken = generateAccessToken(admin);
@@ -99,7 +96,6 @@ export const adminLogin = async (req, res) => {
       sameSite: "Strict",
       maxAge: 24 * 60 * 60 * 1000,
     });
-
     res.json({
       message: "Login Successful",
       token: encryptedAccessToken,
@@ -112,47 +108,41 @@ export const adminLogin = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Admin login error:", err.message);
-    res.status(500).json({ message: "Internal server error." });
+    logger.error("Admin login error:", err.message);
+    next(createError(500, "Internal server error"));
   }
 };
 
-export const adminLogout = async (req, res) => {
+export const adminLogout = async (req, res, next) => {
   try {
-    const token = extractToken(req); // Extract token using the utility
-
-    const decryptedToken = await decrypt(token);
-    verifyAccessToken(decryptedToken);
-    const expiryTime = new Date();
-    expiryTime.setSeconds(expiryTime.getSeconds() + 30);
-
-    await TokenBlacklist.create({
-      token: decryptedToken,
-      expires_at: expiryTime,
+    const decryptedToken = await extractAndDecryptToken(req);
+    await blacklistToken(decryptedToken);
+    // Clear cookies
+    res.clearCookie("encryptedRefreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
     });
-
     res.status(200).send("Admin logged out successfully.");
   } catch (err) {
-    console.error("Admin logout error:", err.message);
-    res.status(500).send("Internal server error.");
+    logger.error("Admin logout error:", err.message);
+    next(createError(500, "Internal server error."));
   }
 };
-export const forgotPassword = async (req, res) => {
-  const { email } = req.body;
 
+export const forgotPassword = async (req, res, next) => {
+  const { email } = req.body;
   if (!email) {
     return res.status(400).json({ message: "Email is required" });
   }
-  try {
-    // Check if email belongs to an admin
-    const user = await Admins.findOne({ where: { email } });
 
+  try {
+    const user = await Admins.findOne({ where: { email } });
     if (!user) {
       return res
         .status(404)
         .json({ message: "No account found with that email" });
     }
-
     // Generate a reset token
     const resetToken = generateAccessToken(user);
     const resetTokenExpiration = new Date(Date.now() + 1800000); // 30min expiration time
@@ -168,59 +158,38 @@ export const forgotPassword = async (req, res) => {
     });
     // Create the reset password link
     const resetLink = `${process.env.ORIGIN_LINK}/reset-admin-password/${resetToken}`;
-
-    // Send reset email to user
-    const transporter = nodemailer.createTransport({
-      service: "gmail", // or your preferred email service
-      auth: {
-        user: process.env.MY_EMAIL,
-        pass: process.env.MY_PASSWORD, // Use environment variables for security
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
-    const mailOptions = {
-      from: process.env.MY_EMAIL,
-      to: user.email,
-      subject: "Password Reset Request",
-      text: `You requested a password reset.It has a short expiry time so hurry up! Click the link below to reset your password:\n\n${resetLink}`,
-    };
-
-    await transporter.sendMail(mailOptions);
+    await sendPasswordResetEmail(user.email, resetLink);
 
     res.status(200).json({
       message: "Please check your inbox, a password reset link has been sent.",
     });
   } catch (error) {
-    console.error("Error in forgotPassword:", error);
-    res
-      .status(500)
-      .json({ message: "Something went wrong. Please try again." });
+    logger.error("Error in forgotPassword:", error);
+    next(createError(500, "Internal server error."));
   }
 };
 
 // Get all users (admin view)
-export const getAllUsers = async (req, res) => {
+export const getAllUsers = async (req, res, next) => {
   try {
     // Fetch all members from the database
     const users = await Members.findAll();
-
     res.status(200).json(users);
   } catch (error) {
-    console.error("Error fetching users:", error);
-    res.status(500).send("Error fetching users");
+    logger.error("Error fetching users:", error);
+    next(createError(500, "Error fetching users"));
   }
 };
 
 // Example: Update subscription plans
-export const updateSubscription = async (req, res) => {
+export const updateSubscription = async (req, res, next) => {
   const { userId, newPlan } = req.body;
 
   // Update logic...
 };
+
 // Example: Update subscription plans
-export const dashboard = async (req, res) => {
+export const dashboard = async (req, res, next) => {
   // const { userId, newPlan } = req.body;
   res.send("Welcome to the admin dashboard!");
 

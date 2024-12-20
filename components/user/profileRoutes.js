@@ -1,37 +1,33 @@
-import { extractToken } from "../Utilities/tokenUtils.js";
-import pool from "../../db/db.js";
 import { encrypt, decrypt } from "../Utilities/encryptionUtils.js";
-import { verifyAccessToken } from "../Utilities/tokenUtils.js";
 import validationSchemas from "../Utilities/validationSchemas.js";
 import { Members, Videos } from "../../models/index.js";
 const { subscriptionSchema } = validationSchemas;
+import logger from "../Utilities/logger.js";
 
-export const profileRoutes = async (req, res) => {
+export const profileRoute = async (req, res, next) => {
   try {
-    // Get user data from the database based on the authenticated user (req.user)
-    const user = await Members.findOne({ where: { id: req.user.id } });
+    const user = await Members.findOne({ where: { email: req.user.email } });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return next(createError(404, "User not found"));
     }
     res.status(200).json({
       id: user.id,
       username: user.username,
       subscription_plan: user.subscription_plan,
       role: user.role,
-      subscription_plan: user.subscription_plan,
       profile_pic: user.profile_pic,
       first_name: user.first_name,
       last_name: user.last_name,
       status: user.status,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Internal Server Error" });
+    logger.error("Profile Route:", err);
+    next(createError(500, "Internal Server Error"));
   }
 };
 
-export const saveVideoUrl = async (req, res) => {
+export const saveVideoUrl = async (req, res, next) => {
   try {
     const {
       video_url = "https://videos.pexels.com/video-files/123456/video.mp4",
@@ -67,18 +63,14 @@ export const saveVideoUrl = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Error adding video:", err);
-    res.status(500).send("Error adding video.");
+    logger.error("Error adding video:", err);
+    next(createError(500, "Error adding video"));
   }
 };
 
-export const fetchVideoUrl = async (req, res) => {
+export const fetchVideoUrl = async (req, res, next) => {
   try {
-    const token = extractToken(req); // Extract token using the utility
-    const dtoken = await decrypt(token);
-    verifyAccessToken(dtoken);
-    const video_id = req.params.video_id; // Get videoID from the URL
-
+    const video_id = req.params.video_id;
     if (!video_id) {
       return res.status(400).json({ message: "Video ID is required." });
     }
@@ -90,7 +82,7 @@ export const fetchVideoUrl = async (req, res) => {
     });
 
     if (!video) {
-      return res.status(404).json({ message: "Video not found." });
+      return next(createError(404, "Video not found."));
     }
 
     // Decrypt the video URL
@@ -105,27 +97,25 @@ export const fetchVideoUrl = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Error fetching video:", err);
-    res.status(500).send("Error fetching video.");
+    logger.error("Error fetching video:", err);
+    next(createError(500, "Error fetching video."));
   }
 };
 
 // PUT /api/subscription (protected route)
-export const subscription_plan = async (req, res) => {
+export const subscription_plan = async (req, res, next) => {
   // Validate the request body
   const { error } = subscriptionSchema.validate(req.body);
   if (error) {
-    return res.status(400).json({ message: error.details[0].message });
+    return next(createError(400, error.details[0].message));
   }
-
   const { subscription_plan } = req.body;
-
   try {
-    // Update the user's subscription plan in the database
-    const updatedMember = await Members.findOne({ where: { id: req.user.id } });
-
+    const updatedMember = await Members.findOne({
+      where: { email: req.user.email },
+    });
     if (!updatedMember) {
-      return res.status(404).json({ message: "User not found" });
+      return next(createError(404, "User not found"));
     }
 
     updatedMember.subscription_plan = subscription_plan;
@@ -136,7 +126,7 @@ export const subscription_plan = async (req, res) => {
       subscription_plan: updatedMember.subscription_plan,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Internal Server Error" });
+    logger.error(err);
+    next(createError(500, "Internal Server Error"));
   }
 };

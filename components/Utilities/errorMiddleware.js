@@ -1,21 +1,30 @@
-import logStream from './morganLogs.js'; // Import the log stream
+import logger from "./logger.js";
 
+// Error Handling Middleware
 const errorHandler = (err, req, res, next) => {
-  // Log the error stack for debugging
-  console.error(err.stack);
-  
-  // Log error to the log file
-  logStream.write(`[${new Date().toISOString()}] Error: ${err.message}\n`);
-
-  // Check if error is a custom error with a status code
   const statusCode = err.statusCode || 500;
-  const message = err.message || 'Something went wrong!';
+  const message = err.message || "Internal Server Error";
 
-  // Send response with the error message
+  // Log the error details
+  const errorDetails = {
+    method: req.method,
+    url: req.originalUrl,
+    status: statusCode,
+    message,
+    stack: process.env.NODE_ENV === "development" ? err.stack : "Hidden",
+    ...(req.body && { requestBody: req.body }),
+  };
+
+  // Log the error using Winston
+  logger.error(JSON.stringify(errorDetails, null, 2));
+
+  // Send a proper JSON response
   res.status(statusCode).json({
     success: false,
-    message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : null, // Show stack in dev mode only
+    error: {
+      message,
+      ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+    },
   });
 };
 

@@ -1,8 +1,8 @@
 import { DataTypes } from "sequelize";
 
 export default (sequelize) => {
-  return sequelize.define(
-    "admins",
+  const Admins = sequelize.define(
+    "Admins",
     {
       id: {
         type: DataTypes.INTEGER,
@@ -16,7 +16,10 @@ export default (sequelize) => {
       email: {
         type: DataTypes.STRING(255),
         allowNull: false,
-        unique: true,
+        unique: true, // Ensure unique email
+        validate: {
+          isEmail: true, // Validate email format
+        },
       },
       password: {
         type: DataTypes.STRING(255),
@@ -24,16 +27,39 @@ export default (sequelize) => {
       },
       role: {
         type: DataTypes.STRING(50),
-        defaultValue: "admin",
+        defaultValue: "admin", // Default role
       },
-      created_at: {
+      status: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true, // Active by default
+      },
+      lastLogin: {
         type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
+      },
+      phoneNumber: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        validate: {
+          is: /^[0-9]{10,15}$/, // Basic phone number validation
+        },
+      },
+      profileImage: {
+        type: DataTypes.STRING,
+        allowNull: true, // Optional profile picture
       },
     },
     {
-      tableName: "admins",
-      timestamps: false, // Prevent Sequelize from expecting `createdAt` and `updatedAt`
+      tableName: "Admins", // Ensure correct table name
+      timestamps: true,
+      indexes: [
+        {
+          name: "admin_email_idx",
+          unique: true,
+          fields: ["email"], // Create index on email
+        },
+      ],
     }
   );
+
+  return Admins;
 };

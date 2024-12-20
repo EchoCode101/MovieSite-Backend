@@ -1,15 +1,15 @@
-import pool from "../../db/db.js";
-import { hashPassword } from "../Utilities/encryptionPassword.js";
+import { hashPassword } from "../Utilities/encryptionUtils.js";
 import { PasswordResets, Members } from "../../models/index.js";
+import logger from "../Utilities/logger.js";
 // Reset Password Route
-export const restPasswordRoute = async (req, res) => {
+export const restPassword = async (req, res, next) => {
   const { token } = req.params;
   const { password } = req.body;
 
   if (!password || password.length < 6) {
-    return res
-      .status(400)
-      .json({ message: "Password must be at least 6 characters long" });
+    return next(
+      createError(400, "Password must be at least 6 characters long")
+    );
   }
   const now = new Date();
   try {
@@ -22,9 +22,7 @@ export const restPasswordRoute = async (req, res) => {
     });
 
     if (!resetEntry) {
-      return res
-        .status(400)
-        .json({ message: "Invalid or expired reset password link" });
+      return next(createError(400, "Invalid or expired reset password link"));
     }
     // Hash the new password
     const hashedPassword = await hashPassword(password);
@@ -34,14 +32,11 @@ export const restPasswordRoute = async (req, res) => {
         { where: { id: resetEntry.user_id } }
       );
     }
-
     // Clear the reset token after it has been used
     await PasswordResets.destroy({ where: { reset_token: token } });
     res.status(200).json({ message: "Password has been successfully reset." });
   } catch (error) {
-    console.error("Error resetting password:", error);
-    res
-      .status(500)
-      .json({ message: "Something went wrong. Please try again." });
+    logger.error("Error resetting password:", error);
+    next(createError(500, "Something went wrong. Please try again."));
   }
 };

@@ -1,0 +1,23 @@
+2024-12-19 04:39:24 [ERROR]: ReferenceError: next is not defined
+    at signup (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/userController.js:40:5)
+    at Layer.handle [as handle_request] (C:\Users\hamza\OneDrive\Desktop\vidstie\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\hamza\OneDrive\Desktop\vidstie\backend\node_modules\express\lib\router\route.js:149:13)
+    at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5
+2024-12-19 05:33:23 [ERROR]: ReferenceError: logger is not defined
+    at login (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/userController.js:158:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2024-12-20 16:48:26 [ERROR]: ReferenceError: logger is not defined
+    at profileRoute (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/profileRoutes.js:24:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2024-12-20 17:05:16 [ERROR]: ReferenceError: createError is not defined
+    at profileRoute (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/profileRoutes.js:26:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2024-12-20 17:08:25 [ERROR]: ReferenceError: createError is not defined
+    at profileRoute (file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/components/user/profileRoutes.js:26:5)
+    at Layer.handle [as handle_request] (C:\Users\hamza\OneDrive\Desktop\vidstie\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\hamza\OneDrive\Desktop\vidstie\backend\node_modules\express\lib\router\route.js:149:13)
+    at file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:724:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///C:/Users/hamza/OneDrive/Desktop/vidstie/backend/node_modules/express-rate-limit/dist/index.mjs:622:5
