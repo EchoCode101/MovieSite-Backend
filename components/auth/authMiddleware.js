@@ -6,6 +6,7 @@ import {
   blacklistTokenCheck,
 } from "../Utilities/helpers.js";
 import logger from "../Utilities/logger.js";
+import createError from "http-errors";
 
 const authenticateToken = async (req, res, next) => {
   try {

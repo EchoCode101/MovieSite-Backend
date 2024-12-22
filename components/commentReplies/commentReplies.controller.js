@@ -1,4 +1,6 @@
 import { CommentReplies } from "../../models/index.js";
+import createError from "http-errors";
+
 // Add a reply
 export const addReply = async (req, res, next) => {
   const { comment_id, user_id, content } = req.body;
@@ -31,7 +33,7 @@ export const getRepliesByCommentId = async (req, res, next) => {
   try {
     const replies = await CommentReplies.findAll({
       where: { comment_id },
-      order: [["created_at", "ASC"]],
+      order: [["createdAt", "ASC"]],
     });
 
     res.status(200).json(replies);

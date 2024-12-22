@@ -42,6 +42,7 @@ export default (sequelize) => {
       timestamps: true, // Adds `createdAt` and `updatedAt`
     }
   );
+  // Model Associations
   Comments.associate = (models) => {
     Comments.belongsTo(models.Members, {
       foreignKey: "member_id",

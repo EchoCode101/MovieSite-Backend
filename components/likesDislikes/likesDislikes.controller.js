@@ -1,5 +1,62 @@
-import { LikesDislikes } from "../../models/index.js";
+import {
+  LikesDislikes,
+  ReviewsAndRatings,
+  Members,
+  Videos,
+} from "../../models/index.js";
 import logger from "../Utilities/logger.js";
+import createError from "http-errors";
+
+// Get reviews with likes/dislikes count
+export const getReviewsWithLikesDislikes = async (req, res, next) => {
+  try {
+    const reviews = await ReviewsAndRatings.findAll({
+      include: [
+        {
+          model: Members,
+          as: "member",
+          attributes: ["member_id", "first_name", "last_name", "username"],
+        },
+        {
+          model: Videos,
+          as: "video",
+          attributes: ["title"],
+        },
+      ],
+      attributes: [
+        "review_id",
+        "video_id",
+        "rating",
+        "review_content",
+        [
+          LikesDislikes.sequelize.literal(`
+            (SELECT COUNT(*) FROM "LikesDislikes" 
+             WHERE "LikesDislikes"."target_id" = "ReviewsAndRatings"."review_id" 
+             AND "LikesDislikes"."target_type" = 'review' 
+             AND "LikesDislikes"."is_like" = true)
+          `),
+          "likes",
+        ],
+        [
+          LikesDislikes.sequelize.literal(`
+            (SELECT COUNT(*) FROM "LikesDislikes" 
+             WHERE "LikesDislikes"."target_id" = "ReviewsAndRatings"."review_id" 
+             AND "LikesDislikes"."target_type" = 'review' 
+             AND "LikesDislikes"."is_like" = false)
+          `),
+          "dislikes",
+        ],
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    res.status(200).json(reviews);
+  } catch (error) {
+    console.error("Error fetching reviews with likes/dislikes:", error);
+    next(createError(500, error.message));
+  }
+};
+
 // Add or update like/dislike
 export const addOrUpdateLikeDislike = async (req, res, next) => {
   const { user_id, target_id, target_type, is_like } = req.body;

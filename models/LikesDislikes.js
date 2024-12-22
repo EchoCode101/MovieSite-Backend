@@ -49,23 +49,23 @@ export default (sequelize) => {
     }
   );
 
-  // Define Associations
+  // Define Associations Safely
   LikesDislikes.associate = (models) => {
     LikesDislikes.belongsTo(models.Members, {
       foreignKey: "user_id",
       as: "user",
     });
-
     LikesDislikes.belongsTo(models.Comments, {
       foreignKey: "target_id",
-      constraints: false, // Disable FK constraint since target_id can point to multiple models
-      as: "commentTarget",
+      constraints: false,
+      scope: { target_type: "comment" },
+      as: "comment",
     });
-
-    LikesDislikes.belongsTo(models.CommentReplies, {
+    LikesDislikes.belongsTo(models.Videos, {
       foreignKey: "target_id",
-      constraints: false, // Handle polymorphic relation
-      as: "replyTarget",
+      constraints: false,
+      scope: { target_type: "video" },
+      as: "video",
     });
   };
 

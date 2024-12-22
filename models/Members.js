@@ -68,13 +68,17 @@ export default (sequelize) => {
     }
   );
   Members.associate = (models) => {
-    Members.hasMany(models.Reviews, {
+    Members.hasMany(models.ReviewsAndRatings, {
       foreignKey: "member_id",
       as: "memberReviews",
     });
     Members.hasMany(models.Comments, {
       foreignKey: "member_id",
       as: "memberComments",
+    });
+    Members.hasMany(models.CommentReplies, {
+      foreignKey: "member_id",
+      as: "memberReplies",
     });
   };
   return Members;

@@ -2,11 +2,11 @@ import express from "express";
 import {
   getAllUsers,
   updateSubscription,
-  dashboard,
   adminSignup,
   adminLogin,
   adminLogout,
   forgotPassword,
+  getDashboardStats,
 } from "./adminController.js";
 import { authenticateAdminToken, limiter } from "../auth/authMiddleware.js";
 import { restAdminPassword } from "./restAdminPasswordRoute.js";
@@ -18,7 +18,7 @@ router.post("/signup", limiter, adminSignup);
 router.post("/login", adminLogin);
 router.post("/logout", authenticateAdminToken, adminLogout);
 router.get("/users", authenticateAdminToken, limiter, getAllUsers);
-router.get("/dashboard", authenticateAdminToken, limiter, dashboard);
+router.get("/stats", authenticateAdminToken, getDashboardStats);
 router.put(
   "/subscription",
   authenticateAdminToken,

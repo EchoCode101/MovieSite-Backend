@@ -1,10 +1,17 @@
-import { Videos } from "../../models/index.js";
+import {
+  Videos,
+  LikesDislikes,
+  Members,
+  VideoMetrics,
+} from "../../models/index.js";
+import createError from "http-errors";
+import sequelize from "sequelize";
 
 // Get all videos
 export const getAllVideos = async (req, res, next) => {
   try {
     const videos = await Videos.findAll({
-      order: [["last_updated", "DESC"]],
+      order: [["updatedAt", "DESC"]],
     });
     res.status(200).json(videos);
   } catch (error) {
@@ -24,22 +31,87 @@ export const getVideoById = async (req, res, next) => {
     next(createError(500, error.message));
   }
 };
-// Get paginated videos
+
 export const getPaginatedVideos = async (req, res, next) => {
   try {
     const {
       page = 1,
       limit = 10,
-      sort = "last_updated",
-      order = "DESC",
+      sort = "updatedAt", // Default sort field
+      order = "DESC", // Default sort order
     } = req.query;
 
     const offset = (page - 1) * limit;
 
+    // Dynamic order logic
+    const orderClause = (() => {
+      if (sort === "views_count") {
+        return [[{ model: VideoMetrics, as: "metrics" }, "views_count", order]];
+      } else if (sort === "likes.length") {
+        return [
+          [
+            sequelize.literal(`(
+              SELECT COUNT(*)
+              FROM "LikesDislikes"
+              WHERE "LikesDislikes"."target_id" = "Videos"."video_id"
+              AND "LikesDislikes"."target_type" = 'video'
+              AND "LikesDislikes"."is_like" = true
+            )`),
+            order,
+          ],
+        ];
+      } else if (sort === "dislikes.length") {
+        return [
+          [
+            sequelize.literal(`(
+              SELECT COUNT(*)
+              FROM "LikesDislikes"
+              WHERE "LikesDislikes"."target_id" = "Videos"."video_id"
+              AND "LikesDislikes"."target_type" = 'video'
+              AND "LikesDislikes"."is_like" = false
+            )`),
+            order,
+          ],
+        ];
+      } else if (sort === "rating") {
+        return [
+          [
+            sequelize.literal(`(
+              SELECT AVG("rating")
+              FROM "ReviewsAndRatings"
+              WHERE "ReviewsAndRatings"."video_id" = "Videos"."video_id"
+            )`),
+            order,
+          ],
+        ];
+      }
+      return [[sort, order]]; // Default sorting
+    })();
+
+    // Fetch paginated data
     const { count, rows: videos } = await Videos.findAndCountAll({
       limit: parseInt(limit, 10),
       offset: parseInt(offset, 10),
-      order: [[sort, order]],
+      order: orderClause,
+      include: [
+        {
+          model: VideoMetrics,
+          as: "metrics",
+          attributes: ["views_count", "shares_count", "favorites_count"],
+        },
+      ],
+      attributes: {
+        include: [
+          [
+            sequelize.literal(`ROUND((
+        SELECT AVG("rating")
+        FROM "ReviewsAndRatings"
+        WHERE "ReviewsAndRatings"."video_id" = "Videos"."video_id"
+      ), 1)`),
+            "average_rating",
+          ],
+        ],
+      },
     });
 
     res.status(200).json({
@@ -49,10 +121,79 @@ export const getPaginatedVideos = async (req, res, next) => {
       videos,
     });
   } catch (error) {
-    next(createError(500, error.message));
+    console.error("Error fetching paginated videos:", error);
+    next(createError(500, error.message || "Error fetching videos"));
   }
 };
 
+// Get videos with likes/dislikes and their associated member information
+export const getVideosWithLikesDislikes = async (req, res, next) => {
+  try {
+    const videos = await Videos.findAll({
+      attributes: [
+        "video_id",
+        "title",
+        "description",
+        "video_url",
+        "duration",
+        "resolution",
+        "file_size",
+        "video_url_encrypted",
+        "access_level",
+        "category",
+        "language",
+        "thumbnail_url",
+        "age_restriction",
+        "published",
+        "video_format",
+        "license_type",
+        "seo_title",
+        "seo_description",
+        "custom_metadata",
+        "createdAt",
+        "updatedAt",
+        [
+          LikesDislikes.sequelize.literal(`
+            (SELECT COUNT(*) FROM "LikesDislikes" 
+             WHERE "LikesDislikes"."target_id" = "Videos"."video_id" 
+             AND "LikesDislikes"."target_type" = 'video' 
+             AND "LikesDislikes"."is_like" = true)
+          `),
+          "likes",
+        ],
+        [
+          LikesDislikes.sequelize.literal(`
+            (SELECT COUNT(*) FROM "LikesDislikes" 
+             WHERE "LikesDislikes"."target_id" = "Videos"."video_id" 
+             AND "LikesDislikes"."target_type" = 'video' 
+             AND "LikesDislikes"."is_like" = false)
+          `),
+          "dislikes",
+        ],
+      ],
+      include: [
+        {
+          model: LikesDislikes,
+          as: "likesDislikes",
+          attributes: ["is_like"],
+          include: [
+            {
+              model: Members,
+              as: "user",
+              attributes: ["member_id", "first_name", "last_name"],
+            },
+          ],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    res.status(200).json(videos);
+  } catch (error) {
+    console.error("Error fetching videos with likes/dislikes:", error);
+    next(createError(500, error.message));
+  }
+};
 // Create a new video
 export const createVideo = async (req, res, next) => {
   try {

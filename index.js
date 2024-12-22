@@ -1,6 +1,7 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
+import logger from "./components/Utilities/logger.js";
 import express from "express";
 import userRoutes from "./components/user/userRoutes.js";
 import tokenRoutes from "./components/token/tokenRoutes.js";
@@ -8,12 +9,12 @@ import adminRoutes from "./components/admin/adminRoutes.js";
 import cookieParser from "cookie-parser";
 import errorHandler from "./components/Utilities/errorMiddleware.js";
 import videosRoutes from "./components/videos/videos.routes.js";
+import videoMetricsRoutes from "./components/videos/videoMetrics.routes.js";
 import membersRoutes from "./components/members/members.route.js";
 import reviewsRoutes from "./components/reviews/reviews.routes.js";
 import commentsRoutes from "./components/comments/comments.routes.js";
 import likesDislikesRoutes from "./components/likesDislikes/likesDislikes.routes.js";
 import commentRepliesRoutes from "./components/commentReplies/commentReplies.routes.js";
-import logger from "./components/Utilities/logger.js";
 
 // import { limiter } from "./components/auth/authMiddleware.js";
 
@@ -49,8 +50,9 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/videos", videosRoutes);
 app.use("/api/members", membersRoutes);
 app.use("/api/reviews", reviewsRoutes);
-app.use("/api/replies", commentRepliesRoutes);
 app.use("/api/comments", commentsRoutes);
+app.use("/api/replies", commentRepliesRoutes);
+app.use("/api/video_metrics", videoMetricsRoutes);
 app.use("/api/likes-dislikes", likesDislikesRoutes);
 
 app.get("/test", (req, res) => {

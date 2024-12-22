@@ -6,6 +6,8 @@ import {
 } from "../../models/index.js";
 import logger from "../Utilities/logger.js";
 import { Sequelize } from "sequelize";
+import createError from "http-errors";
+
 // Create a new comment
 export const createComment = async (req, res, next) => {
   try {
@@ -22,7 +24,7 @@ export const getPaginatedComments = async (req, res, next) => {
     const {
       page = 1,
       limit = 10,
-      sort = "created_at",
+      sort = "createdAt",
       order = "DESC",
     } = req.query;
 
@@ -30,12 +32,12 @@ export const getPaginatedComments = async (req, res, next) => {
 
     let orderQuery = [[sort, order]];
 
-    // Handle special sorting cases
+    // Special sorting cases for likes and dislikes
     if (sort === "likes" || sort === "dislikes") {
       orderQuery = [
         [
           Sequelize.literal(
-            `(SELECT COUNT(*) FROM LikesDislikes WHERE LikesDislikes.target_type = 'comment' AND LikesDislikes.comment_id = Comments.comment_id AND LikesDislikes.is_like = ${
+            `(SELECT COUNT(*) FROM "LikesDislikes" WHERE "LikesDislikes"."target_type" = 'comment' AND "LikesDislikes"."target_id" = "Comments"."comment_id" AND "LikesDislikes"."is_like" = ${
               sort === "likes" ? "true" : "false"
             })`
           ),
@@ -44,31 +46,40 @@ export const getPaginatedComments = async (req, res, next) => {
       ];
     }
 
-    // Correct count query without includes
+    // Get total comments count
     const count = await Comments.count();
 
-    // Fetch paginated comments with sorting
+    // Fetch paginated comments with associations
     const comments = await Comments.findAll({
-      order: orderQuery,
-      offset: parseInt(offset),
       limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: orderQuery,
+      attributes: [
+        "comment_id",
+        "content",
+        "createdAt",
+        [
+          Sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM "LikesDislikes"
+            WHERE "LikesDislikes"."target_id" = "Comments"."comment_id"
+            AND "LikesDislikes"."target_type" = 'comment'
+            AND "LikesDislikes"."is_like" = true
+          )`),
+          "likesCount",
+        ],
+        [
+          Sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM "LikesDislikes"
+            WHERE "LikesDislikes"."target_id" = "Comments"."comment_id"
+            AND "LikesDislikes"."target_type" = 'comment'
+            AND "LikesDislikes"."is_like" = false
+          )`),
+          "dislikesCount",
+        ],
+      ],
       include: [
-        {
-          model: LikesDislikes,
-          as: "likesDislikes",
-          attributes: ["is_like"],
-          where: {
-            target_type: "comment",
-          },
-          required: false, // Include even if no likes exist
-          include: [
-            {
-              model: Members,
-              as: "user",
-              attributes: ["member_id", "first_name", "last_name", "email"],
-            },
-          ],
-        },
         {
           model: Members,
           as: "member",
@@ -77,7 +88,7 @@ export const getPaginatedComments = async (req, res, next) => {
         {
           model: Videos,
           as: "video",
-          attributes: ["video_id", "title", "thumbnail_url"],
+          attributes: ["video_id", "title", "description", "thumbnail_url"],
         },
       ],
     });
@@ -89,11 +100,11 @@ export const getPaginatedComments = async (req, res, next) => {
       comments,
     });
   } catch (error) {
-    logger.error("Error fetching paginated comments:", error);
-    next(createError(500, error.message));
+    next(
+      createError(500, error.message || "Error fetching paginated comments")
+    );
   }
 };
-
 // // Get paginated comments
 // export const getPaginatedComments = async (req, res) => {
 //   try {
@@ -190,7 +201,7 @@ export const getPaginatedComments = async (req, res, next) => {
 export const getAllComments = async (req, res, next) => {
   try {
     const comments = await Comments.findAll({
-      order: [["created_at", "DESC"]],
+      order: [["createdAt", "DESC"]],
     });
     res.status(200).json(comments);
   } catch (error) {

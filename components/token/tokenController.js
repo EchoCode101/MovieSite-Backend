@@ -5,6 +5,8 @@ import {
   verifyAccessToken,
   generateAccessToken,
 } from "../Utilities/tokenUtils.js";
+import createError from "http-errors";
+
 import {
   blacklistTokenCheck,
   extractAndDecryptToken,

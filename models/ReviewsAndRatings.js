@@ -49,11 +49,11 @@ export default (sequelize) => {
     }
   );
 
-  // Define Model Associations
+  // Associations
   ReviewsAndRatings.associate = (models) => {
     ReviewsAndRatings.belongsTo(models.Videos, {
       foreignKey: "video_id",
-      as: "video",
+      as: "video", // Correct alias
     });
 
     ReviewsAndRatings.belongsTo(models.Members, {
@@ -61,6 +61,5 @@ export default (sequelize) => {
       as: "member",
     });
   };
-
   return ReviewsAndRatings;
 };

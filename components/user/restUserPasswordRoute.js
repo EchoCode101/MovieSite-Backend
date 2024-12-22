@@ -1,6 +1,8 @@
 import { hashPassword } from "../Utilities/encryptionUtils.js";
 import { PasswordResets, Members } from "../../models/index.js";
 import logger from "../Utilities/logger.js";
+import createError from "http-errors";
+
 // Reset Password Route
 export const restPassword = async (req, res, next) => {
   const { token } = req.params;

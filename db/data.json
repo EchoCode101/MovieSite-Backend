@@ -1,0 +1,42 @@
+[
+  {
+    "video_id": 1,
+    "tag_id": 1
+  },
+  {
+    "video_id": 1,
+    "tag_id": 3
+  },
+  {
+    "video_id": 2,
+    "tag_id": 2
+  },
+  {
+    "video_id": 2,
+    "tag_id": 5
+  },
+  {
+    "video_id": 3,
+    "tag_id": 4
+  },
+  {
+    "video_id": 3,
+    "tag_id": 6
+  },
+  {
+    "video_id": 4,
+    "tag_id": 7
+  },
+  {
+    "video_id": 4,
+    "tag_id": 8
+  },
+  {
+    "video_id": 5,
+    "tag_id": 9
+  },
+  {
+    "video_id": 5,
+    "tag_id": 10
+  }
+]

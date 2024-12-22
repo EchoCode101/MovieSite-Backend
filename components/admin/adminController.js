@@ -12,23 +12,26 @@ import validationSchemas from "../Utilities/validationSchemas.js";
 
 import { Admins, PasswordResets } from "../../models/index.js";
 import Sequelize from "sequelize";
-import { extractAndDecryptToken } from "../Utilities/helpers.js";
+import {
+  extractAndDecryptToken,
+  sendPasswordResetEmail,
+} from "../Utilities/helpers.js";
 import logger from "../Utilities/logger.js";
-
+import createError from "http-errors";
+import { Videos, Comments, VideoMetrics,ReviewsAndRatings } from "../../models/index.js";
+import { Op } from "sequelize";
 // import validateAndSanitizeUserInput from "../Utilities/validator.js";
 
 const { adminSignupSchema, loginSchema } = validationSchemas;
 
 export const adminSignup = async (req, res, next) => {
   const { username, email, password } = req.body;
-  // if (!username || !email || !password) {
-  //   return next(createError(400, "All fields are required."));
-  // }
+  if (!username || !email || !password) {
+    return next(createError(400, "All fields are required."));
+  }
   const { error } = adminSignupSchema.validate(req.body);
   if (error) return next(createError(400, error.details[0].message));
-  // const validationResult = passwordSchema.validate(password);
-  // if (!validationResult) {
-  //   return next(createError(400, "Password is not strong enough"));
+
   try {
     // Check if admin already exists
     const adminExists = await Admins.findOne({
@@ -192,10 +195,54 @@ export const updateSubscription = async (req, res, next) => {
   // Update logic...
 };
 
-// Example: Update subscription plans
-export const dashboard = async (req, res, next) => {
-  // const { userId, newPlan } = req.body;
-  res.send("Welcome to the admin dashboard!");
+// Get dashboard stats
+export const getDashboardStats = async (req, res, next) => {
+  try {
+    const currentMonth = new Date().getMonth() + 1; // Months are 0-based
+    const currentYear = new Date().getFullYear();
 
-  // Update logic...
+    // Unique views for the current month
+    const viewsThisMonth = await VideoMetrics.sum("views_count", {
+      where: {
+        createdAt: {
+          [Op.gte]: new Date(`${currentYear}-${currentMonth}-01`),
+        },
+      },
+    });
+
+    // Items (videos) added this month
+    const itemsThisMonth = await Videos.count({
+      where: {
+        createdAt: {
+          [Op.gte]: new Date(`${currentYear}-${currentMonth}-01`),
+        },
+      },
+    });
+
+    // New comments this month
+    const commentsThisMonth = await Comments.count({
+      where: {
+        createdAt: {
+          [Op.gte]: new Date(`${currentYear}-${currentMonth}-01`),
+        },
+      },
+    });
+    // New comments this month
+    const reviewsThisMonth = await ReviewsAndRatings.count({
+      where: {
+        createdAt: {
+          [Op.gte]: new Date(`${currentYear}-${currentMonth}-01`),
+        },
+      },
+    });
+
+    res.status(200).json({
+      uniqueViews: viewsThisMonth || 0,
+      itemsAdded: itemsThisMonth || 0,
+      newComments: commentsThisMonth || 0,
+      newReviews: reviewsThisMonth || 0,
+    });
+  } catch (error) {
+    next(error);
+  }
 };

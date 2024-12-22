@@ -1,9 +1,18 @@
-import { Members } from "../../models/index.js";
+import createError from "http-errors";
+import {
+  Members,
+  Comments,
+  LikesDislikes,
+  ReviewsAndRatings,
+  CommentReplies,
+} from "../../models/index.js";
+
+import sequelize from "sequelize";
 
 export const getAllMembers = async (req, res, next) => {
   try {
     const members = await Members.findAll({
-      order: [["date_of_creation", "DESC"]],
+      order: [["createdAt", "DESC"]],
     });
     res.status(200).json(members);
   } catch (error) {
@@ -15,26 +24,83 @@ export const getPaginatedUsers = async (req, res, next) => {
     const {
       page = 1,
       limit = 10,
-      sort = "date_of_creation",
+      sort = "createdAt",
       order = "DESC",
     } = req.query;
 
-    const offset = (page - 1) * limit;
+    const currentPage = parseInt(page, 10);
+    const itemsPerPage = parseInt(limit, 10);
+
+    if (isNaN(currentPage) || isNaN(itemsPerPage)) {
+      return next(createError(400, "Invalid pagination parameters"));
+    }
+
+    const offset = (currentPage - 1) * itemsPerPage;
+
+    const orderClause = (() => {
+      if (sort === "Plan") return [["subscription_plan", order]];
+      if (sort === "Status") return [["status", order]];
+      if (sort === "Date") return [["createdAt", order]];
+      return [[sort, order]];
+    })();
 
     const { count, rows: users } = await Members.findAndCountAll({
-      limit: parseInt(limit, 10),
-      offset: parseInt(offset, 10),
-      order: [[sort, order]],
+      limit: itemsPerPage,
+      offset,
+      order: orderClause,
+      attributes: [
+        "member_id",
+        "profile_pic",
+        "email",
+        "first_name",
+        "last_name",
+        "username",
+        "subscription_plan",
+        "status",
+        "createdAt",
+        [
+          sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM "Comments"
+            WHERE "Comments"."member_id" = "Members"."member_id"
+          )`),
+          "commentsCount",
+        ],
+        [
+          sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM "ReviewsAndRatings"
+            WHERE "ReviewsAndRatings"."member_id" = "Members"."member_id"
+          )`),
+          "reviewsCount",
+        ],
+        [
+          sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM "CommentReplies"
+            WHERE "CommentReplies"."member_id" = "Members"."member_id"
+          )`),
+          "commentRepliesCount",
+        ],
+      ],
+      include: [
+        {
+          model: CommentReplies,
+          as: "memberReplies",
+          attributes: [],
+        },
+      ],
     });
 
     res.status(200).json({
-      currentPage: parseInt(page, 10),
-      totalPages: Math.ceil(count / limit),
+      currentPage,
+      totalPages: Math.ceil(count / itemsPerPage),
       totalItems: count,
       users,
     });
   } catch (error) {
-    next(createError(500, error.message));
+    console.error("Error fetching paginated users:", error);
+    next(createError(500, error.message || "Error fetching users"));
   }
 };
 

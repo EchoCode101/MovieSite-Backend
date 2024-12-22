@@ -89,20 +89,33 @@ export default (sequelize) => {
   );
   Videos.associate = (models) => {
     Videos.belongsToMany(models.Tags, {
-      through: VideoTags,
+      through: models.VideoTags, // Correctly reference the through model
       foreignKey: "video_id",
+      otherKey: "tag_id",
       as: "tags",
     });
-    // Video Associations
-    Videos.hasMany(models.Reviews, {
+    Videos.hasMany(models.ReviewsAndRatings, {
       foreignKey: "video_id",
-      as: "videoReviews",
+      as: "reviews",
     });
 
     Videos.hasMany(models.Comments, {
       foreignKey: "video_id",
-      as: "videoComments",
+      as: "comments",
+    });
+    // Correctly associate VideoMetrics
+    Videos.hasOne(models.VideoMetrics, {
+      foreignKey: "video_id",
+      as: "metrics", // Alias must match the include in controller
+    });
+
+    Videos.hasMany(models.LikesDislikes, {
+      foreignKey: "target_id",
+      constraints: false,
+      scope: { target_type: "video" },
+      as: "likesDislikes",
     });
   };
+
   return Videos;
 };

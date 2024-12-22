@@ -19,15 +19,15 @@ export default (sequelize) => {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
-      user_id: {
+      member_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
           model: "Members",
           key: "member_id",
         },
-        onUpdate: "CASCADE",
         onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       },
       reply_content: {
         type: DataTypes.TEXT,
@@ -39,22 +39,23 @@ export default (sequelize) => {
       timestamps: true, // Automatically creates `createdAt` and `updatedAt`
     }
   );
+
   CommentReplies.associate = (models) => {
     CommentReplies.belongsTo(models.Comments, {
       foreignKey: "comment_id",
       as: "comment",
     });
-
     CommentReplies.belongsTo(models.Members, {
-      foreignKey: "user_id",
-      as: "user",
+      foreignKey: "member_id",
+      as: "member",
     });
-
-    CommentReplies.hasMany(models.LikesDislikes, {
-      foreignKey: "target_id",
-      as: "likesDislikes",
-      scope: { target_type: "comment_reply" },
-    });
+    if (models.LikesDislikes) {
+      CommentReplies.hasMany(models.LikesDislikes, {
+        foreignKey: "target_id",
+        as: "likesDislikes",
+        scope: { target_type: "comment_reply" },
+      });
+    }
   };
 
   return CommentReplies;

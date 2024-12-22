@@ -3,6 +3,7 @@ import validationSchemas from "../Utilities/validationSchemas.js";
 import { Members, Videos } from "../../models/index.js";
 const { subscriptionSchema } = validationSchemas;
 import logger from "../Utilities/logger.js";
+import createError from "http-errors";
 
 export const profileRoute = async (req, res, next) => {
   try {
