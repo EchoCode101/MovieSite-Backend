@@ -1,7 +1,7 @@
 import {
   Members,
   PasswordResets,
-  UserLoginHistory,
+  UserSessionHistory,
 } from "../../models/index.js";
 import {
   encrypt,
@@ -82,7 +82,7 @@ export const login = async (req, res, next) => {
     if (!match) return next(createError(400, "Invalid email or password"));
 
     // Save login history
-    await UserLoginHistory.create({
+    await UserSessionHistory.create({
       user_id: user.member_id,
       login_time: new Date(),
       ip_address: req.ip || req.headers["x-forwarded-for"] || "Unknown",
@@ -129,7 +129,7 @@ export const logout = async (req, res, next) => {
     const member_id = req.user.id;
 
     // Destroy the current session
-    const deletedSession = await UserLoginHistory.destroy({
+    const deletedSession = await UserSessionHistory.destroy({
       where: { user_id: member_id },
     });
     if (!deletedSession) {
@@ -137,7 +137,7 @@ export const logout = async (req, res, next) => {
     }
 
     // Record logout time in login history
-    await UserLoginHistory.update(
+    await UserSessionHistory.update(
       { logout_time: new Date() },
       {
         where: {

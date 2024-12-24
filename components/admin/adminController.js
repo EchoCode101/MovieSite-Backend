@@ -18,7 +18,12 @@ import {
 } from "../Utilities/helpers.js";
 import logger from "../Utilities/logger.js";
 import createError from "http-errors";
-import { Videos, Comments, VideoMetrics,ReviewsAndRatings } from "../../models/index.js";
+import {
+  Videos,
+  Comments,
+  VideoMetrics,
+  ReviewsAndRatings,
+} from "../../models/index.js";
 import { Op } from "sequelize";
 // import validateAndSanitizeUserInput from "../Utilities/validator.js";
 
@@ -70,7 +75,6 @@ export const adminSignup = async (req, res, next) => {
 
 export const adminLogin = async (req, res, next) => {
   const { email, password } = req.body;
-  // const sanitizedInput = validateAndSanitizeUserInput(req.body);
   const { error } = loginSchema.validate(req.body); // Joi validation schema for login
   if (error) return next(createError(400, error.details[0].message));
 
@@ -93,6 +97,10 @@ export const adminLogin = async (req, res, next) => {
     const encryptedAccessToken = await encrypt(accessToken);
     const encryptedRefreshToken = await encrypt(refreshToken);
 
+    // Update lastLogin column
+    admin.lastLogin = new Date();
+    await admin.save();
+
     res.cookie("encryptedRefreshToken", encryptedRefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production" || true,
@@ -106,6 +114,8 @@ export const adminLogin = async (req, res, next) => {
       admin: {
         id: admin.id,
         username: admin.username,
+        first_name: admin.first_name,
+        last_name: admin.last_name,
         email: admin.email,
         role: admin.role,
       },

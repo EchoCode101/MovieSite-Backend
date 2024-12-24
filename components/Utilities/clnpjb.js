@@ -2,11 +2,10 @@
 import cron from "node-cron";
 import { Op } from "sequelize";
 import sequelize from "../../db/db.js";
-import TokenBlacklist from "../../models/TokenBlacklist.js";
-import PasswordResets from "../../models/PasswordResets.js";
+import { TokenBlacklist, PasswordResets } from "../../models/index.js";
 
 // Scheduled job to clean up expired tokens and password resets
-const clnupjb = cron.schedule("0 0 * * *", async () => {
+const clnupjb = cron.schedule("0 * * * *", async () => {
   console.log("🕒 Starting cleanup job...");
 
   try {

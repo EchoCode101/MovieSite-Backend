@@ -2,7 +2,8 @@ import dotenv from "dotenv";
 import logger from "../components/Utilities/logger.js";
 import { Sequelize } from "sequelize";
 import clnpjb from "../components/Utilities/clnpjb.js";
-
+clnpjb.start();
+console.log("🚀 Cleanup job scheduled!");
 // Load environment variables
 const env = process.env.NODE_ENV || "development";
 dotenv.config({ path: `.env.${env}` });

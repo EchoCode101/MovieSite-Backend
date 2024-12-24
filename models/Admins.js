@@ -25,6 +25,14 @@ export default (sequelize) => {
         type: DataTypes.STRING(255),
         allowNull: false,
       },
+      first_name: {
+        type: DataTypes.STRING(255),
+        allowNull: true, // Not required on registration
+      },
+      last_name: {
+        type: DataTypes.STRING(255),
+        allowNull: true, // Not required on registration
+      },
       role: {
         type: DataTypes.STRING(50),
         defaultValue: "admin", // Default role

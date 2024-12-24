@@ -60,6 +60,11 @@ export default (sequelize) => {
       foreignKey: "member_id",
       as: "member",
     });
+    ReviewsAndRatings.hasMany(models.LikesDislikes, {
+      foreignKey: "target_id",
+      scope: { target_type: "review" },
+      as: "likesDislikes",
+    });
   };
   return ReviewsAndRatings;
 };

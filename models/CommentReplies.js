@@ -49,13 +49,11 @@ export default (sequelize) => {
       foreignKey: "member_id",
       as: "member",
     });
-    if (models.LikesDislikes) {
-      CommentReplies.hasMany(models.LikesDislikes, {
-        foreignKey: "target_id",
-        as: "likesDislikes",
-        scope: { target_type: "comment_reply" },
-      });
-    }
+    CommentReplies.hasMany(models.LikesDislikes, {
+      foreignKey: "target_id",
+      as: "likesDislikes",
+      scope: { target_type: "comment_reply" },
+    });
   };
 
   return CommentReplies;

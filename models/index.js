@@ -12,7 +12,7 @@ import LikesDislikesModel from "./LikesDislikes.js";
 import CommentRepliesModel from "./CommentReplies.js";
 import PasswordResetsModel from "./PasswordResets.js";
 import TokenBlacklistModel from "./TokenBlacklist.js";
-import UserLoginHistoryModel from "./UserSessionHistory.js";
+import UserSessionHistoryModel from "./UserSessionHistory.js";
 import ReviewsAndRatingsModel from "./ReviewsAndRatings.js";
 
 // Initialize Models
@@ -27,7 +27,7 @@ const LikesDislikes = LikesDislikesModel(sequelize);
 const CommentReplies = CommentRepliesModel(sequelize);
 const PasswordResets = PasswordResetsModel(sequelize);
 const TokenBlacklist = TokenBlacklistModel(sequelize);
-const UserLoginHistory = UserLoginHistoryModel(sequelize);
+const UserSessionHistory = UserSessionHistoryModel(sequelize);
 const ReviewsAndRatings = ReviewsAndRatingsModel(sequelize);
 
 // Define associations
@@ -40,12 +40,23 @@ Videos.associate({
   LikesDislikes,
 });
 VideoMetrics.associate({ Videos });
-UserLoginHistory.associate({ Members });
-ReviewsAndRatings.associate({ Videos, Members });
+ReviewsAndRatings.associate({ Videos, Members, LikesDislikes });
 CommentReplies.associate({ Comments, Members, LikesDislikes });
-Members.associate({ Comments, ReviewsAndRatings, CommentReplies });
+Members.associate({
+  Comments,
+  ReviewsAndRatings,
+  CommentReplies,
+  UserSessionHistory,
+});
+UserSessionHistory.associate({ Members });
 Comments.associate({ Members, Videos, CommentReplies, LikesDislikes });
-LikesDislikes.associate({ Members, Videos, Comments, CommentReplies });
+LikesDislikes.associate({
+  Members,
+  ReviewsAndRatings,
+  Videos,
+  Comments,
+  CommentReplies,
+});
 
 // Sync and Export Models
 (async () => {
@@ -69,6 +80,6 @@ export {
   TokenBlacklist,
   CommentReplies,
   PasswordResets,
-  UserLoginHistory,
+  UserSessionHistory,
   ReviewsAndRatings,
 };

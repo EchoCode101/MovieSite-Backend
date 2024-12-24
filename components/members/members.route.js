@@ -16,5 +16,5 @@ router.post("/", authenticateAdminToken, createMember);
 router.get("/:id", getMemberById);
 router.put("/:id", updateMember);
 router.delete("/:id", authenticateAdminToken, deleteMember);
-
+// router.put("/password-update/:id", updateMemberPassword);
 export default router;

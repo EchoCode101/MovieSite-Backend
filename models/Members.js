@@ -80,6 +80,10 @@ export default (sequelize) => {
       foreignKey: "member_id",
       as: "memberReplies",
     });
+    Members.hasMany(models.UserSessionHistory, {
+      foreignKey: "user_id",
+      as: "userSessionHistory",
+    });
   };
   return Members;
 };
