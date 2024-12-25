@@ -1,7 +1,7 @@
 import { DataTypes } from "sequelize";
 
 export default (sequelize) => {
-  const UserSessionHistory = sequelize.define("UserSessionHistory", {
+  const UserSessionHistory = sequelize.define("UserSessionHistories", {
     session_id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,

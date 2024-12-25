@@ -71,18 +71,22 @@ export default (sequelize) => {
     Members.hasMany(models.ReviewsAndRatings, {
       foreignKey: "member_id",
       as: "memberReviews",
+      onDelete: "CASCADE",
     });
     Members.hasMany(models.Comments, {
       foreignKey: "member_id",
       as: "memberComments",
+      onDelete: "CASCADE",
     });
     Members.hasMany(models.CommentReplies, {
       foreignKey: "member_id",
       as: "memberReplies",
+      onDelete: "CASCADE",
     });
     Members.hasMany(models.UserSessionHistory, {
       foreignKey: "user_id",
       as: "userSessionHistory",
+      onDelete: "CASCADE",
     });
   };
   return Members;

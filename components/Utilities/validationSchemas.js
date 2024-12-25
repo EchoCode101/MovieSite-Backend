@@ -59,10 +59,27 @@ const subscriptionSchema = Joi.object({
     .valid("Free", "Basic", "Premium", "Ultimate")
     .required(),
 });
+// Validation schema for creating a member
+const createMemberSchema = Joi.object({
+  username: Joi.string().min(3).max(30).alphanum().required(),
+  email: Joi.string().email().required(),
+  password: Joi.string()
+    .custom(passwordValidation, "Password Validation")
+    .required(),
+  subscription_plan: Joi.string()
+    .valid("Free", "Basic", "Premium", "Ultimate")
+    .default("Free"),
+  role: Joi.string().valid("user", "admin").default("user"),
+  profile_pic: Joi.string().uri().allow("").optional(),
+  first_name: Joi.string().max(50).optional(),
+  last_name: Joi.string().max(50).optional(),
+  status: Joi.string().valid("Active", "Inactive").default("Active"),
+});
 
 export default {
   userSignupSchema,
   loginSchema,
   adminSignupSchema,
   subscriptionSchema,
+  createMemberSchema,
 };

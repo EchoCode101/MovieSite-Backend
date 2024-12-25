@@ -10,8 +10,14 @@ import {
 } from "../../models/index.js";
 
 import sequelize from "sequelize";
-import { comparePassword, encrypt } from "../Utilities/encryptionUtils.js";
-
+import {
+  comparePassword,
+  encrypt,
+  hashPassword,
+} from "../Utilities/encryptionUtils.js";
+import { Transaction } from "sequelize";
+import validationSchemas from "../Utilities/validationSchemas.js";
+const { createMemberSchema } = validationSchemas;
 export const getAllMembers = async (req, res, next) => {
   try {
     const members = await Members.findAll({
@@ -276,19 +282,47 @@ export const createMember = async (req, res, next) => {
       last_name,
       status = "Active",
     } = req.body;
-    const newMember = await Members.create({
-      username,
-      email,
-      password,
-      subscription_plan,
-      role,
-      profile_pic,
-      first_name,
-      last_name,
-      status,
+
+    // Check for required fields
+    if (!username || !email || !password) {
+      return next(
+        createError(400, "Username, email, and password are required.")
+      );
+    }
+    const { error, value: validatedData } = createMemberSchema.validate(
+      req.body
+    );
+    if (error) return next(createError(400, error.details[0].message));
+
+    // Check if email or username already exists
+    const existingMember = await Members.findOne({
+      where: {
+        [sequelize.Op.or]: [{ email }, { username }],
+      },
     });
-    res.status(201).json(newMember);
+    if (existingMember) {
+      return next(createError(409, "Email or username already exists."));
+    }
+    // Hash the password
+    const hashedPassword = await hashPassword(password);
+
+    const newMember = await Members.create({
+      ...validatedData,
+      password: hashedPassword, // Save the hashed password
+    });
+    res.status(201).json({
+      message: "Member created successfully",
+      member: newMember,
+    });
   } catch (error) {
+    if (error.name === "SequelizeValidationError") {
+      return next(
+        createError(400, {
+          message: "Validation error",
+          details: error.errors.map((e) => e.message),
+        })
+      );
+    }
     next(createError(500, error.message));
   }
 };
@@ -322,51 +356,23 @@ export const updateMember = async (req, res, next) => {
     next(createError(500, error.message)); // Handle errors
   }
 };
-// export const updateMember = async (req, res, next) => {
-//   try {
-//     const member = await Members.findByPk(req.params.id);
-//     if (!member) return next(createError(404, "Member not found"));
-//     const updatedMember = await member.update(req.body);
-//     res.status(200).json(updatedMember);
-//   } catch (error) {
-//     next(createError(500, error.message));
-//   }
-// };
-// export const updateMemberPassword = async (req, res, next) => {
-//   try {
-//     console.log("Incoming Payload:", req.body); // Log the payload
 
-//     const member = await Members.findByPk(req.params.id); // Fetch the member by ID
-//     if (!member) return next(createError(404, "Member not found")); // Handle not found
-//     const oldPassword = req.body.password; // Update the password
-//     const decryptedPassword = await comparePassword(
-//       oldPassword,
-//       member.password
-//     );
-//     if (!decryptedPassword) return next(createError(400, "Invalid password"));
-//     const newPassword = await encrypt(req.body.newPassword);
-//     const saveNewPassword = await member.update(req.body);
+export const destroyMemberWithAssociations = async (req, res, next) => {
+  const { id } = req.params;
 
-//     console.log("Updated Member Password:", saveNewPassword); // Log the updated data
-
-//     // Send the updated member back
-//     res.status(200).json(updatedMember);
-//   } catch (error) {
-//     console.error("Error in updateMember:", error);
-//     next(createError(500, error.message)); // Handle errors
-//   }
-// };
-
-export const deleteMember = async (req, res, next) => {
   try {
-    const member = await Members.findByPk(req.params.id);
-    if (!member) return next(createError(404, "Member not found"));
+    const member = await Members.findByPk(id);
+    if (!member) {
+      return next(createError(404, "Member not found."));
+    }
 
-    const destroyedMember = await member.destroy();
-    res
-      .status(200)
-      .json({ message: "Member deleted successfully", destroyedMember });
+    await member.destroy(); // This triggers the cascading deletes
+    res.status(200).json({
+      success: true,
+      message: "Member and associated data deleted successfully.",
+    });
   } catch (error) {
-    next(createError(500, error.message));
+    console.error("Error deleting member:", error.message);
+    next(createError(500, "Failed to delete member."));
   }
 };
