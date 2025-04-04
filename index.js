@@ -32,16 +32,31 @@ app.set("trust proxy", 1); // Enable if your app is behind a proxy
 
 app.use(
   cors({
-    origin: process.env.ORIGIN_LINK, // Replace with your frontend's URL
+    origin: process.env.ORIGIN_LINK, // Allow all origins
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"], // Allow specific HTTP methods
-    allowedHeaders: ["Content-Type", "Authorization"], // Allow specific headers
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"], // Allow specific headers
   })
 );
 // app.use(limiter);
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 app.use(cookieParser());
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        "script-src": [
+          "'self'",
+          "https://api.cloudinary.com",
+          "https://www.gstatic.com",
+        ],
+        "img-src": ["'self'", "data:", "https://res.cloudinary.com"],
+        "connect-src": ["'self'", "https://api.cloudinary.com"],
+      },
+    },
+  })
+);
 
 // Routes\
 app.use("/api/user", userRoutes);
@@ -74,6 +89,19 @@ process.on("unhandledRejection", (reason, promise) => {
 process.on("uncaughtException", (err) => {
   logger.error(`Uncaught Exception: ${err.message}`, { stack: err.stack });
   process.exit(1); // Restart app on critical failure
+});
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({
+        success: false,
+        message: "File size exceeds the limit of 100 MB.",
+      });
+    } else if (err.code === "LIMIT_UNEXPECTED_FILE") {
+      return res.status(400).json({ success: false, message: err.message });
+    }
+  }
+  next(err);
 });
 
 // Start the server

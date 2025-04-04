@@ -75,11 +75,47 @@ const createMemberSchema = Joi.object({
   last_name: Joi.string().max(50).optional(),
   status: Joi.string().valid("Active", "Inactive").default("Active"),
 });
-
+// const createVideoSchema = Joi.object({
+//   title: Joi.string().required(),
+//   description: Joi.string().allow(""), // Optional
+//   video_url: Joi.string().uri().required(),
+//   thumbnail_url: Joi.string().uri().allow(""), // Optional
+//   duration: Joi.number().integer().allow(null), // Optional
+//   resolution: Joi.string().valid("FullHD", "HD").default("FullHD"),
+//   file_size: Joi.number().integer().allow(null), // Optional
+//   category: Joi.string().allow(""), // Optional
+//   language: Joi.string().allow(""), // Optional
+//   age_restriction: Joi.boolean().default(false),
+//   published: Joi.boolean().default(true),
+//   seo_title: Joi.string().allow(""), // Optional
+//   seo_description: Joi.string().allow(""), // Optional
+//   license_type: Joi.string().allow(""), // Optional
+//   access_level: Joi.string().valid("Free", "Paid").default("Free"),
+//   video_format: Joi.string().allow(""), // Optional
+//   tags: Joi.array().items(Joi.string()).allow(null), // Array of tag IDs
+//   custom_metadata: Joi.object().allow(null), // Optional for custom fields
+// });.
+export const createVideoSchema = Joi.object({
+  title: Joi.string().required(),
+  description: Joi.string().optional(),
+  duration: Joi.number().optional(),
+  resolution: Joi.string().default("FullHD"),
+  file_size: Joi.number().optional(),
+  category: Joi.string().optional(),
+  language: Joi.string().optional(),
+  age_restriction: Joi.boolean().default(false),
+  published: Joi.boolean().default(true),
+  seo_title: Joi.string().optional(),
+  seo_description: Joi.string().optional(),
+  license_type: Joi.string().optional(),
+  access_level: Joi.string().default("Free"),
+  video_format: Joi.string().optional(),
+});
 export default {
   userSignupSchema,
   loginSchema,
   adminSignupSchema,
   subscriptionSchema,
   createMemberSchema,
+  createVideoSchema,
 };

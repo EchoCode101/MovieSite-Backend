@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video Upload</title>
+  </head>
+  <body>
+    <h1>Upload Video</h1>
+    <form
+      id="uploadForm"
+      method="POST"
+      enctype="multipart/form-data"
+      action="http://localhost:7100/api/videos/upload"
+    >
+      <label for="video">Select Video:</label>
+      <input
+        type="file"
+        name="video"
+        id="video"
+        accept="video/*"
+        required
+      /><br /><br />
+
+      <label for="title">Title:</label>
+      <input type="text" name="title" id="title" required /><br /><br />
+
+      <label for="description">Description:</label>
+      <textarea name="description" id="description"></textarea><br /><br />
+
+      <label for="duration">Duration (in seconds):</label>
+      <input type="number" name="duration" id="duration" /><br /><br />
+
+      <label for="category">Category:</label>
+      <input type="text" name="category" id="category" /><br /><br />
+
+      <label for="language">Language:</label>
+      <input type="text" name="language" id="language" /><br /><br />
+
+      <button type="submit">Upload</button>
+    </form>
+
+    <p id="response"></p>
+
+    <script>
+      document
+        .getElementById("uploadForm")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault();
+
+          const formData = new FormData();
+          console.log(formData);
+          const videoFile = document.getElementById("video").files[0];
+          const title = document.getElementById("title").value;
+          const description = document.getElementById("description").value;
+          const duration = document.getElementById("duration").value;
+          const category = document.getElementById("category").value;
+          const language = document.getElementById("language").value;
+
+          formData.append("video", videoFile);
+          formData.append("title", title);
+          formData.append("description", description);
+          formData.append("duration", duration);
+          formData.append("category", category);
+          formData.append("language", language);
+          console.log(formData);
+          console.log("start");
+
+          try {
+            const response = await fetch(
+              "http://localhost:7100/api/videos/upload",
+              {
+                method: "POST",
+                body: formData,
+              }
+            );
+            console.log("start...");
+
+            const result = await response.json();
+            document.getElementById("response").textContent = JSON.stringify(
+              result,
+              null,
+              2
+            );
+            console.log("Done");
+          } catch (error) {
+            document.getElementById("response").textContent =
+              "Error: " + error.message;
+          }
+        });
+    </script>
+  </body>
+</html>
