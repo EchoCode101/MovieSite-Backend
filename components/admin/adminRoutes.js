@@ -15,7 +15,7 @@ const router = express.Router();
 
 router.post("/forgotPassword", limiter, forgotPassword);
 router.post("/signup", limiter, adminSignup);
-router.post("/login", adminLogin);
+router.post("/login", limiter, adminLogin);
 router.post("/logout", authenticateAdminToken, adminLogout);
 router.get("/users", authenticateAdminToken, limiter, getAllUsers);
 router.get("/stats", authenticateAdminToken, getDashboardStats);

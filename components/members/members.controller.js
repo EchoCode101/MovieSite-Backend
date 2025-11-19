@@ -8,23 +8,25 @@ import {
   UserSessionHistory,
   CommentReplies,
 } from "../../models/index.js";
-
-import sequelize from "sequelize";
+import logger from "../Utilities/logger.js";
 import {
   comparePassword,
   encrypt,
   hashPassword,
 } from "../Utilities/encryptionUtils.js";
-import { Transaction } from "sequelize";
 import validationSchemas from "../Utilities/validationSchemas.js";
 const { createMemberSchema } = validationSchemas;
+
 export const getAllMembers = async (req, res, next) => {
   try {
-    const members = await Members.findAll({
-      order: [["createdAt", "DESC"]],
+    const members = await Members.find().sort({ createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      message: "Members retrieved successfully",
+      data: members,
     });
-    res.status(200).json(members);
   } catch (error) {
+    logger.error("Error fetching all members:", error);
     next(createError(500, error.message));
   }
 };
@@ -44,227 +46,236 @@ export const getPaginatedUsers = async (req, res, next) => {
       return next(createError(400, "Invalid pagination parameters"));
     }
 
-    const offset = (currentPage - 1) * itemsPerPage;
+    const skip = (currentPage - 1) * itemsPerPage;
+    const sortOrder = order === "ASC" ? 1 : -1;
 
-    const orderClause = (() => {
-      if (sort === "Plan") return [["subscription_plan", order]];
-      if (sort === "Status") return [["status", order]];
-      if (sort === "Date") return [["createdAt", order]];
-      return [[sort, order]];
-    })();
+    // Determine sort field
+    let sortField = sort;
+    if (sort === "Plan") sortField = "subscription_plan";
+    else if (sort === "Status") sortField = "status";
+    else if (sort === "Date") sortField = "createdAt";
 
-    const { count, rows: users } = await Members.findAndCountAll({
-      limit: itemsPerPage,
-      offset,
-      order: orderClause,
-      attributes: [
-        "member_id",
-        "profile_pic",
-        "email",
-        "first_name",
-        "last_name",
-        "username",
-        "subscription_plan",
-        "status",
-        "createdAt",
-        [
-          sequelize.literal(`(
-            SELECT COUNT(*)
-            FROM "Comments"
-            WHERE "Comments"."member_id" = "Members"."member_id"
-          )`),
-          "commentsCount",
-        ],
-        [
-          sequelize.literal(`(
-            SELECT COUNT(*)
-            FROM "ReviewsAndRatings"
-            WHERE "ReviewsAndRatings"."member_id" = "Members"."member_id"
-          )`),
-          "reviewsCount",
-        ],
-        [
-          sequelize.literal(`(
-            SELECT COUNT(*)
-            FROM "CommentReplies"
-            WHERE "CommentReplies"."member_id" = "Members"."member_id"
-          )`),
-          "commentRepliesCount",
-        ],
-      ],
-      include: [
-        {
-          model: CommentReplies,
-          as: "memberReplies",
-          attributes: [],
+    // Build aggregation pipeline
+    const pipeline = [
+      // Lookup comments count
+      {
+        $lookup: {
+          from: "comments",
+          localField: "_id",
+          foreignField: "member_id",
+          as: "comments",
         },
-      ],
+      },
+      // Lookup reviews count
+      {
+        $lookup: {
+          from: "reviewsandratings",
+          localField: "_id",
+          foreignField: "member_id",
+          as: "reviews",
+        },
+      },
+      // Lookup comment replies count
+      {
+        $lookup: {
+          from: "commentreplies",
+          localField: "_id",
+          foreignField: "member_id",
+          as: "commentReplies",
+        },
+      },
+      // Add computed fields
+      {
+        $addFields: {
+          commentsCount: { $size: "$comments" },
+          reviewsCount: { $size: "$reviews" },
+          commentRepliesCount: { $size: "$commentReplies" },
+        },
+      },
+      // Project fields
+      {
+        $project: {
+          _id: 1,
+          profile_pic: 1,
+          email: 1,
+          first_name: 1,
+          last_name: 1,
+          username: 1,
+          subscription_plan: 1,
+          status: 1,
+          createdAt: 1,
+          commentsCount: 1,
+          reviewsCount: 1,
+          commentRepliesCount: 1,
+        },
+      },
+      // Sort
+      { $sort: { [sortField]: sortOrder } },
+    ];
+
+    // Use $facet to get both count and data
+    pipeline.push({
+      $facet: {
+        total: [{ $count: "count" }],
+        users: [{ $skip: skip }, { $limit: itemsPerPage }],
+      },
     });
+
+    const result = await Members.aggregate(pipeline);
+    const totalItems = result[0]?.total[0]?.count || 0;
+    const users = result[0]?.users || [];
 
     res.status(200).json({
       currentPage,
-      totalPages: Math.ceil(count / itemsPerPage),
-      totalItems: count,
+      totalPages: Math.ceil(totalItems / itemsPerPage),
+      totalItems,
       users,
     });
   } catch (error) {
-    console.error("Error fetching paginated users:", error);
+    logger.error("Error fetching paginated users:", error);
     next(createError(500, error.message || "Error fetching users"));
   }
 };
 
 export const getMemberById = async (req, res, next) => {
   try {
-    const member = await Members.findByPk(req.params.id, {
-      attributes: [
-        "member_id",
-        "username",
-        "email",
-        "profile_pic",
-        "first_name",
-        "last_name",
-        "subscription_plan",
-        "role",
-        "status",
-        "createdAt",
-        "updatedAt",
-      ],
-      include: [
-        // Include Comments with associated Video info and Likes/Dislikes
-        {
-          model: Comments,
-          as: "memberComments",
-          attributes: [
-            "comment_id",
-            "content",
-            "createdAt",
-            [
-              sequelize.literal(`(
-                SELECT COUNT(*) 
-                FROM "LikesDislikes" AS ld
-                WHERE ld."target_id" = "memberComments"."comment_id"
-                AND ld."target_type" = 'comment'
-                AND ld."is_like" = true
-              )`),
-              "likes",
-            ],
-            [
-              sequelize.literal(`(
-                SELECT COUNT(*) 
-                FROM "LikesDislikes" AS ld
-                WHERE ld."target_id" = "memberComments"."comment_id"
-                AND ld."target_type" = 'comment'
-                AND ld."is_like" = false
-              )`),
-              "dislikes",
-            ],
-          ],
-          include: [
-            {
-              model: Videos,
-              as: "video",
-              attributes: ["video_id", "title"],
-            },
-          ],
-        },
-        // Include Reviews with associated Video info and Likes/Dislikes
-        {
-          model: ReviewsAndRatings,
-          as: "memberReviews",
-          attributes: [
-            "review_id",
-            "review_content",
-            "rating",
-            "createdAt",
-            [
-              sequelize.literal(`(
-                SELECT COUNT(*) 
-                FROM "LikesDislikes" AS ld
-                WHERE ld."target_id" = "memberReviews"."review_id"
-                AND ld."target_type" = 'review'
-                AND ld."is_like" = true
-              )`),
-              "likes",
-            ],
-            [
-              sequelize.literal(`(
-                SELECT COUNT(*) 
-                FROM "LikesDislikes" AS ld
-                WHERE ld."target_id" = "memberReviews"."review_id"
-                AND ld."target_type" = 'review'
-                AND ld."is_like" = false
-              )`),
-              "dislikes",
-            ],
-          ],
-          include: [
-            {
-              model: Videos,
-              as: "video",
-              attributes: ["video_id", "title"],
-            },
-          ],
-        },
-        // Include Comment Replies with Likes/Dislikes
-        {
-          model: CommentReplies,
-          as: "memberReplies",
-          attributes: [
-            "reply_id",
-            "reply_content",
-            "createdAt",
-            [
-              sequelize.literal(`(
-                SELECT COUNT(*) 
-                FROM "LikesDislikes" AS ld
-                WHERE ld."target_id" = "memberReplies"."reply_id"
-                AND ld."target_type" = 'comment_reply'
-                AND ld."is_like" = true
-              )`),
-              "likes",
-            ],
-            [
-              sequelize.literal(`(
-                SELECT COUNT(*) 
-                FROM "LikesDislikes" AS ld
-                WHERE ld."target_id" = "memberReplies"."reply_id"
-                AND ld."target_type" = 'comment_reply'
-                AND ld."is_like" = false
-              )`),
-              "dislikes",
-            ],
-          ],
-          include: [
-            {
-              model: Comments,
-              as: "comment",
-              attributes: ["comment_id", "content"],
-            },
-          ],
-        },
-        // Include User Login History
-        {
-          model: UserSessionHistory,
-          as: "userSessionHistory",
-          attributes: [
-            "session_id",
-            "login_time",
-            "logout_time",
-            "ip_address",
-            "device_info",
-          ],
-        },
-      ],
-      subQuery: false, // Ensures that subqueries are not used
-    });
+    const member = await Members.findById(req.params.id).select(
+      "username email profile_pic first_name last_name subscription_plan role status createdAt updatedAt"
+    );
 
     if (!member) {
       return next(createError(404, "Member not found"));
     }
 
-    res.status(200).json(member);
+    // Get related data
+    const [memberComments, memberReviews, memberReplies, userSessionHistory] =
+      await Promise.all([
+        Comments.find({ member_id: req.params.id })
+          .select("content createdAt")
+          .populate("video_id", "title"),
+        ReviewsAndRatings.find({ member_id: req.params.id })
+          .select("review_content rating createdAt")
+          .populate("video_id", "title"),
+        CommentReplies.find({ member_id: req.params.id })
+          .select("reply_content createdAt")
+          .populate("comment_id", "content"),
+        UserSessionHistory.find({ user_id: req.params.id }).select(
+          "login_time logout_time ip_address device_info"
+        ),
+      ]);
+
+    // Get likes/dislikes for comments, reviews, and replies using aggregation
+    const memberObj = member.toObject();
+    memberObj.memberComments = memberComments;
+    memberObj.memberReviews = memberReviews;
+    memberObj.memberReplies = memberReplies;
+    memberObj.userSessionHistory = userSessionHistory;
+
+    // Get likes/dislikes for comments
+    if (memberObj.memberComments && memberObj.memberComments.length > 0) {
+      const commentIds = memberObj.memberComments.map((c) => c._id);
+      const commentLikesDislikes = await LikesDislikes.aggregate([
+        {
+          $match: {
+            target_id: { $in: commentIds },
+            target_type: "comment",
+          },
+        },
+        {
+          $group: {
+            _id: "$target_id",
+            likes: { $sum: { $cond: ["$is_like", 1, 0] } },
+            dislikes: { $sum: { $cond: ["$is_like", 0, 1] } },
+          },
+        },
+      ]);
+
+      const likesMap = {};
+      commentLikesDislikes.forEach((item) => {
+        likesMap[item._id.toString()] = {
+          likes: item.likes,
+          dislikes: item.dislikes,
+        };
+      });
+
+      memberObj.memberComments = memberObj.memberComments.map((comment) => ({
+        ...comment,
+        likes: likesMap[comment._id.toString()]?.likes || 0,
+        dislikes: likesMap[comment._id.toString()]?.dislikes || 0,
+      }));
+    }
+
+    // Get likes/dislikes for reviews
+    if (memberObj.memberReviews && memberObj.memberReviews.length > 0) {
+      const reviewIds = memberObj.memberReviews.map((r) => r._id);
+      const reviewLikesDislikes = await LikesDislikes.aggregate([
+        {
+          $match: {
+            target_id: { $in: reviewIds },
+            target_type: "review",
+          },
+        },
+        {
+          $group: {
+            _id: "$target_id",
+            likes: { $sum: { $cond: ["$is_like", 1, 0] } },
+            dislikes: { $sum: { $cond: ["$is_like", 0, 1] } },
+          },
+        },
+      ]);
+
+      const likesMap = {};
+      reviewLikesDislikes.forEach((item) => {
+        likesMap[item._id.toString()] = {
+          likes: item.likes,
+          dislikes: item.dislikes,
+        };
+      });
+
+      memberObj.memberReviews = memberObj.memberReviews.map((review) => ({
+        ...review,
+        likes: likesMap[review._id.toString()]?.likes || 0,
+        dislikes: likesMap[review._id.toString()]?.dislikes || 0,
+      }));
+    }
+
+    // Get likes/dislikes for replies
+    if (memberObj.memberReplies && memberObj.memberReplies.length > 0) {
+      const replyIds = memberObj.memberReplies.map((r) => r._id);
+      const replyLikesDislikes = await LikesDislikes.aggregate([
+        {
+          $match: {
+            target_id: { $in: replyIds },
+            target_type: "comment_reply",
+          },
+        },
+        {
+          $group: {
+            _id: "$target_id",
+            likes: { $sum: { $cond: ["$is_like", 1, 0] } },
+            dislikes: { $sum: { $cond: ["$is_like", 0, 1] } },
+          },
+        },
+      ]);
+
+      const likesMap = {};
+      replyLikesDislikes.forEach((item) => {
+        likesMap[item._id.toString()] = {
+          likes: item.likes,
+          dislikes: item.dislikes,
+        };
+      });
+
+      memberObj.memberReplies = memberObj.memberReplies.map((reply) => ({
+        ...reply,
+        likes: likesMap[reply._id.toString()]?.likes || 0,
+        dislikes: likesMap[reply._id.toString()]?.dislikes || 0,
+      }));
+    }
+
+    res.status(200).json(memberObj);
   } catch (error) {
-    console.error("Error fetching member details:", error);
+    logger.error("Error fetching member details:", error);
     next(createError(500, error.message));
   }
 };
@@ -296,9 +307,7 @@ export const createMember = async (req, res, next) => {
 
     // Check if email or username already exists
     const existingMember = await Members.findOne({
-      where: {
-        [sequelize.Op.or]: [{ email }, { username }],
-      },
+      $or: [{ email }, { username }],
     });
     if (existingMember) {
       return next(createError(409, "Email or username already exists."));
@@ -315,45 +324,45 @@ export const createMember = async (req, res, next) => {
       member: newMember,
     });
   } catch (error) {
-    if (error.name === "SequelizeValidationError") {
+    if (error.name === "ValidationError") {
       return next(
         createError(400, {
           message: "Validation error",
-          details: error.errors.map((e) => e.message),
+          details: Object.values(error.errors).map((e) => e.message),
         })
       );
     }
+    logger.error("Error creating member:", error);
     next(createError(500, error.message));
   }
 };
 
-// export const updateMember = async (req, res, next) => {
-//   try {
-//     const member = await Members.findByPk(req.params.id);
-//     if (!member) return next(createError(404, "Member not found"));
-//     const updatedMember = await member.update(req.body);
-//     res.status(200).json(updatedMember);
-//   } catch (error) {
-//     next(createError(500, error.message));
-//   }
-// };
 export const updateMember = async (req, res, next) => {
   try {
-    console.log("Incoming Payload:", req.body); // Log the payload
+    const { updateMemberSchema } = validationSchemas;
+    const { error } = updateMemberSchema.validate(req.body);
+    if (error) {
+      return next(createError(400, error.details[0].message));
+    }
 
-    const member = await Members.findByPk(req.params.id); // Fetch the member by ID
-    if (!member) return next(createError(404, "Member not found")); // Handle not found
+    const updatedMember = await Members.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
 
-    // Update the member with the request body
-    const updatedMember = await member.update(req.body);
+    if (!updatedMember) {
+      return next(createError(404, "Member not found"));
+    }
 
-    console.log("Updated Member:", updatedMember); // Log the updated data
-
-    // Send the updated member back
-    res.status(200).json(updatedMember);
+    res.status(200).json({
+      success: true,
+      message: "Member updated successfully",
+      data: updatedMember,
+    });
   } catch (error) {
-    console.error("Error in updateMember:", error);
-    next(createError(500, error.message)); // Handle errors
+    logger.error("Error updating member:", error);
+    next(createError(500, error.message));
   }
 };
 
@@ -361,18 +370,23 @@ export const destroyMemberWithAssociations = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const member = await Members.findByPk(id);
+    const member = await Members.findByIdAndDelete(id);
     if (!member) {
       return next(createError(404, "Member not found."));
     }
 
-    await member.destroy(); // This triggers the cascading deletes
+    // Delete associated data
+    await Comments.deleteMany({ member_id: id });
+    await ReviewsAndRatings.deleteMany({ member_id: id });
+    await CommentReplies.deleteMany({ member_id: id });
+    await UserSessionHistory.deleteMany({ user_id: id });
+
     res.status(200).json({
       success: true,
       message: "Member and associated data deleted successfully.",
     });
   } catch (error) {
-    console.error("Error deleting member:", error.message);
+    logger.error("Error deleting member:", error);
     next(createError(500, "Failed to delete member."));
   }
 };

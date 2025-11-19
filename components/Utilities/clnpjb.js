@@ -1,44 +1,30 @@
-// clnpjb.js
 import cron from "node-cron";
-import { Op } from "sequelize";
-import sequelize from "../../db/db.js";
 import { TokenBlacklist, PasswordResets } from "../../models/index.js";
+import logger from "./logger.js";
 
 // Scheduled job to clean up expired tokens and password resets
 const clnupjb = cron.schedule("0 * * * *", async () => {
-  console.log("🕒 Starting cleanup job...");
+  logger.info("🕒 Starting cleanup job...");
 
   try {
-    await sequelize.transaction(async (t) => {
-      // Delete expired tokens using Sequelize ORM
-      const deletedTokens = await TokenBlacklist.destroy({
-        where: {
-          expires_at: {
-            [Op.lt]: new Date(), // Less than the current time
-          },
-        },
-        transaction: t,
-      });
-
-      // Delete expired password resets using Sequelize ORM
-      const deletedResets = await PasswordResets.destroy({
-        where: {
-          reset_token_expiration: {
-            [Op.lt]: new Date(),
-          },
-        },
-        transaction: t,
-      });
-
-      console.log(
-        `🧹 Cleanup completed: ${deletedTokens} token(s) removed from token_blacklist`
-      );
-      console.log(
-        `🧹 Cleanup completed: ${deletedResets} record(s) removed from password_resets`
-      );
+    // Delete expired tokens using Mongoose
+    const deletedTokens = await TokenBlacklist.deleteMany({
+      expires_at: { $lt: new Date() },
     });
+
+    // Delete expired password resets using Mongoose
+    const deletedResets = await PasswordResets.deleteMany({
+      reset_token_expiration: { $lt: new Date() },
+    });
+
+    logger.info(
+      `🧹 Cleanup completed: ${deletedTokens.deletedCount} token(s) removed from token_blacklist`
+    );
+    logger.info(
+      `🧹 Cleanup completed: ${deletedResets.deletedCount} record(s) removed from password_resets`
+    );
   } catch (err) {
-    console.error("❌ Cleanup job failed:", err);
+    logger.error("❌ Cleanup job failed:", err);
   }
 });
 

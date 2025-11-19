@@ -1,60 +1,32 @@
-import { DataTypes } from "sequelize";
+import mongoose from "mongoose";
 
-export default (sequelize) => {
-  const CommentReplies = sequelize.define(
-    "CommentReplies",
-    {
-      reply_id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      comment_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: "Comments",
-          key: "comment_id",
-        },
-        onUpdate: "CASCADE",
-        onDelete: "CASCADE",
-      },
-      member_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: "Members",
-          key: "member_id",
-        },
-        onDelete: "CASCADE",
-        onUpdate: "CASCADE",
-      },
-      reply_content: {
-        type: DataTypes.TEXT,
-        allowNull: false, // Replies must have content
-      },
+const commentReplySchema = new mongoose.Schema(
+  {
+    comment_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Comments",
+      required: true,
     },
-    {
-      tableName: "CommentReplies",
-      timestamps: true, // Automatically creates `createdAt` and `updatedAt`
-    }
-  );
+    member_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Members",
+      required: true,
+    },
+    reply_content: {
+      type: String,
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-  CommentReplies.associate = (models) => {
-    CommentReplies.belongsTo(models.Comments, {
-      foreignKey: "comment_id",
-      as: "comment",
-    });
-    CommentReplies.belongsTo(models.Members, {
-      foreignKey: "member_id",
-      as: "member",
-    });
-    CommentReplies.hasMany(models.LikesDislikes, {
-      foreignKey: "target_id",
-      as: "likesDislikes",
-      scope: { target_type: "comment_reply" },
-    });
-  };
+// Create indexes
+commentReplySchema.index({ comment_id: 1 });
+commentReplySchema.index({ member_id: 1 });
+commentReplySchema.index({ createdAt: -1 });
 
-  return CommentReplies;
-};
+const CommentReplies = mongoose.model("CommentReplies", commentReplySchema);
+
+export default CommentReplies;

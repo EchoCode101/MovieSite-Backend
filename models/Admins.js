@@ -1,73 +1,59 @@
-import { DataTypes } from "sequelize";
+import mongoose from "mongoose";
 
-export default (sequelize) => {
-  const Admins = sequelize.define(
-    "Admins",
-    {
-      id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      username: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-      },
-      email: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-        unique: true, // Ensure unique email
-        validate: {
-          isEmail: true, // Validate email format
-        },
-      },
-      password: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-      },
-      first_name: {
-        type: DataTypes.STRING(255),
-        allowNull: true, // Not required on registration
-      },
-      last_name: {
-        type: DataTypes.STRING(255),
-        allowNull: true, // Not required on registration
-      },
-      role: {
-        type: DataTypes.STRING(50),
-        defaultValue: "admin", // Default role
-      },
-      status: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: true, // Active by default
-      },
-      lastLogin: {
-        type: DataTypes.DATE,
-      },
-      phoneNumber: {
-        type: DataTypes.STRING,
-        allowNull: true,
-        validate: {
-          is: /^[0-9]{10,15}$/, // Basic phone number validation
-        },
-      },
-      profileImage: {
-        type: DataTypes.STRING,
-        allowNull: true, // Optional profile picture
-      },
+const adminSchema = new mongoose.Schema(
+  {
+    username: {
+      type: String,
+      required: true,
+      maxlength: 255,
     },
-    {
-      tableName: "Admins", // Ensure correct table name
-      timestamps: true,
-      indexes: [
-        {
-          name: "admin_email_idx",
-          unique: true,
-          fields: ["email"], // Create index on email
-        },
-      ],
-    }
-  );
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: [/^\S+@\S+\.\S+$/, "Please provide a valid email"],
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    first_name: {
+      type: String,
+      maxlength: 255,
+    },
+    last_name: {
+      type: String,
+      maxlength: 255,
+    },
+    role: {
+      type: String,
+      default: "admin",
+      maxlength: 50,
+    },
+    status: {
+      type: Boolean,
+      default: true,
+    },
+    lastLogin: {
+      type: Date,
+    },
+    phoneNumber: {
+      type: String,
+      match: [/^[0-9]{10,15}$/, "Please provide a valid phone number"],
+    },
+    profileImage: {
+      type: String,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-  return Admins;
-};
+// Index is automatically created by unique: true in field definition
+
+const Admins = mongoose.model("Admins", adminSchema);
+
+export default Admins;

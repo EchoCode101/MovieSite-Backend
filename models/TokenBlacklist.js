@@ -1,30 +1,26 @@
-import { DataTypes } from "sequelize";
+import mongoose from "mongoose";
 
-export default (sequelize) => {
-  const TokenBlacklist = sequelize.define(
-    "TokenBlacklist",
-    {
-      token: {
-        type: DataTypes.TEXT, // Supports tokens up to several KB
-        allowNull: false,
-        primaryKey: true, // Use token as primary key if unique
-      },
-      expires_at: {
-        type: DataTypes.DATE,
-        allowNull: false,
-      },
+const tokenBlacklistSchema = new mongoose.Schema(
+  {
+    token: {
+      type: String,
+      required: true,
     },
-    {
-      tableName: "TokenBlacklist",
-      timestamps: true,
-      indexes: [
-        {
-          name: "expires_at_idx",
-          fields: ["expires_at"], // Create index on email
-        },
-      ],
-    }
-  );
+    expires_at: {
+      type: Date,
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-  return TokenBlacklist;
-};
+// Index is automatically created by unique: true in field definition
+
+// TTL index to auto-delete expired tokens
+tokenBlacklistSchema.index({ expires_at: 1 }, { expireAfterSeconds: 0 });
+
+const TokenBlacklist = mongoose.model("TokenBlacklist", tokenBlacklistSchema);
+
+export default TokenBlacklist;

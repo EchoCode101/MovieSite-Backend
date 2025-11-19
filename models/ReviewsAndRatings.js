@@ -1,70 +1,41 @@
-import { DataTypes } from "sequelize";
+import mongoose from "mongoose";
 
-export default (sequelize) => {
-  const ReviewsAndRatings = sequelize.define(
-    "ReviewsAndRatings",
-    {
-      review_id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      video_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: "Videos",
-          key: "video_id",
-        },
-        onUpdate: "CASCADE",
-        onDelete: "CASCADE",
-      },
-      member_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: "Members",
-          key: "member_id",
-        },
-        onUpdate: "CASCADE",
-        onDelete: "CASCADE",
-      },
-      rating: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        validate: {
-          min: 1,
-          max: 10, // Ensure rating is between 1 and 10
-          isInt: true,
-        },
-      },
-      review_content: {
-        type: DataTypes.TEXT,
-        allowNull: true, // Optional content
-      },
+const reviewSchema = new mongoose.Schema(
+  {
+    video_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Videos",
+      required: true,
     },
-    {
-      tableName: "ReviewsAndRatings",
-      timestamps: true, // Manages `createdAt` and `updatedAt`
-    }
-  );
+    member_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Members",
+      required: true,
+    },
+    rating: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 10,
+    },
+    review_content: {
+      type: String,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-  // Associations
-  ReviewsAndRatings.associate = (models) => {
-    ReviewsAndRatings.belongsTo(models.Videos, {
-      foreignKey: "video_id",
-      as: "video", // Correct alias
-    });
+// Create indexes
+reviewSchema.index({ video_id: 1 });
+reviewSchema.index({ member_id: 1 });
+reviewSchema.index({ rating: 1 });
+reviewSchema.index({ createdAt: -1 });
 
-    ReviewsAndRatings.belongsTo(models.Members, {
-      foreignKey: "member_id",
-      as: "member",
-    });
-    ReviewsAndRatings.hasMany(models.LikesDislikes, {
-      foreignKey: "target_id",
-      scope: { target_type: "review" },
-      as: "likesDislikes",
-    });
-  };
-  return ReviewsAndRatings;
-};
+// Ensure one review per user per video
+reviewSchema.index({ video_id: 1, member_id: 1 }, { unique: true });
+
+const ReviewsAndRatings = mongoose.model("ReviewsAndRatings", reviewSchema);
+
+export default ReviewsAndRatings;

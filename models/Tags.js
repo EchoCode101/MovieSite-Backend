@@ -1,28 +1,21 @@
-import { DataTypes } from "sequelize";
+import mongoose from "mongoose";
 
-export default (sequelize) => {
-  const Tags = sequelize.define("Tags", {
-    tag_id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
+const tagSchema = new mongoose.Schema(
+  {
     tag_name: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
+      type: String,
+      required: true,
       unique: true,
+      maxlength: 100,
     },
-  });
+  },
+  {
+    timestamps: true,
+  }
+);
 
-  Tags.associate = (models) => {
-    Tags.belongsToMany(models.Videos, {
-      through: models.VideoTags,
-      foreignKey: "tag_id",
-      onDelete: "CASCADE",
-      onUpdate: "CASCADE",
-      as: "videos",
-    });
-  };
+// Index is automatically created by unique: true in field definition
 
-  return Tags;
-};
+const Tags = mongoose.model("Tags", tagSchema);
+
+export default Tags;

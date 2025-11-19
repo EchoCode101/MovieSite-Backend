@@ -17,10 +17,8 @@ export const restPassword = async (req, res, next) => {
   try {
     // Find the password reset entry by token
     const resetEntry = await PasswordResets.findOne({
-      where: {
-        reset_token: token,
-        reset_token_expiration: { $gt: now },
-      },
+      reset_token: token,
+      reset_token_expiration: { $gt: now },
     });
 
     if (!resetEntry) {
@@ -28,14 +26,13 @@ export const restPassword = async (req, res, next) => {
     }
     // Hash the new password
     const hashedPassword = await hashPassword(password);
-    if (resetEntry.user_type === "member") {
-      await Members.update(
-        { password: hashedPassword },
-        { where: { id: resetEntry.user_id } }
-      );
+    if (resetEntry.user_type === "user") {
+      await Members.findByIdAndUpdate(resetEntry.user_id, {
+        password: hashedPassword,
+      });
     }
     // Clear the reset token after it has been used
-    await PasswordResets.destroy({ where: { reset_token: token } });
+    await PasswordResets.deleteOne({ reset_token: token });
     res.status(200).json({ message: "Password has been successfully reset." });
   } catch (error) {
     logger.error("Error resetting password:", error);

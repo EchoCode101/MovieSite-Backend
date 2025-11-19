@@ -1,93 +1,63 @@
-import { DataTypes } from "sequelize";
+import mongoose from "mongoose";
 
-export default (sequelize) => {
-  const Members = sequelize.define(
-    "Members",
-    {
-      member_id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      username: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-        unique: true, // Ensures username is unique
-      },
-      email: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-        unique: true, // Ensures email uniqueness
-        validate: {
-          isEmail: true, // Email format validation
-        },
-      },
-      password: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-      },
-      subscription_plan: {
-        type: DataTypes.STRING(255),
-        defaultValue: "Free", // Default subscription
-      },
-      role: {
-        type: DataTypes.STRING(255),
-        defaultValue: "user", // Default role
-      },
-      profile_pic: {
-        type: DataTypes.TEXT,
-        allowNull: true, // Optional profile picture
-      },
-      first_name: {
-        type: DataTypes.STRING(255),
-        allowNull: true, // Not required on registration
-      },
-      last_name: {
-        type: DataTypes.STRING(255),
-        allowNull: true, // Not required on registration
-      },
-      status: {
-        type: DataTypes.STRING(255),
-        defaultValue: "Active", // Default active status
-      },
-      lastLogin: {
-        type: DataTypes.DATE, // Track last login date
-        allowNull: true,
-      },
+const memberSchema = new mongoose.Schema(
+  {
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      maxlength: 255,
+      trim: true,
     },
-    {
-      tableName: "Members",
-      timestamps: true, // Adds createdAt & updatedAt
-      indexes: [
-        {
-          name: "email_idx",
-          unique: true,
-          fields: ["email"], // Create index on email
-        },
-      ],
-    }
-  );
-  Members.associate = (models) => {
-    Members.hasMany(models.ReviewsAndRatings, {
-      foreignKey: "member_id",
-      as: "memberReviews",
-      onDelete: "CASCADE",
-    });
-    Members.hasMany(models.Comments, {
-      foreignKey: "member_id",
-      as: "memberComments",
-      onDelete: "CASCADE",
-    });
-    Members.hasMany(models.CommentReplies, {
-      foreignKey: "member_id",
-      as: "memberReplies",
-      onDelete: "CASCADE",
-    });
-    Members.hasMany(models.UserSessionHistory, {
-      foreignKey: "user_id",
-      as: "userSessionHistory",
-      onDelete: "CASCADE",
-    });
-  };
-  return Members;
-};
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: [/^\S+@\S+\.\S+$/, "Please provide a valid email"],
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    subscription_plan: {
+      type: String,
+      default: "Free",
+      maxlength: 255,
+    },
+    role: {
+      type: String,
+      default: "user",
+      maxlength: 255,
+    },
+    profile_pic: {
+      type: String,
+    },
+    first_name: {
+      type: String,
+      maxlength: 255,
+    },
+    last_name: {
+      type: String,
+      maxlength: 255,
+    },
+    status: {
+      type: String,
+      default: "Active",
+      maxlength: 255,
+    },
+    lastLogin: {
+      type: Date,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Indexes are automatically created by unique: true in field definitions
+
+const Members = mongoose.model("Members", memberSchema);
+
+export default Members;

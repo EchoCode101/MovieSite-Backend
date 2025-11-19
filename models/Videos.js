@@ -1,121 +1,98 @@
-import { DataTypes } from "sequelize";
+import mongoose from "mongoose";
 
-export default (sequelize) => {
-  const Videos = sequelize.define(
-    "Videos",
-    {
-      video_id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      title: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-      },
-      description: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      video_url: {
-        type: DataTypes.TEXT,
-        allowNull: false,
-      },
-      duration: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-      },
-      resolution: {
-        type: DataTypes.STRING(20),
-        allowNull: true,
-      },
-      file_size: {
-        type: DataTypes.BIGINT,
-        allowNull: true,
-      },
-      video_url_encrypted: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      access_level: {
-        type: DataTypes.STRING(50),
-        defaultValue: "Free",
-      },
-      category: {
-        type: DataTypes.STRING(100),
-        allowNull: true,
-      },
-      language: {
-        type: DataTypes.STRING(50),
-        allowNull: true,
-      },
-      thumbnail_url: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      age_restriction: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
-      },
-      published: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: true,
-      },
-      video_format: {
-        type: DataTypes.STRING(50),
-        allowNull: true,
-      },
-      license_type: {
-        type: DataTypes.STRING(100),
-        allowNull: true,
-      },
-      seo_title: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-      },
-      seo_description: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      custom_metadata: {
-        type: DataTypes.JSONB,
-        allowNull: true,
-      },
+const videoSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      maxlength: 255,
     },
-    {
-      tableName: "Videos",
-      timestamps: true, // Sequelize will handle createdAt & updatedAt
-    }
-  );
-  Videos.associate = (models) => {
-    Videos.belongsToMany(models.Tags, {
-      through: models.VideoTags, // Correctly reference the through model
-      foreignKey: "video_id",
-      otherKey: "tag_id",
-      as: "tags",
-    });
-    Videos.hasMany(models.ReviewsAndRatings, {
-      foreignKey: "video_id",
-      as: "reviews",
-    });
+    description: {
+      type: String,
+    },
+    video_url: {
+      type: String,
+      required: true,
+    },
+    duration: {
+      type: Number,
+    },
+    resolution: {
+      type: String,
+      maxlength: 20,
+    },
+    file_size: {
+      type: Number,
+    },
+    video_url_encrypted: {
+      type: String,
+    },
+    access_level: {
+      type: String,
+      default: "Free",
+      maxlength: 50,
+    },
+    category: {
+      type: String,
+      maxlength: 100,
+    },
+    language: {
+      type: String,
+      maxlength: 50,
+    },
+    thumbnail_url: {
+      type: String,
+    },
+    age_restriction: {
+      type: Boolean,
+      default: false,
+    },
+    published: {
+      type: Boolean,
+      default: true,
+    },
+    video_format: {
+      type: String,
+      maxlength: 50,
+    },
+    license_type: {
+      type: String,
+      maxlength: 100,
+    },
+    seo_title: {
+      type: String,
+      maxlength: 255,
+    },
+    seo_description: {
+      type: String,
+    },
+    custom_metadata: {
+      type: mongoose.Schema.Types.Mixed,
+    },
+    tags: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Tags",
+      },
+    ],
+    created_by: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Members",
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-    Videos.hasMany(models.Comments, {
-      foreignKey: "video_id",
-      as: "comments",
-    });
-    // Correctly associate VideoMetrics
-    Videos.hasOne(models.VideoMetrics, {
-      foreignKey: "video_id",
-      as: "metrics", // Alias must match the include in controller
-    });
+// Create indexes for better query performance
+videoSchema.index({ title: 1 });
+videoSchema.index({ category: 1 });
+videoSchema.index({ published: 1 });
+videoSchema.index({ createdAt: -1 });
+videoSchema.index({ updatedAt: -1 });
+videoSchema.index({ created_by: 1 });
 
-    Videos.hasMany(models.LikesDislikes, {
-      foreignKey: "target_id",
-      constraints: false,
-      scope: { target_type: "video" },
-      as: "likesDislikes",
-    });
-  };
+const Videos = mongoose.model("Videos", videoSchema);
 
-  return Videos;
-};
+export default Videos;

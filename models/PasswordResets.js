@@ -1,44 +1,44 @@
-import { DataTypes } from "sequelize";
+import mongoose from "mongoose";
 
-export default (sequelize) => {
-  const PasswordResets = sequelize.define(
-    "PasswordResets",
-    {
-      id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      reset_token: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-        unique: true, // Ensure tokens are unique
-      },
-      reset_token_expiration: {
-        type: DataTypes.DATE,
-        allowNull: false, // Required to track expiry
-      },
-      user_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false, // Foreign key to Members
-      },
-      user_type: {
-        type: DataTypes.STRING(10),
-        allowNull: false,
-        validate: {
-          isIn: [["admin", "user"]], // Ensure a valid user type
-        },
-      },
-      used_at: {
-        type: DataTypes.DATE,
-        allowNull: true, // Tracks when reset is used
-      },
+const passwordResetSchema = new mongoose.Schema(
+  {
+    reset_token: {
+      type: String,
+      required: true,
+      unique: true,
+      maxlength: 255,
     },
-    {
-      tableName: "PasswordResets",
-      timestamps: true, // Adds createdAt & updatedAt
-    }
-  );
+    reset_token_expiration: {
+      type: Date,
+      required: true,
+    },
+    user_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+    },
+    user_type: {
+      type: String,
+      required: true,
+      enum: ["admin", "user"],
+    },
+    used_at: {
+      type: Date,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-  return PasswordResets;
-};
+// Index is automatically created by unique: true in field definition
+passwordResetSchema.index({ user_id: 1, user_type: 1 });
+
+// TTL index to auto-delete expired tokens after 24 hours
+passwordResetSchema.index(
+  { reset_token_expiration: 1 },
+  { expireAfterSeconds: 0 }
+);
+
+const PasswordResets = mongoose.model("PasswordResets", passwordResetSchema);
+
+export default PasswordResets;

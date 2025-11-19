@@ -5,7 +5,6 @@ import {
   VideoMetrics,
 } from "../../models/index.js";
 import createError from "http-errors";
-import sequelize from "sequelize";
 import validationSchemas from "../Utilities/validationSchemas.js";
 const { createVideoSchema } = validationSchemas;
 import { v2 as cloudinary } from "cloudinary";
@@ -18,10 +17,12 @@ import axios from "axios";
 // Get all videos
 export const getAllVideos = async (req, res, next) => {
   try {
-    const videos = await Videos.findAll({
-      order: [["updatedAt", "DESC"]],
+    const videos = await Videos.find().sort({ updatedAt: -1 });
+    res.status(200).json({
+      success: true,
+      message: "Videos retrieved successfully",
+      data: videos,
     });
-    res.status(200).json(videos);
   } catch (error) {
     next(createError(500, error.message));
   }
@@ -30,11 +31,15 @@ export const getAllVideos = async (req, res, next) => {
 // Get video by ID
 export const getVideoById = async (req, res, next) => {
   try {
-    const video = await Videos.findByPk(req.params.id);
+    const video = await Videos.findById(req.params.id);
     if (!video) {
       return next(createError(404, "Video not found"));
     }
-    res.status(200).json(video);
+    res.status(200).json({
+      success: true,
+      message: "Video retrieved successfully",
+      data: video,
+    });
   } catch (error) {
     next(createError(500, error.message));
   }
@@ -49,83 +54,119 @@ export const getPaginatedVideos = async (req, res, next) => {
       order = "DESC", // Default sort order
     } = req.query;
 
-    const offset = (page - 1) * limit;
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const sortOrder = order === "ASC" ? 1 : -1;
 
-    // Dynamic order logic
-    const orderClause = (() => {
-      if (sort === "views_count") {
-        return [[{ model: VideoMetrics, as: "metrics" }, "views_count", order]];
-      } else if (sort === "likes.length") {
-        return [
-          [
-            sequelize.literal(`(
-              SELECT COUNT(*)
-              FROM "LikesDislikes"
-              WHERE "LikesDislikes"."target_id" = "Videos"."video_id"
-              AND "LikesDislikes"."target_type" = 'video'
-              AND "LikesDislikes"."is_like" = true
-            )`),
-            order,
-          ],
-        ];
-      } else if (sort === "dislikes.length") {
-        return [
-          [
-            sequelize.literal(`(
-              SELECT COUNT(*)
-              FROM "LikesDislikes"
-              WHERE "LikesDislikes"."target_id" = "Videos"."video_id"
-              AND "LikesDislikes"."target_type" = 'video'
-              AND "LikesDislikes"."is_like" = false
-            )`),
-            order,
-          ],
-        ];
-      } else if (sort === "rating") {
-        return [
-          [
-            sequelize.literal(`(
-              SELECT AVG("rating")
-              FROM "ReviewsAndRatings"
-              WHERE "ReviewsAndRatings"."video_id" = "Videos"."video_id"
-            )`),
-            order,
-          ],
-        ];
-      }
-      return [[sort, order]]; // Default sorting
-    })();
-
-    // Fetch paginated data
-    const { count, rows: videos } = await Videos.findAndCountAll({
-      limit: parseInt(limit, 10),
-      offset: parseInt(offset, 10),
-      order: orderClause,
-      include: [
-        {
-          model: VideoMetrics,
+    // Build aggregation pipeline
+    const pipeline = [
+      {
+        $lookup: {
+          from: "videometrics",
+          localField: "_id",
+          foreignField: "video_id",
           as: "metrics",
-          attributes: ["views_count", "shares_count", "favorites_count"],
         },
-      ],
-      attributes: {
-        include: [
-          [
-            sequelize.literal(`ROUND((
-        SELECT AVG("rating")
-        FROM "ReviewsAndRatings"
-        WHERE "ReviewsAndRatings"."video_id" = "Videos"."video_id"
-      ), 1)`),
-            "average_rating",
-          ],
-        ],
       },
-    });
+      {
+        $unwind: {
+          path: "$metrics",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "likesdislikes",
+          let: { videoId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$target_id", "$$videoId"] },
+                    { $eq: ["$target_type", "video"] },
+                    { $eq: ["$is_like", true] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "likes",
+        },
+      },
+      {
+        $lookup: {
+          from: "likesdislikes",
+          let: { videoId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$target_id", "$$videoId"] },
+                    { $eq: ["$target_type", "video"] },
+                    { $eq: ["$is_like", false] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "dislikes",
+        },
+      },
+      {
+        $lookup: {
+          from: "reviewsandratings",
+          localField: "_id",
+          foreignField: "video_id",
+          as: "reviews",
+        },
+      },
+      {
+        $addFields: {
+          likes_count: { $size: "$likes" },
+          dislikes_count: { $size: "$dislikes" },
+          average_rating: {
+            $cond: {
+              if: { $gt: [{ $size: "$reviews" }, 0] },
+              then: { $round: [{ $avg: "$reviews.rating" }, 1] },
+              else: null,
+            },
+          },
+        },
+      },
+    ];
+
+    // Add sorting
+    let sortField = sort;
+    if (sort === "views_count") {
+      sortField = "metrics.views_count";
+    } else if (sort === "likes.length") {
+      sortField = "likes_count";
+    } else if (sort === "dislikes.length") {
+      sortField = "dislikes_count";
+    } else if (sort === "rating") {
+      sortField = "average_rating";
+    }
+
+    pipeline.push({ $sort: { [sortField]: sortOrder } });
+    pipeline.push({ $skip: skip });
+    pipeline.push({ $limit: parseInt(limit, 10) });
+
+    // Get total count
+    const countPipeline = [
+      ...pipeline.slice(0, -2), // Remove skip and limit
+      { $count: "total" },
+    ];
+    const countResult = await Videos.aggregate(countPipeline);
+    const totalItems = countResult[0]?.total || 0;
+
+    // Get videos
+    const videos = await Videos.aggregate(pipeline);
 
     res.status(200).json({
       currentPage: parseInt(page, 10),
-      totalPages: Math.ceil(count / limit),
-      totalItems: count,
+      totalPages: Math.ceil(totalItems / parseInt(limit, 10)),
+      totalItems,
       videos,
     });
   } catch (error) {
@@ -137,64 +178,76 @@ export const getPaginatedVideos = async (req, res, next) => {
 // Get videos with likes/dislikes and their associated member information
 export const getVideosWithLikesDislikes = async (req, res, next) => {
   try {
-    const videos = await Videos.findAll({
-      attributes: [
-        "video_id",
-        "title",
-        "description",
-        "video_url",
-        "duration",
-        "resolution",
-        "file_size",
-        "video_url_encrypted",
-        "access_level",
-        "category",
-        "language",
-        "thumbnail_url",
-        "age_restriction",
-        "published",
-        "video_format",
-        "license_type",
-        "seo_title",
-        "seo_description",
-        "custom_metadata",
-        "createdAt",
-        "updatedAt",
-        [
-          LikesDislikes.sequelize.literal(`
-            (SELECT COUNT(*) FROM "LikesDislikes" 
-             WHERE "LikesDislikes"."target_id" = "Videos"."video_id" 
-             AND "LikesDislikes"."target_type" = 'video' 
-             AND "LikesDislikes"."is_like" = true)
-          `),
-          "likes",
-        ],
-        [
-          LikesDislikes.sequelize.literal(`
-            (SELECT COUNT(*) FROM "LikesDislikes" 
-             WHERE "LikesDislikes"."target_id" = "Videos"."video_id" 
-             AND "LikesDislikes"."target_type" = 'video' 
-             AND "LikesDislikes"."is_like" = false)
-          `),
-          "dislikes",
-        ],
-      ],
-      include: [
-        {
-          model: LikesDislikes,
-          as: "likesDislikes",
-          attributes: ["is_like"],
-          include: [
+    const videos = await Videos.aggregate([
+      {
+        $lookup: {
+          from: "likesdislikes",
+          let: { videoId: "$_id" },
+          pipeline: [
             {
-              model: Members,
-              as: "user",
-              attributes: ["member_id", "first_name", "last_name"],
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$target_id", "$$videoId"] },
+                    { $eq: ["$target_type", "video"] },
+                  ],
+                },
+              },
+            },
+            {
+              $lookup: {
+                from: "members",
+                localField: "user_id",
+                foreignField: "_id",
+                as: "user",
+              },
+            },
+            {
+              $unwind: {
+                path: "$user",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            {
+              $project: {
+                is_like: 1,
+                user: {
+                  _id: "$user._id",
+                  first_name: "$user.first_name",
+                  last_name: "$user.last_name",
+                },
+              },
             },
           ],
+          as: "likesDislikes",
         },
-      ],
-      order: [["createdAt", "DESC"]],
-    });
+      },
+      {
+        $addFields: {
+          likes: {
+            $size: {
+              $filter: {
+                input: "$likesDislikes",
+                as: "item",
+                cond: { $eq: ["$$item.is_like", true] },
+              },
+            },
+          },
+          dislikes: {
+            $size: {
+              $filter: {
+                input: "$likesDislikes",
+                as: "item",
+                cond: { $eq: ["$$item.is_like", false] },
+              },
+            },
+          },
+        },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
 
     res.status(200).json(videos);
   } catch (error) {
@@ -281,15 +334,16 @@ export const uploadVideoToCloudinary = async (req, res, next) => {
 // Update an existing video
 export const updateVideo = async (req, res, next) => {
   try {
-    const video = await Videos.findByPk(req.params.id);
+    const video = await Videos.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
     if (!video) {
       return next(createError(404, "Video not found"));
     }
-
-    const updatedVideo = await video.update(req.body);
-    res.status(200).json(updatedVideo);
+    res.status(200).json(video);
   } catch (error) {
-    if (error.message.includes("unique constraint")) {
+    if (error.code === 11000) {
       next(createError(400, "Title or Video URL already exists"));
     } else {
       next(createError(500, error.message));
@@ -300,12 +354,10 @@ export const updateVideo = async (req, res, next) => {
 // Delete a video
 export const deleteVideo = async (req, res, next) => {
   try {
-    const video = await Videos.findByPk(req.params.id);
+    const video = await Videos.findByIdAndDelete(req.params.id);
     if (!video) {
       return next(createError(404, "Video not found"));
     }
-
-    await video.destroy();
     res.status(200).json({ message: "Video deleted successfully" });
   } catch (error) {
     next(createError(500, error.message));
@@ -313,7 +365,7 @@ export const deleteVideo = async (req, res, next) => {
 };
 
 // Add a new video to the database using Sequelize
-export const addVideoToDatabase = async (req, res) => {
+export const addVideoToDatabase = async (req, res, next) => {
   const {
     title,
     description,
@@ -334,10 +386,7 @@ export const addVideoToDatabase = async (req, res) => {
   try {
     // Validate required fields
     if (!title || !video_url) {
-      return res.status(400).json({
-        success: false,
-        message: "Title and video URL are required.",
-      });
+      return next(createError(400, "Title and video URL are required."));
     }
 
     // Ensure valid values for optional fields
@@ -358,20 +407,17 @@ export const addVideoToDatabase = async (req, res) => {
       gallery: gallery ? JSON.stringify(gallery) : null,
     };
 
-    // Use Sequelize to create a new video entry
+    // Use Mongoose to create a new video entry
     const newVideo = await Videos.create(sanitizedData);
 
     res.status(201).json({
       success: true,
       message: "Video added to the database successfully.",
-      video: newVideo,
+      data: newVideo,
     });
   } catch (error) {
-    console.error("Error adding video to the database:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to add video to the database.",
-    });
+    logger.error("Error adding video to the database:", error);
+    next(createError(500, "Failed to add video to the database."));
   }
 };
 

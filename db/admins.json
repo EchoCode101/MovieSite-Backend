@@ -1,0 +1,23 @@
+[
+  {
+    "username": "admin",
+    "email": "admin@vidstie.com",
+    "password": "$2b$10$rQ8K8K8K8K8K8K8K8K8K8O8K8K8K8K8K8K8K8K8K8K8K8K8K8K",
+    "first_name": "Admin",
+    "last_name": "User",
+    "role": "admin",
+    "status": true,
+    "phoneNumber": "1234567890"
+  },
+  {
+    "username": "superadmin",
+    "email": "superadmin@vidstie.com",
+    "password": "$2b$10$rQ8K8K8K8K8K8K8K8K8K8O8K8K8K8K8K8K8K8K8K8K8K8K8K8K",
+    "first_name": "Super",
+    "last_name": "Admin",
+    "role": "admin",
+    "status": true,
+    "phoneNumber": "0987654321"
+  }
+]
+

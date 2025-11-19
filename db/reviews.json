@@ -1,0 +1,93 @@
+[
+  {
+    "video_index": 0,
+    "member_index": 0,
+    "rating": 9,
+    "review_content": "Excellent introduction to web development. Very comprehensive and easy to follow."
+  },
+  {
+    "video_index": 0,
+    "member_index": 1,
+    "rating": 8,
+    "review_content": "Good tutorial for beginners. Could use more practical examples."
+  },
+  {
+    "video_index": 1,
+    "member_index": 2,
+    "rating": 10,
+    "review_content": "Best React patterns tutorial I've seen. Highly recommended!"
+  },
+  {
+    "video_index": 1,
+    "member_index": 3,
+    "rating": 9,
+    "review_content": "Advanced concepts explained clearly. Great work!"
+  },
+  {
+    "video_index": 2,
+    "member_index": 4,
+    "rating": 8,
+    "review_content": "Node.js backend development is well covered. More examples would help."
+  },
+  {
+    "video_index": 2,
+    "member_index": 5,
+    "rating": 7,
+    "review_content": "Good content but could be more detailed in some areas."
+  },
+  {
+    "video_index": 3,
+    "member_index": 6,
+    "rating": 9,
+    "review_content": "MongoDB design patterns are explained perfectly. Very helpful!"
+  },
+  {
+    "video_index": 4,
+    "member_index": 7,
+    "rating": 8,
+    "review_content": "ES6+ features are well demonstrated. Great tutorial!"
+  },
+  {
+    "video_index": 5,
+    "member_index": 8,
+    "rating": 10,
+    "review_content": "Docker containerization made simple. Excellent explanation!"
+  },
+  {
+    "video_index": 6,
+    "member_index": 9,
+    "rating": 9,
+    "review_content": "RESTful API design best practices are spot on. Very useful!"
+  },
+  {
+    "video_index": 7,
+    "member_index": 0,
+    "rating": 8,
+    "review_content": "GraphQL fundamentals are well covered. Good introduction!"
+  },
+  {
+    "video_index": 8,
+    "member_index": 1,
+    "rating": 9,
+    "review_content": "TypeScript guide is comprehensive. Helped me migrate my project!"
+  },
+  {
+    "video_index": 9,
+    "member_index": 2,
+    "rating": 10,
+    "review_content": "AWS cloud services overview is excellent. Very detailed!"
+  },
+  {
+    "video_index": 3,
+    "member_index": 3,
+    "rating": 7,
+    "review_content": "Good content but could use more real-world examples."
+  },
+  {
+    "video_index": 4,
+    "member_index": 4,
+    "rating": 8,
+    "review_content": "JavaScript ES6+ features are well explained. Great tutorial!"
+  }
+]
+

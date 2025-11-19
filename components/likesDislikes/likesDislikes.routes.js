@@ -1,5 +1,5 @@
 import express from "express";
-
+import { authenticateToken } from "../auth/authMiddleware.js";
 import {
   addOrUpdateLikeDislike,
   getLikesDislikesCount,
@@ -8,7 +8,7 @@ import {
 
 const router = express.Router();
 
-router.post("/", addOrUpdateLikeDislike);
+router.post("/", authenticateToken, addOrUpdateLikeDislike);
 router.get("/reviews-with-likes-dislikes", getReviewsWithLikesDislikes);
 router.get("/:target_id/:target_type", getLikesDislikesCount);
 

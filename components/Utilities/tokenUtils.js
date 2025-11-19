@@ -12,7 +12,7 @@ const {
 export const generateAccessToken = (user) => {
   return jwt.sign(
     {
-      id: user.member_id || user.id,
+      id: user._id || user.id,
       email: user.email,
       username: user.username,
       first_name: user.first_name,
@@ -20,7 +20,7 @@ export const generateAccessToken = (user) => {
       role: user.role,
       status: user.status || "active",
       lastLogin: user.lastLogin,
-      profileImage: user.profileImage || null,
+      profileImage: user.profileImage || user.profile_pic || null,
     },
     JWT_SECRET,
     { expiresIn: TOKEN_EXPIRY_TIME }
@@ -31,7 +31,7 @@ export const generateAccessToken = (user) => {
 export const generateRefreshToken = (user) => {
   return jwt.sign(
     {
-      id: user.member_id || user.id,
+      id: user._id || user.id,
       email: user.email,
       username: user.username,
       first_name: user.first_name,
@@ -39,7 +39,7 @@ export const generateRefreshToken = (user) => {
       role: user.role,
       status: user.status || "active",
       lastLogin: user.lastLogin,
-      profileImage: user.profileImage || null,
+      profileImage: user.profileImage || user.profile_pic || null,
     },
     REFRESH_SECRET,
     { expiresIn: REFRESH_TOKEN_EXPIRY_TIME }

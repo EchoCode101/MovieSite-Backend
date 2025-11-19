@@ -1,28 +1,29 @@
-import { DataTypes } from "sequelize";
+import mongoose from "mongoose";
 
-export default (sequelize) => {
-  const VideoTags = sequelize.define("VideoTags", {
+const videoTagsSchema = new mongoose.Schema(
+  {
     video_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: "Videos",
-        key: "video_id",
-      },
-      onDelete: "CASCADE",
-      onUpdate: "CASCADE",
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Videos",
+      required: true,
     },
     tag_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: "Tags",
-        key: "tag_id",
-      },
-      onDelete: "CASCADE",
-      onUpdate: "CASCADE",
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Tags",
+      required: true,
     },
-  });
+  },
+  {
+    timestamps: true,
+  }
+);
 
-  return VideoTags;
-};
+// Create compound unique index to prevent duplicate video-tag pairs
+videoTagsSchema.index({ video_id: 1, tag_id: 1 }, { unique: true });
+
+// Create indexes for better query performance
+videoTagsSchema.index({ tag_id: 1 });
+
+const VideoTags = mongoose.model("VideoTags", videoTagsSchema);
+
+export default VideoTags;

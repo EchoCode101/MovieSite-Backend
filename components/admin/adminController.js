@@ -10,11 +10,11 @@ import {
 } from "../Utilities/tokenUtils.js";
 import validationSchemas from "../Utilities/validationSchemas.js";
 
-import { Admins, PasswordResets } from "../../models/index.js";
-import Sequelize from "sequelize";
+import { Admins, PasswordResets, Members } from "../../models/index.js";
 import {
   extractAndDecryptToken,
   sendPasswordResetEmail,
+  blacklistToken,
 } from "../Utilities/helpers.js";
 import logger from "../Utilities/logger.js";
 import createError from "http-errors";
@@ -24,7 +24,6 @@ import {
   VideoMetrics,
   ReviewsAndRatings,
 } from "../../models/index.js";
-import { Op } from "sequelize";
 // import validateAndSanitizeUserInput from "../Utilities/validator.js";
 
 const { adminSignupSchema, loginSchema } = validationSchemas;
@@ -40,9 +39,7 @@ export const adminSignup = async (req, res, next) => {
   try {
     // Check if admin already exists
     const adminExists = await Admins.findOne({
-      where: {
-        [Sequelize.Op.or]: [{ username }, { email }],
-      },
+      $or: [{ username }, { email }],
     });
 
     if (adminExists) {
@@ -60,7 +57,7 @@ export const adminSignup = async (req, res, next) => {
     res.status(201).json({
       message: "Admin registered successfully!",
       admin: {
-        id: newAdmin.id,
+        id: newAdmin._id,
         username: newAdmin.username,
         email: newAdmin.email,
         role: newAdmin.role,
@@ -79,7 +76,7 @@ export const adminLogin = async (req, res, next) => {
   if (error) return next(createError(400, error.details[0].message));
 
   try {
-    const admin = await Admins.findOne({ where: { email } });
+    const admin = await Admins.findOne({ email });
 
     if (!admin) {
       return next(createError(400, "Invalid email or password."));
@@ -103,7 +100,7 @@ export const adminLogin = async (req, res, next) => {
 
     res.cookie("encryptedRefreshToken", encryptedRefreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production" || true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
       maxAge: 24 * 60 * 60 * 1000,
     });
@@ -112,7 +109,7 @@ export const adminLogin = async (req, res, next) => {
       token: encryptedAccessToken,
       refreshToken: encryptedRefreshToken,
       admin: {
-        id: admin.id,
+        id: admin._id,
         username: admin.username,
         first_name: admin.first_name,
         last_name: admin.last_name,
@@ -141,7 +138,7 @@ export const adminLogout = async (req, res, next) => {
     logger.error("Admin logout error:", err.message);
     next(
       err.status
-        ? error // Use the existing error if already set
+        ? err // Use the existing error if already set
         : createError(500, "Internal server error.")
     );
   }
@@ -150,15 +147,13 @@ export const adminLogout = async (req, res, next) => {
 export const forgotPassword = async (req, res, next) => {
   const { email } = req.body;
   if (!email) {
-    return res.status(400).json({ message: "Email is required" });
+    return next(createError(400, "Email is required"));
   }
 
   try {
-    const user = await Admins.findOne({ where: { email } });
+    const user = await Admins.findOne({ email });
     if (!user) {
-      return res
-        .status(404)
-        .json({ message: "No account found with that email" });
+      return next(createError(404, "No account found with that email"));
     }
     // Generate a reset token
     const resetToken = generateAccessToken(user);
@@ -168,9 +163,7 @@ export const forgotPassword = async (req, res, next) => {
     await PasswordResets.create({
       reset_token: resetToken,
       reset_token_expiration: resetTokenExpiration,
-      user_id: user.id,
-      username: user.username,
-      email: user.email,
+      user_id: user._id,
       user_type: "admin",
     });
     // Create the reset password link
@@ -178,6 +171,7 @@ export const forgotPassword = async (req, res, next) => {
     await sendPasswordResetEmail(user.email, resetLink);
 
     res.status(200).json({
+      success: true,
       message: "Please check your inbox, a password reset link has been sent.",
     });
   } catch (error) {
@@ -190,7 +184,7 @@ export const forgotPassword = async (req, res, next) => {
 export const getAllUsers = async (req, res, next) => {
   try {
     // Fetch all members from the database
-    const users = await Members.findAll();
+    const users = await Members.find().select("-password");
     res.status(200).json(users);
   } catch (error) {
     logger.error("Error fetching users:", error);
@@ -198,11 +192,44 @@ export const getAllUsers = async (req, res, next) => {
   }
 };
 
-// Example: Update subscription plans
+// Update subscription plans
 export const updateSubscription = async (req, res, next) => {
   const { userId, newPlan } = req.body;
 
-  // Update logic...
+  if (!userId || !newPlan) {
+    return next(createError(400, "userId and newPlan are required"));
+  }
+
+  const validPlans = ["Free", "Basic", "Premium", "Ultimate"];
+  if (!validPlans.includes(newPlan)) {
+    return next(
+      createError(400, `newPlan must be one of: ${validPlans.join(", ")}`)
+    );
+  }
+
+  try {
+    const member = await Members.findByIdAndUpdate(
+      userId,
+      { subscription_plan: newPlan },
+      { new: true, runValidators: true }
+    );
+
+    if (!member) {
+      return next(createError(404, "User not found"));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Subscription plan updated successfully",
+      data: {
+        userId: member._id,
+        subscription_plan: member.subscription_plan,
+      },
+    });
+  } catch (error) {
+    logger.error("Error updating subscription:", error);
+    next(createError(500, "Internal server error."));
+  }
 };
 
 // Get dashboard stats
@@ -210,49 +237,49 @@ export const getDashboardStats = async (req, res, next) => {
   try {
     const currentMonth = new Date().getMonth() + 1; // Months are 0-based
     const currentYear = new Date().getFullYear();
+    const startOfMonth = new Date(
+      `${currentYear}-${String(currentMonth).padStart(2, "0")}-01`
+    );
 
-    // Unique views for the current month
-    const viewsThisMonth = await VideoMetrics.sum("views_count", {
-      where: {
-        createdAt: {
-          [Op.gte]: new Date(`${currentYear}-${currentMonth}-01`),
+    // Unique views for the current month using aggregation
+    const viewsResult = await VideoMetrics.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startOfMonth },
         },
       },
-    });
+      {
+        $group: {
+          _id: null,
+          totalViews: { $sum: "$views_count" },
+        },
+      },
+    ]);
+    const viewsThisMonth = viewsResult[0]?.totalViews || 0;
 
     // Items (videos) added this month
-    const itemsThisMonth = await Videos.count({
-      where: {
-        createdAt: {
-          [Op.gte]: new Date(`${currentYear}-${currentMonth}-01`),
-        },
-      },
+    const itemsThisMonth = await Videos.countDocuments({
+      createdAt: { $gte: startOfMonth },
     });
 
     // New comments this month
-    const commentsThisMonth = await Comments.count({
-      where: {
-        createdAt: {
-          [Op.gte]: new Date(`${currentYear}-${currentMonth}-01`),
-        },
-      },
+    const commentsThisMonth = await Comments.countDocuments({
+      createdAt: { $gte: startOfMonth },
     });
-    // New comments this month
-    const reviewsThisMonth = await ReviewsAndRatings.count({
-      where: {
-        createdAt: {
-          [Op.gte]: new Date(`${currentYear}-${currentMonth}-01`),
-        },
-      },
+
+    // New reviews this month
+    const reviewsThisMonth = await ReviewsAndRatings.countDocuments({
+      createdAt: { $gte: startOfMonth },
     });
 
     res.status(200).json({
-      uniqueViews: viewsThisMonth || 0,
-      itemsAdded: itemsThisMonth || 0,
-      newComments: commentsThisMonth || 0,
-      newReviews: reviewsThisMonth || 0,
+      uniqueViews: viewsThisMonth,
+      itemsAdded: itemsThisMonth,
+      newComments: commentsThisMonth,
+      newReviews: reviewsThisMonth,
     });
   } catch (error) {
-    next(error);
+    logger.error("Error fetching dashboard stats:", error);
+    next(createError(500, "Error fetching dashboard statistics"));
   }
 };

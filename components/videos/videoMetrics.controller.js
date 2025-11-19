@@ -4,22 +4,12 @@ import createError from "http-errors";
 // Fetch all video metrics with associated video data
 export const getVideoMetrics = async (req, res, next) => {
   try {
-    const videoMetrics = await VideoMetrics.findAll({
-      include: [
-        {
-          model: Videos,
-          as: "video", // Ensure this matches the association alias
-          attributes: [
-            "video_id",
-            "title",
-            "category",
-            "access_level",
-            "file_size",
-          ],
-        },
-      ],
-      order: [["updatedAt", "DESC"]],
-    });
+    const videoMetrics = await VideoMetrics.find()
+      .populate({
+        path: "video_id",
+        select: "title category access_level file_size",
+      })
+      .sort({ updatedAt: -1 });
 
     res.status(200).json(videoMetrics);
   } catch (error) {

@@ -2,7 +2,6 @@ import { hashPassword } from "../Utilities/encryptionUtils.js";
 import { Admins, PasswordResets } from "../../models/index.js";
 import logger from "../Utilities/logger.js";
 import createError from "http-errors";
-import { Sequelize } from "sequelize";
 
 // Reset Password Route
 export const restAdminPassword = async (req, res, next) => {
@@ -18,12 +17,8 @@ export const restAdminPassword = async (req, res, next) => {
   try {
     // Find the reset entry by token and expiration time
     const resetEntry = await PasswordResets.findOne({
-      where: {
-        reset_token: token,
-        reset_token_expiration: {
-          [Sequelize.Op.gt]: now, // Check if the token is still valid
-        },
-      },
+      reset_token: token,
+      reset_token_expiration: { $gt: now }, // Check if the token is still valid
     });
 
     if (!resetEntry) {
@@ -34,16 +29,13 @@ export const restAdminPassword = async (req, res, next) => {
 
     // Update the password based on user type
     if (resetEntry.user_type === "admin") {
-      await Admins.update(
-        { password: hashedPassword },
-        { where: { id: resetEntry.user_id } }
-      );
+      await Admins.findByIdAndUpdate(resetEntry.user_id, {
+        password: hashedPassword,
+      });
     }
 
     // Delete the used reset token
-    await PasswordResets.destroy({
-      where: { reset_token: token },
-    });
+    await PasswordResets.deleteOne({ reset_token: token });
 
     res.status(200).json({ message: "Password has been successfully reset." });
   } catch (error) {

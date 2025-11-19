@@ -1,70 +1,36 @@
-import { DataTypes } from "sequelize";
-export default (sequelize) => {
-  const Comments = sequelize.define(
-    "Comments",
-    {
-      comment_id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      member_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: "Members",
-          key: "member_id",
-        },
-        onUpdate: "CASCADE",
-        onDelete: "CASCADE",
-      },
-      video_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: "Videos",
-          key: "video_id",
-        },
-        onUpdate: "CASCADE",
-        onDelete: "CASCADE",
-      },
-      content: {
-        type: DataTypes.TEXT,
-        allowNull: false,
-      },
-      is_active: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: true,
-      },
+import mongoose from "mongoose";
+
+const commentSchema = new mongoose.Schema(
+  {
+    member_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Members",
+      required: true,
     },
-    {
-      tableName: "Comments",
-      timestamps: true, // Adds `createdAt` and `updatedAt`
-    }
-  );
-  // Model Associations
-  Comments.associate = (models) => {
-    Comments.belongsTo(models.Members, {
-      foreignKey: "member_id",
-      as: "member",
-    });
+    video_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Videos",
+      required: true,
+    },
+    content: {
+      type: String,
+      required: true,
+    },
+    is_active: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-    Comments.belongsTo(models.Videos, {
-      foreignKey: "video_id",
-      as: "video",
-    });
+// Create indexes
+commentSchema.index({ video_id: 1 });
+commentSchema.index({ member_id: 1 });
+commentSchema.index({ createdAt: -1 });
 
-    Comments.hasMany(models.CommentReplies, {
-      foreignKey: "comment_id",
-      as: "replies",
-    });
+const Comments = mongoose.model("Comments", commentSchema);
 
-    Comments.hasMany(models.LikesDislikes, {
-      foreignKey: "target_id",
-      as: "likesDislikes",
-      scope: { target_type: "comment" },
-    });
-  };
-
-  return Comments;
-};
+export default Comments;

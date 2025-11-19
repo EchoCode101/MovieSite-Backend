@@ -19,7 +19,6 @@ import {
   blacklistToken,
   sendPasswordResetEmail,
 } from "../Utilities/helpers.js";
-import { Sequelize } from "sequelize";
 import validationSchemas from "../Utilities/validationSchemas.js";
 
 const { userSignupSchema, loginSchema } = validationSchemas;
@@ -34,9 +33,7 @@ export const signup = async (req, res, next) => {
   try {
     // Check if user exists
     const userExists = await Members.findOne({
-      where: {
-        [Sequelize.Op.or]: [{ username }, { email }],
-      },
+      $or: [{ username }, { email }],
     });
 
     if (userExists) {
@@ -54,7 +51,7 @@ export const signup = async (req, res, next) => {
     res.status(201).json({
       message: "User registered successfully!",
       user: {
-        id: newUser.id,
+        id: newUser._id,
         username: newUser.username,
         email: newUser.email,
         subscription_plan: newUser.subscription_plan,
@@ -73,7 +70,7 @@ export const login = async (req, res, next) => {
   const { email, password } = req.body;
 
   try {
-    const user = await Members.findOne({ where: { email } });
+    const user = await Members.findOne({ email });
     if (!user) {
       return next(createError(400, "Invalid email or password"));
     }
@@ -83,7 +80,7 @@ export const login = async (req, res, next) => {
 
     // Save login history
     await UserSessionHistory.create({
-      user_id: user.member_id,
+      user_id: user._id,
       login_time: new Date(),
       ip_address: req.ip || req.headers["x-forwarded-for"] || "Unknown",
       device_info: req.headers["user-agent"] || "Unknown",
@@ -108,13 +105,13 @@ export const login = async (req, res, next) => {
       token: encryptedAccessToken,
       refreshToken: encryptedRefreshToken,
       data: {
-        id: user.member_id,
+        id: user._id,
         email: user.email,
         username: user.username,
       },
     });
-  } catch (err) {
-    logger.error("Login error:", err);
+  } catch (error) {
+    logger.error("Login error:", error);
     next(createError(500, "Internal Server Error"));
   }
 };
@@ -128,25 +125,21 @@ export const logout = async (req, res, next) => {
     }
     const member_id = req.user.id;
 
-    // Destroy the current session
-    const deletedSession = await UserSessionHistory.destroy({
-      where: { user_id: member_id },
-    });
-    if (!deletedSession) {
-      return next(createError(400, "No active session found"));
-    }
-
-    // Record logout time in login history
-    await UserSessionHistory.update(
-      { logout_time: new Date() },
+    // Update logout time in login history for active sessions
+    const updatedSession = await UserSessionHistory.updateMany(
       {
-        where: {
-          user_id: member_id,
-          logout_time: null, // Ensure only active sessions are updated
-        },
+        user_id: member_id,
+        logout_time: null, // Ensure only active sessions are updated
+      },
+      {
+        $set: { logout_time: new Date(), is_active: false },
       }
     );
+    if (updatedSession.matchedCount === 0) {
+      return next(createError(400, "No active session found"));
+    }
     const decryptedToken = await extractAndDecryptToken(req);
+    console.log(decryptedToken);
     await blacklistToken(decryptedToken);
 
     // Clear cookies
@@ -156,10 +149,10 @@ export const logout = async (req, res, next) => {
       sameSite: "Strict",
     });
     res.status(200).json({ message: "Logged out successfully" });
-  } catch (err) {
-    logger.error("Logout error:", err);
+  } catch (error) {
+    logger.error("Logout error:", error);
     next(
-      err.status
+      error.status
         ? error // Use the existing error if already set
         : createError(500, "Error logging out")
     );
@@ -174,7 +167,7 @@ export const forgotPassword = async (req, res, next) => {
   }
 
   try {
-    const user = await Members.findOne({ where: { email } });
+    const user = await Members.findOne({ email });
     if (!user) {
       return next(createError(404, "No account found with that email"));
     }
@@ -185,10 +178,8 @@ export const forgotPassword = async (req, res, next) => {
     await PasswordResets.create({
       reset_token: resetToken,
       reset_token_expiration: resetTokenExpiration,
-      user_id: user.id,
-      username: user.username,
-      email: user.email,
-      user_type: "member",
+      user_id: user._id,
+      user_type: "user",
     });
 
     const resetLink = `${process.env.ORIGIN_LINK}/reset-password/${resetToken}`;

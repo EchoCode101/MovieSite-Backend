@@ -7,14 +7,17 @@ import {
   deleteComment,
   getPaginatedComments,
 } from "./comments.controller.js";
-import { authenticateAdminToken } from "../auth/authMiddleware.js";
+import {
+  authenticateAdminToken,
+  authenticateToken,
+} from "../auth/authMiddleware.js";
 const router = express.Router();
 
-router.post("/", createComment); // Create a new comment
+router.post("/", authenticateToken, createComment); // Create a new comment
 router.get("/", authenticateAdminToken, getAllComments); // Get all comments
 router.get("/paginated", authenticateAdminToken, getPaginatedComments);
 router.get("/:id", getCommentById); // Get a specific comment by ID
-router.put("/:id", updateComment); // Update a comment
-router.delete("/:id", deleteComment); // Delete a comment
+router.put("/:id", authenticateToken, updateComment); // Update a comment
+router.delete("/:id", authenticateToken, deleteComment); // Delete a comment
 
 export default router;

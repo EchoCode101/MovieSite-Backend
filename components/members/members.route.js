@@ -7,11 +7,14 @@ import {
   getPaginatedUsers,
   destroyMemberWithAssociations,
 } from "./members.controller.js";
-import { authenticateAdminToken } from "../auth/authMiddleware.js";
+import {
+  authenticateAdminToken,
+  authenticateToken,
+} from "../auth/authMiddleware.js";
 const router = express.Router();
 
 router.get("/", authenticateAdminToken, getAllMembers);
-router.get("/paginated", getPaginatedUsers);
+router.get("/paginated", authenticateToken, getPaginatedUsers);
 router.post("/", authenticateAdminToken, createMember);
 router.get("/:id", getMemberById);
 router.put("/:id", updateMember);

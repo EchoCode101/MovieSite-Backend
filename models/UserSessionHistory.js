@@ -1,50 +1,44 @@
-import { DataTypes } from "sequelize";
+import mongoose from "mongoose";
 
-export default (sequelize) => {
-  const UserSessionHistory = sequelize.define("UserSessionHistories", {
-    session_id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
+const userSessionHistorySchema = new mongoose.Schema(
+  {
     user_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: "Members",
-        key: "member_id",
-      },
-      onDelete: "CASCADE",
-      onUpdate: "CASCADE",
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Members",
+      required: true,
     },
     login_time: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
+      type: Date,
+      default: Date.now,
     },
     logout_time: {
-      type: DataTypes.DATE,
-      allowNull: true, // Will be set on logout
+      type: Date,
     },
     ip_address: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
+      type: String,
+      maxlength: 100,
     },
     device_info: {
-      type: DataTypes.TEXT,
-      allowNull: true,
+      type: String,
     },
     is_active: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true, // Determines if the session is still active
+      type: Boolean,
+      default: true,
     },
-  });
+  },
+  {
+    timestamps: true,
+  }
+);
 
-  UserSessionHistory.associate = (models) => {
-    UserSessionHistory.belongsTo(models.Members, {
-      foreignKey: "member_id",
-      as: "user",
-    });
-  };
+// Create indexes
+userSessionHistorySchema.index({ user_id: 1 });
+userSessionHistorySchema.index({ login_time: -1 });
+userSessionHistorySchema.index({ is_active: 1 });
 
-  return UserSessionHistory;
-};
+const UserSessionHistory = mongoose.model(
+  "UserSessionHistory",
+  userSessionHistorySchema
+);
+
+export default UserSessionHistory;

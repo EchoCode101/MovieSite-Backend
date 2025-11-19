@@ -1,40 +1,37 @@
-import { DataTypes } from "sequelize";
+import mongoose from "mongoose";
 
-export default (sequelize) => {
-  const VideoMetrics = sequelize.define("VideoMetrics", {
+const videoMetricsSchema = new mongoose.Schema(
+  {
     video_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: "Videos",
-        key: "video_id",
-      },
-      primaryKey: true,
-      onDelete: "CASCADE",
-      onUpdate: "CASCADE",
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Videos",
+      required: true,
     },
     views_count: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
+      type: Number,
+      default: 0,
     },
     shares_count: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
+      type: Number,
+      default: 0,
     },
     favorites_count: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
+      type: Number,
+      default: 0,
     },
     report_count: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
+      type: Number,
+      default: 0,
     },
-  });
-  VideoMetrics.associate = (models) => {
-    VideoMetrics.belongsTo(models.Videos, {
-      foreignKey: "video_id",
-      as: "video",
-    });
-  };
-  return VideoMetrics;
-};
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Create indexes
+videoMetricsSchema.index({ video_id: 1 }, { unique: true });
+
+const VideoMetrics = mongoose.model("VideoMetrics", videoMetricsSchema);
+
+export default VideoMetrics;

@@ -11,7 +11,10 @@ import {
   uploadVideoToCloudinary,
   addVideoToDatabase,
 } from "./videos.controller.js";
-import { authenticateAdminToken } from "../auth/authMiddleware.js";
+import {
+  authenticateAdminToken,
+  authenticateToken,
+} from "../auth/authMiddleware.js";
 import upload from "../Utilities/multer.js";
 
 const router = express.Router();
@@ -26,6 +29,7 @@ router.get("/", authenticateAdminToken, getAllVideos);
 
 router.post(
   "/uploadVideoToCloudinary",
+  authenticateToken,
   upload.single("video"), // Handle file upload
   uploadVideoToCloudinary
 );
@@ -40,6 +44,6 @@ router.post("/", authenticateAdminToken, createVideo);
 router.get("/:id", getVideoById);
 router.put("/:id", authenticateAdminToken, updateVideo);
 router.delete("/:id", authenticateAdminToken, deleteVideo);
-router.post("/addVideo", addVideoToDatabase);
+router.post("/addVideo", authenticateToken, addVideoToDatabase);
 
 export default router;

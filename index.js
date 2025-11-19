@@ -15,6 +15,9 @@ import reviewsRoutes from "./components/reviews/reviews.routes.js";
 import commentsRoutes from "./components/comments/comments.routes.js";
 import likesDislikesRoutes from "./components/likesDislikes/likesDislikes.routes.js";
 import commentRepliesRoutes from "./components/commentReplies/commentReplies.routes.js";
+import multer from "multer";
+// Initialize MongoDB connection
+import "./db/db.js";
 
 // import { limiter } from "./components/auth/authMiddleware.js";
 

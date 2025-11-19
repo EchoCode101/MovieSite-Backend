@@ -1,35 +1,30 @@
 import { ReviewsAndRatings, Videos, Members } from "../../models/index.js";
 import logger from "../Utilities/logger.js";
 import createError from "http-errors";
-import { Op } from "sequelize";
-import { Sequelize } from "sequelize";
+
 // Get reviews within a date range
 export const getRecentReviews = async (req, res, next) => {
   const { startDate, endDate } = req.query;
 
   try {
-    const reviews = await ReviewsAndRatings.findAll({
-      where: {
-        createdAt: {
-          [Op.between]: [startDate, endDate],
-        },
-      },
-      include: [
-        {
-          model: Videos,
-          as: "video", // Correct alias as defined in the association
-          attributes: ["title"],
-        },
-        {
-          model: Members,
-          as: "member", // Correct alias as defined in the association
-          attributes: ["username", "first_name", "last_name"],
-        },
-      ],
-      order: [["createdAt", "DESC"]],
-    });
+    const query = {};
+    if (startDate && endDate) {
+      query.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      };
+    }
 
-    res.status(200).json(reviews);
+    const reviews = await ReviewsAndRatings.find(query)
+      .sort({ createdAt: -1 })
+      .populate("video_id", "title")
+      .populate("member_id", "username first_name last_name");
+
+    res.status(200).json({
+      success: true,
+      message: "Recent reviews retrieved successfully",
+      data: reviews,
+    });
   } catch (error) {
     logger.error("Error fetching recent reviews:", error);
     next(createError(500, error.message));
@@ -46,76 +41,131 @@ export const getPaginatedReviews = async (req, res, next) => {
       order = "DESC",
     } = req.query;
 
-    const offset = (page - 1) * limit;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const sortOrder = order === "ASC" ? 1 : -1;
 
-    let orderQuery = [[sort, order]];
+    // Build aggregation pipeline
+    const pipeline = [
+      // Lookup likes
+      {
+        $lookup: {
+          from: "likesdislikes",
+          let: { reviewId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$target_id", "$$reviewId"] },
+                    { $eq: ["$target_type", "review"] },
+                    { $eq: ["$is_like", true] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "likes",
+        },
+      },
+      // Lookup dislikes
+      {
+        $lookup: {
+          from: "likesdislikes",
+          let: { reviewId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$target_id", "$$reviewId"] },
+                    { $eq: ["$target_type", "review"] },
+                    { $eq: ["$is_like", false] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "dislikes",
+        },
+      },
+      // Populate member
+      {
+        $lookup: {
+          from: "members",
+          localField: "member_id",
+          foreignField: "_id",
+          as: "member",
+        },
+      },
+      // Populate video
+      {
+        $lookup: {
+          from: "videos",
+          localField: "video_id",
+          foreignField: "_id",
+          as: "video",
+        },
+      },
+      // Add computed fields
+      {
+        $addFields: {
+          likesCount: { $size: "$likes" },
+          dislikesCount: { $size: "$dislikes" },
+          member: { $arrayElemAt: ["$member", 0] },
+          video: { $arrayElemAt: ["$video", 0] },
+        },
+      },
+      // Project fields
+      {
+        $project: {
+          _id: 1,
+          review_content: 1,
+          rating: 1,
+          createdAt: 1,
+          likesCount: 1,
+          dislikesCount: 1,
+          member: {
+            _id: "$member._id",
+            first_name: "$member.first_name",
+            last_name: "$member.last_name",
+          },
+          video: {
+            _id: "$video._id",
+            title: "$video.title",
+            description: "$video.description",
+            thumbnail_url: "$video.thumbnail_url",
+          },
+        },
+      },
+    ];
 
-    // Special sorting cases for likes and dislikes
-    if (sort === "likes" || sort === "dislikes") {
-      orderQuery = [
-        [
-          Sequelize.literal(
-            `(SELECT COUNT(*) FROM "LikesDislikes" WHERE "LikesDislikes"."target_type" = 'review' AND "LikesDislikes"."target_id" = "ReviewsAndRatings"."review_id" AND "LikesDislikes"."is_like" = ${
-              sort === "likes" ? "true" : "false"
-            })`
-          ),
-          order,
-        ],
-      ];
+    // Add sorting
+    let sortField = sort;
+    if (sort === "likes") {
+      sortField = "likesCount";
+    } else if (sort === "dislikes") {
+      sortField = "dislikesCount";
     }
 
-    // Get total reviews count
-    const count = await ReviewsAndRatings.count();
+    pipeline.push({ $sort: { [sortField]: sortOrder } });
+    pipeline.push({ $skip: skip });
+    pipeline.push({ $limit: parseInt(limit) });
 
-    // Fetch paginated reviews with associations
-    const reviews = await ReviewsAndRatings.findAll({
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-      order: orderQuery,
-      attributes: [
-        "review_id",
-        "review_content",
-        "rating",
-        "createdAt",
-        [
-          Sequelize.literal(`(
-            SELECT COUNT(*)
-            FROM "LikesDislikes"
-            WHERE "LikesDislikes"."target_id" = "ReviewsAndRatings"."review_id"
-            AND "LikesDislikes"."target_type" = 'review'
-            AND "LikesDislikes"."is_like" = true
-          )`),
-          "likesCount",
-        ],
-        [
-          Sequelize.literal(`(
-            SELECT COUNT(*)
-            FROM "LikesDislikes"
-            WHERE "LikesDislikes"."target_id" = "ReviewsAndRatings"."review_id"
-            AND "LikesDislikes"."target_type" = 'review'
-            AND "LikesDislikes"."is_like" = false
-          )`),
-          "dislikesCount",
-        ],
-      ],
-      include: [
-        {
-          model: Members,
-          as: "member",
-          attributes: ["member_id", "first_name", "last_name"],
-        },
-        {
-          model: Videos,
-          as: "video",
-          attributes: ["video_id", "title", "description", "thumbnail_url"],
-        },
-      ],
-    });
+    // Get total count
+    const countPipeline = [
+      ...pipeline.slice(0, -2), // Remove skip and limit
+      { $count: "total" },
+    ];
+    const countResult = await ReviewsAndRatings.aggregate(countPipeline);
+    const totalItems = countResult[0]?.total || 0;
+
+    // Get reviews
+    const reviews = await ReviewsAndRatings.aggregate(pipeline);
 
     res.status(200).json({
       currentPage: parseInt(page),
-      totalPages: Math.ceil(count / limit),
-      totalItems: count,
+      totalPages: Math.ceil(totalItems / parseInt(limit)),
+      totalItems,
       reviews,
     });
   } catch (error) {
@@ -126,30 +176,48 @@ export const getPaginatedReviews = async (req, res, next) => {
 
 // Add a new review
 export const addReview = async (req, res, next) => {
-  const { video_id, member_id, rating, content } = req.body;
+  const { video_id, rating, content } = req.body;
+  const member_id = req.user.id; // Extract from authenticated token
+
+  if (!video_id || !rating || !content) {
+    return next(createError(400, "video_id, rating, and content are required"));
+  }
+
+  if (rating < 1 || rating > 5) {
+    return next(createError(400, "Rating must be between 1 and 5"));
+  }
 
   try {
+    // Check if video exists
+    const video = await Videos.findById(video_id);
+    if (!video) {
+      return next(createError(404, "Video not found"));
+    }
+
+    // Check if user already reviewed this video
+    const existingReview = await ReviewsAndRatings.findOne({
+      video_id,
+      member_id,
+    });
+    if (existingReview) {
+      return next(createError(409, "You have already reviewed this video"));
+    }
+
     // Insert review
     const review = await ReviewsAndRatings.create({
       video_id,
       member_id,
       rating,
-      content,
+      review_content: content,
     });
 
-    // Update video's rating and total_ratings
-    const video = await Videos.findByPk(video_id);
-    const updatedRating =
-      (video.rating * video.total_ratings + rating) / (video.total_ratings + 1);
-
-    await video.update({
-      rating: updatedRating,
-      total_ratings: video.total_ratings + 1,
-      review_counts: video.review_counts + 1,
+    res.status(201).json({
+      success: true,
+      message: "Review added successfully",
+      data: review,
     });
-
-    res.status(201).json(review);
   } catch (error) {
+    logger.error("Error adding review:", error);
     next(createError(500, error.message));
   }
 };
@@ -159,85 +227,91 @@ export const getReviewsByVideoId = async (req, res, next) => {
   const { videoId } = req.params;
 
   try {
-    const reviews = await ReviewsAndRatings.findAll({
-      where: { video_id: videoId },
-      order: [["createdAt", "DESC"]],
-      include: [
-        {
-          model: Videos,
-          attributes: ["title", "category", "rating"],
-        },
-        {
-          model: Members,
-          attributes: ["username", "email", "first_name", "last_name"],
-        },
-      ],
-    });
+    const reviews = await ReviewsAndRatings.find({ video_id: videoId })
+      .sort({ createdAt: -1 })
+      .populate("video_id", "title category")
+      .populate("member_id", "username email first_name last_name");
 
     res.status(200).json(reviews);
   } catch (error) {
+    logger.error("Error fetching reviews by video ID:", error);
     next(createError(500, error.message));
   }
 };
+
 // Update a review
 export const updateReview = async (req, res, next) => {
   const { reviewId } = req.params;
   const { rating, content } = req.body;
+  const member_id = req.user.id; // Extract from authenticated token
+
+  if (!rating && !content) {
+    return next(
+      createError(400, "At least one field (rating or content) is required")
+    );
+  }
+
+  if (rating && (rating < 1 || rating > 5)) {
+    return next(createError(400, "Rating must be between 1 and 5"));
+  }
 
   try {
-    const review = await ReviewsAndRatings.findByPk(reviewId);
+    // Check if review exists and belongs to user
+    const review = await ReviewsAndRatings.findById(reviewId);
+    if (!review) {
+      return next(createError(404, "Review not found"));
+    }
+
+    if (review.member_id.toString() !== member_id) {
+      return next(createError(403, "You can only update your own reviews"));
+    }
+
+    const updateData = {};
+    if (rating !== undefined) updateData.rating = rating;
+    if (content !== undefined) updateData.review_content = content;
+
+    const updatedReview = await ReviewsAndRatings.findByIdAndUpdate(
+      reviewId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Review updated successfully",
+      data: updatedReview,
+    });
+  } catch (error) {
+    logger.error("Error updating review:", error);
+    next(createError(500, error.message));
+  }
+};
+
+// Delete a review
+export const deleteReview = async (req, res, next) => {
+  const { reviewId } = req.params;
+  const member_id = req.user.id; // Extract from authenticated token
+
+  try {
+    const review = await ReviewsAndRatings.findById(reviewId);
 
     if (!review) {
       return next(createError(404, "Review not found"));
     }
 
-    const video = await Videos.findByPk(review.video_id);
-
-    const updatedReview = await review.update({
-      rating,
-      content,
-    });
-
-    const updatedRating =
-      (video.rating * video.total_ratings - review.rating + rating) /
-      video.total_ratings;
-
-    await video.update({ rating: updatedRating });
-
-    res.status(200).json(updatedReview);
-  } catch (error) {
-    next(createError(500, error.message));
-  }
-};
-// Delete a review
-export const deleteReview = async (req, res, next) => {
-  const { reviewId } = req.params;
-
-  try {
-    const review = await ReviewsAndRatings.findByPk(reviewId);
-
-    if (!review) {
-      next(createError(404, "Review not found"));
+    // Check ownership
+    if (review.member_id.toString() !== member_id) {
+      return next(createError(403, "You can only delete your own reviews"));
     }
 
-    const video = await Videos.findByPk(review.video_id);
+    await ReviewsAndRatings.findByIdAndDelete(reviewId);
 
-    await review.destroy();
-
-    const updatedRating =
-      video.total_ratings > 1
-        ? (video.rating * video.total_ratings - review.rating) /
-          (video.total_ratings - 1)
-        : 0;
-
-    await video.update({
-      rating: updatedRating,
-      total_ratings: video.total_ratings - 1,
-      review_counts: video.review_counts - 1,
+    res.status(200).json({
+      success: true,
+      message: "Review deleted successfully",
     });
-
-    res.status(200).json({ message: "Review deleted successfully" });
   } catch (error) {
+    logger.error("Error deleting review:", error);
     next(createError(500, error.message));
   }
 };

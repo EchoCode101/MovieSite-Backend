@@ -111,6 +111,69 @@ export const createVideoSchema = Joi.object({
   access_level: Joi.string().default("Free"),
   video_format: Joi.string().optional(),
 });
+
+// Comment validation schemas
+const createCommentSchema = Joi.object({
+  video_id: Joi.string().required(),
+  content: Joi.string().min(1).max(1000).required(),
+});
+
+const updateCommentSchema = Joi.object({
+  content: Joi.string().min(1).max(1000).required(),
+});
+
+// Review validation schemas
+const createReviewSchema = Joi.object({
+  video_id: Joi.string().required(),
+  rating: Joi.number().integer().min(1).max(5).required(),
+  content: Joi.string().min(1).max(2000).required(),
+});
+
+const updateReviewSchema = Joi.object({
+  rating: Joi.number().integer().min(1).max(5).optional(),
+  content: Joi.string().min(1).max(2000).optional(),
+}).min(1); // At least one field required
+
+// Reply validation schemas
+const createReplySchema = Joi.object({
+  comment_id: Joi.string().required(),
+  reply_content: Joi.string().min(1).max(1000).required(),
+});
+
+const updateReplySchema = Joi.object({
+  reply_content: Joi.string().min(1).max(1000).required(),
+});
+
+// Like/Dislike validation schema
+const likeDislikeSchema = Joi.object({
+  target_id: Joi.string().required(),
+  target_type: Joi.string()
+    .valid("video", "comment", "review", "comment_reply")
+    .required(),
+  is_like: Joi.boolean().required(),
+});
+
+// Profile update schema
+const updateProfileSchema = Joi.object({
+  first_name: Joi.string().max(50).optional(),
+  last_name: Joi.string().max(50).optional(),
+  profile_pic: Joi.string().uri().allow("").optional(),
+  username: Joi.string().min(3).max(30).alphanum().optional(),
+}).min(1); // At least one field required
+
+// Member update schema
+const updateMemberSchema = Joi.object({
+  username: Joi.string().min(3).max(30).alphanum().optional(),
+  email: Joi.string().email().optional(),
+  first_name: Joi.string().max(50).optional(),
+  last_name: Joi.string().max(50).optional(),
+  profile_pic: Joi.string().uri().allow("").optional(),
+  subscription_plan: Joi.string()
+    .valid("Free", "Basic", "Premium", "Ultimate")
+    .optional(),
+  status: Joi.string().valid("Active", "Inactive").optional(),
+}).min(1); // At least one field required
+
 export default {
   userSignupSchema,
   loginSchema,
@@ -118,4 +181,13 @@ export default {
   subscriptionSchema,
   createMemberSchema,
   createVideoSchema,
+  createCommentSchema,
+  updateCommentSchema,
+  createReviewSchema,
+  updateReviewSchema,
+  createReplySchema,
+  updateReplySchema,
+  likeDislikeSchema,
+  updateProfileSchema,
+  updateMemberSchema,
 };
