@@ -226,8 +226,43 @@ All API responses follow this standard format:
 #### Add/Update Like or Dislike
 *   **Endpoint:** `POST /api/likes-dislikes`
 *   **Auth:** Required
-*   **Body:** `target_id`, `target_type` (video/comment/review), `is_like` (boolean)
-*   **Response:** Updated status.
+*   **Body:** 
+    * `target_id` (string, required)
+    * `target_type` (`video` | `comment` | `review` | `comment_reply`, required)
+    * `is_like` (boolean, required)
+*   **Behavior (Three-State Toggle):**
+    * Each user can have **at most one reaction per target** (enforced by a unique index on `user_id`, `target_id`, `target_type`).
+    * Neutral → Like: creates a new record with `is_like: true`.
+    * Neutral → Dislike: creates a new record with `is_like: false`.
+    * Like → Dislike: updates the existing record to `is_like: false`.
+    * Dislike → Like: updates the existing record to `is_like: true`.
+    * Like → Like (click Like again): **removes** the existing record (back to neutral).
+    * Dislike → Dislike (click Dislike again): **removes** the existing record (back to neutral).
+*   **Responses:**
+    * On create or toggle:
+      ```json
+      {
+        "success": true,
+        "message": "Liked successfully", // or "Disliked successfully"
+        "data": {
+          "_id": "likeDislikeId",
+          "user_id": "userId",
+          "target_id": "targetId",
+          "target_type": "video",
+          "is_like": true
+        }
+      }
+      ```
+    * On removal (back to neutral):
+      ```json
+      {
+        "success": true,
+        "message": "Reaction removed",
+        "data": {
+          "removed": true
+        }
+      }
+      ```
 
 #### Get Counts
 *   **Endpoint:** `GET /api/likes-dislikes/:target_type/:target_id`

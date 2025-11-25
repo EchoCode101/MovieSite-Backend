@@ -387,7 +387,7 @@ export const bulkDeleteVideos = async (req, res, next) => {
     // If not admin, delete only videos owned by the user
     const query = { _id: { $in: ids } };
     if (!isAdmin) {
-      query.uploader_id = member_id;
+      query.created_by = member_id;
     }
 
     const result = await Videos.deleteMany(query);

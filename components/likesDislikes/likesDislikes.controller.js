@@ -138,13 +138,31 @@ export const addOrUpdateLikeDislike = async (req, res, next) => {
   }
 
   try {
-    // Check for existing interaction to determine if it's a new like or an update
+    // Check for existing interaction to determine if it's a new reaction, toggle, or removal
     const existingInteraction = await LikesDislikes.findOne({
       user_id: member_id,
       target_id,
       target_type,
     });
 
+    // If the user is sending the same reaction again, interpret as clearing (neutral state)
+    if (existingInteraction && existingInteraction.is_like === is_like) {
+      await LikesDislikes.deleteOne({
+        user_id: member_id,
+        target_id,
+        target_type,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Reaction removed",
+        data: {
+          removed: true,
+        },
+      });
+    }
+
+    // Otherwise create a new reaction or toggle between like and dislike
     const likeDislike = await LikesDislikes.findOneAndUpdate(
       {
         user_id: member_id,
@@ -165,16 +183,16 @@ export const addOrUpdateLikeDislike = async (req, res, next) => {
     );
 
     // Notification Logic
-    // Only notify on new likes, not un-likes or toggles to dislike (unless we want to notify on dislike too, usually not)
-    // Also check if user is liking their own content
+    // Only notify on new likes or when switching from dislike -> like.
+    // Do not notify on dislikes or when removing a reaction.
     if (is_like && (!existingInteraction || existingInteraction.is_like === false)) {
       let recipientId = null;
       let message = "";
 
       if (target_type === "video") {
         const video = await Videos.findById(target_id);
-        if (video && video.uploader_id.toString() !== member_id) {
-          recipientId = video.uploader_id;
+        if (video && video.created_by && video.created_by.toString() !== member_id) {
+          recipientId = video.created_by;
           message = `liked your video "${video.title}"`;
         }
       } else if (target_type === "comment") {
@@ -239,10 +257,10 @@ export const getLikesDislikesCount = async (req, res, next) => {
         $group: {
           _id: null,
           likes: {
-            $sum: { $cond: ["$is_like", 1, 0] },
+            $sum: { $cond: [{ $eq: ["$is_like", true] }, 1, 0] },
           },
           dislikes: {
-            $sum: { $cond: ["$is_like", 0, 1] },
+            $sum: { $cond: [{ $eq: ["$is_like", false] }, 1, 0] },
           },
         },
       },
@@ -256,6 +274,36 @@ export const getLikesDislikesCount = async (req, res, next) => {
     });
   } catch (error) {
     logger.error("Error getting likes/dislikes count:", error);
+    next(createError(500, error.message));
+  }
+};
+
+// Get user's reaction for a specific target
+export const getUserReaction = async (req, res, next) => {
+  const { target_id, target_type } = req.params;
+  const user_id = req.user.id;
+
+  try {
+    const targetObjectId = mongoose.Types.ObjectId.isValid(target_id)
+      ? new mongoose.Types.ObjectId(target_id)
+      : target_id;
+
+    const reaction = await LikesDislikes.findOne({
+      user_id: new mongoose.Types.ObjectId(user_id),
+      target_id: targetObjectId,
+      target_type: target_type,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "User reaction retrieved successfully",
+      data: {
+        hasReacted: !!reaction,
+        isLike: reaction ? reaction.is_like : null,
+      },
+    });
+  } catch (error) {
+    logger.error("Error getting user reaction:", error);
     next(createError(500, error.message));
   }
 };

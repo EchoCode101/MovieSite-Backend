@@ -44,10 +44,14 @@ export const addReply = async (req, res, next) => {
       });
     }
 
+    // Populate member_id before returning
+    const populatedReply = await CommentReplies.findById(savedReply._id)
+      .populate("member_id", "username first_name last_name profile_pic");
+
     res.status(201).json({
       success: true,
       message: "Reply added successfully",
-      data: savedReply,
+      data: populatedReply,
     });
   } catch (error) {
     next(createError(500, error.message));
@@ -59,9 +63,9 @@ export const getRepliesByCommentId = async (req, res, next) => {
   const { comment_id } = req.params;
 
   try {
-    const replies = await CommentReplies.find({ comment_id }).sort({
-      createdAt: 1,
-    });
+    const replies = await CommentReplies.find({ comment_id })
+      .sort({ createdAt: 1 })
+      .populate("member_id", "username first_name last_name profile_pic");
 
     res.status(200).json({
       success: true,
@@ -102,7 +106,7 @@ export const updateReply = async (req, res, next) => {
       reply_id,
       { reply_content: reply_content.trim() },
       { new: true, runValidators: true }
-    );
+    ).populate("member_id", "username first_name last_name profile_pic");
 
     res.status(200).json({
       success: true,

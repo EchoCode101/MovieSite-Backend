@@ -217,9 +217,9 @@ export const addReview = async (req, res, next) => {
     });
 
     // Notification Logic
-    if (video && video.uploader_id.toString() !== member_id) {
+    if (video && video.created_by && video.created_by.toString() !== member_id) {
       await Notifications.create({
-        recipient_id: video.uploader_id,
+        recipient_id: video.created_by,
         sender_id: member_id,
         type: "review",
         reference_id: savedReview._id,
