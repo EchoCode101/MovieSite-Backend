@@ -17,7 +17,7 @@ router.get("/", authenticateAdminToken, getAllMembers);
 router.get("/paginated", authenticateToken, getPaginatedUsers);
 router.post("/", authenticateAdminToken, createMember);
 router.get("/:id", getMemberById);
-router.put("/:id", updateMember);
+router.put("/:id", authenticateToken, updateMember);
 router.delete(
   "/:id/destroy",
   authenticateAdminToken,

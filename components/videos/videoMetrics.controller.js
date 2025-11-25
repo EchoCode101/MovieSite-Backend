@@ -11,7 +11,11 @@ export const getVideoMetrics = async (req, res, next) => {
       })
       .sort({ updatedAt: -1 });
 
-    res.status(200).json(videoMetrics);
+    res.status(200).json({
+      success: true,
+      message: "Video metrics retrieved successfully",
+      data: videoMetrics,
+    });
   } catch (error) {
     next(createError(500, error.message));
   }

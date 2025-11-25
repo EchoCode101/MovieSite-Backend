@@ -10,11 +10,14 @@ import cookieParser from "cookie-parser";
 import errorHandler from "./components/Utilities/errorMiddleware.js";
 import videosRoutes from "./components/videos/videos.routes.js";
 import videoMetricsRoutes from "./components/videos/videoMetrics.routes.js";
-import membersRoutes from "./components/members/members.route.js";
+// import membersRoutes from "./components/members/members.route.js"; // Deprecated
 import reviewsRoutes from "./components/reviews/reviews.routes.js";
 import commentsRoutes from "./components/comments/comments.routes.js";
 import likesDislikesRoutes from "./components/likesDislikes/likesDislikes.routes.js";
 import commentRepliesRoutes from "./components/commentReplies/commentReplies.routes.js";
+import reportsRoutes from "./components/reports/reports.routes.js";
+import searchRoutes from "./components/search/search.routes.js";
+import notificationsRoutes from "./components/notifications/notifications.routes.js";
 import multer from "multer";
 // Initialize MongoDB connection
 import "./db/db.js";
@@ -62,16 +65,20 @@ app.use(
 );
 
 // Routes\
-app.use("/api/user", userRoutes);
+app.use("/api/users", userRoutes); // New standard
+app.use("/api/user", userRoutes); // Backward compatibility
 app.use("/api/token", tokenRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/videos", videosRoutes);
-app.use("/api/members", membersRoutes);
+app.use("/api/members", userRoutes); // Deprecated alias for backward compatibility
 app.use("/api/reviews", reviewsRoutes);
 app.use("/api/comments", commentsRoutes);
 app.use("/api/replies", commentRepliesRoutes);
 app.use("/api/video_metrics", videoMetricsRoutes);
 app.use("/api/likes-dislikes", likesDislikesRoutes);
+app.use("/api/reports", reportsRoutes);
+app.use("/api/search", searchRoutes);
+app.use("/api/notifications", notificationsRoutes);
 
 app.get("/test", (req, res) => {
   res.send("Hello from Express!");

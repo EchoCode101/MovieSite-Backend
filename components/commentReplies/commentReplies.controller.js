@@ -1,4 +1,9 @@
-import { CommentReplies, Comments } from "../../models/index.js";
+import {
+  CommentReplies,
+  Comments,
+  Members,
+  Notifications,
+} from "../../models/index.js";
 import createError from "http-errors";
 
 // Add a reply
@@ -21,16 +26,28 @@ export const addReply = async (req, res, next) => {
       return next(createError(404, "Comment not found"));
     }
 
-    const newReply = await CommentReplies.create({
+    const savedReply = await CommentReplies.create({
       comment_id,
       member_id,
       reply_content: reply_content.trim(),
     });
 
+    // Notification Logic
+    if (comment && comment.member_id.toString() !== member_id) {
+      await Notifications.create({
+        recipient_id: comment.member_id,
+        sender_id: member_id,
+        type: "reply",
+        reference_id: savedReply._id,
+        reference_type: "Comments", // Linking to the comment implies the reply context
+        message: `replied to your comment: "${comment.content.substring(0, 30)}..."`,
+      });
+    }
+
     res.status(201).json({
       success: true,
       message: "Reply added successfully",
-      data: newReply,
+      data: savedReply,
     });
   } catch (error) {
     next(createError(500, error.message));

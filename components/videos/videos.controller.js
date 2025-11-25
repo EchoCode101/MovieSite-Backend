@@ -249,7 +249,11 @@ export const getVideosWithLikesDislikes = async (req, res, next) => {
       },
     ]);
 
-    res.status(200).json(videos);
+    res.status(200).json({
+      success: true,
+      message: "Videos with likes/dislikes retrieved successfully",
+      data: videos,
+    });
   } catch (error) {
     console.error("Error fetching videos with likes/dislikes:", error);
     next(createError(500, error.message));
@@ -341,7 +345,11 @@ export const updateVideo = async (req, res, next) => {
     if (!video) {
       return next(createError(404, "Video not found"));
     }
-    res.status(200).json(video);
+    res.status(200).json({
+      success: true,
+      message: "Video updated successfully",
+      data: video,
+    });
   } catch (error) {
     if (error.code === 11000) {
       next(createError(400, "Title or Video URL already exists"));
@@ -359,6 +367,35 @@ export const deleteVideo = async (req, res, next) => {
       return next(createError(404, "Video not found"));
     }
     res.status(200).json({ message: "Video deleted successfully" });
+  } catch (error) {
+    next(createError(500, error.message));
+  }
+};
+
+// Bulk delete videos
+export const bulkDeleteVideos = async (req, res, next) => {
+  const { ids } = req.body;
+  const member_id = req.user.id;
+  const isAdmin = req.user.role === "admin";
+
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return next(createError(400, "ids array is required"));
+  }
+
+  try {
+    // If admin, delete all provided IDs
+    // If not admin, delete only videos owned by the user
+    const query = { _id: { $in: ids } };
+    if (!isAdmin) {
+      query.uploader_id = member_id;
+    }
+
+    const result = await Videos.deleteMany(query);
+
+    res.status(200).json({
+      success: true,
+      message: `${result.deletedCount} videos deleted successfully`,
+    });
   } catch (error) {
     next(createError(500, error.message));
   }

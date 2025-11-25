@@ -5,6 +5,7 @@ import {
   createVideo,
   updateVideo,
   deleteVideo,
+  bulkDeleteVideos,
   getPaginatedVideos,
   getVideosWithLikesDislikes,
   // uploadAndSaveVideo,
@@ -43,6 +44,7 @@ router.get(
 router.post("/", authenticateAdminToken, createVideo);
 router.get("/:id", getVideoById);
 router.put("/:id", authenticateAdminToken, updateVideo);
+router.delete("/bulk", authenticateToken, bulkDeleteVideos); // Bulk delete
 router.delete("/:id", authenticateAdminToken, deleteVideo);
 router.post("/addVideo", authenticateToken, addVideoToDatabase);
 

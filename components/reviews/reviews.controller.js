@@ -1,4 +1,9 @@
-import { ReviewsAndRatings, Videos, Members } from "../../models/index.js";
+import {
+  ReviewsAndRatings,
+  Videos,
+  Members,
+  Notifications,
+} from "../../models/index.js";
 import logger from "../Utilities/logger.js";
 import createError from "http-errors";
 
@@ -204,17 +209,29 @@ export const addReview = async (req, res, next) => {
     }
 
     // Insert review
-    const review = await ReviewsAndRatings.create({
+    const savedReview = await ReviewsAndRatings.create({
       video_id,
       member_id,
       rating,
       review_content: content,
     });
 
+    // Notification Logic
+    if (video && video.uploader_id.toString() !== member_id) {
+      await Notifications.create({
+        recipient_id: video.uploader_id,
+        sender_id: member_id,
+        type: "review",
+        reference_id: savedReview._id,
+        reference_type: "ReviewsAndRatings",
+        message: `reviewed your video "${video.title}"`,
+      });
+    }
+
     res.status(201).json({
       success: true,
       message: "Review added successfully",
-      data: review,
+      data: savedReview,
     });
   } catch (error) {
     logger.error("Error adding review:", error);
@@ -232,7 +249,11 @@ export const getReviewsByVideoId = async (req, res, next) => {
       .populate("video_id", "title category")
       .populate("member_id", "username email first_name last_name");
 
-    res.status(200).json(reviews);
+    res.status(200).json({
+      success: true,
+      message: "Reviews retrieved successfully",
+      data: reviews,
+    });
   } catch (error) {
     logger.error("Error fetching reviews by video ID:", error);
     next(createError(500, error.message));

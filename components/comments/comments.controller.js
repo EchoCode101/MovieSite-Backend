@@ -3,6 +3,7 @@ import {
   Members,
   Videos,
   LikesDislikes,
+  Notifications,
 } from "../../models/index.js";
 import logger from "../Utilities/logger.js";
 import createError from "http-errors";
@@ -32,6 +33,18 @@ export const createComment = async (req, res, next) => {
       member_id,
       content: content.trim(),
     });
+
+    // Notification Logic
+    if (video && video.uploader_id.toString() !== member_id) {
+      await Notifications.create({
+        recipient_id: video.uploader_id,
+        sender_id: member_id,
+        type: "comment",
+        reference_id: comment._id,
+        reference_type: "Comments",
+        message: `commented on your video "${video.title}"`,
+      });
+    }
 
     res.status(201).json({
       success: true,
@@ -214,7 +227,11 @@ export const getCommentById = async (req, res, next) => {
     if (!comment) {
       return next(createError(404, "Comment not found"));
     }
-    res.status(200).json(comment);
+    res.status(200).json({
+      success: true,
+      message: "Comment retrieved successfully",
+      data: comment,
+    });
   } catch (error) {
     logger.error("Error fetching comment by ID:", error);
     next(createError(500, error.message));
@@ -287,6 +304,64 @@ export const deleteComment = async (req, res, next) => {
     });
   } catch (error) {
     logger.error("Error deleting comment:", error);
+    next(createError(500, error.message));
+  }
+};
+
+// Bulk delete comments
+export const bulkDeleteComments = async (req, res, next) => {
+  const { ids } = req.body;
+  const member_id = req.user.id;
+  const isAdmin = req.user.role === "admin";
+
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return next(createError(400, "ids array is required"));
+  }
+
+  try {
+    // If admin, delete all provided IDs
+    // If not admin, delete only comments owned by the user
+    const query = { _id: { $in: ids } };
+    if (!isAdmin) {
+      query.member_id = member_id;
+    }
+
+    const result = await Comments.deleteMany(query);
+
+    res.status(200).json({
+      success: true,
+      message: `${result.deletedCount} comments deleted successfully`,
+    });
+  } catch (error) {
+    logger.error("Error bulk deleting comments:", error);
+    next(createError(500, error.message));
+  }
+};
+// Get comments by video ID
+export const getCommentsByVideoId = async (req, res, next) => {
+  const { videoId } = req.params;
+
+  try {
+    const comments = await Comments.find({ video_id: videoId })
+      .sort({ createdAt: -1 })
+      .populate("member_id", "first_name last_name username avatar_url") // Added username and avatar_url just in case
+      .lean(); // Use lean for better performance
+
+    // We might want to fetch likes/dislikes counts here if needed, 
+    // but for now let's return the basic comment data to fix the 404.
+    // The frontend might be fetching likes separately or we might need to aggregate.
+    
+    // If we need likes/dislikes, we can use the aggregation pipeline similar to getPaginatedComments
+    // but filtered by video_id. 
+    // For now, let's stick to the simple find to ensure data is returned.
+
+    res.status(200).json({
+      success: true,
+      message: "Comments retrieved successfully",
+      data: comments,
+    });
+  } catch (error) {
+    logger.error("Error fetching comments by video ID:", error);
     next(createError(500, error.message));
   }
 };

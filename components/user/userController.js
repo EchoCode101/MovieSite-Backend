@@ -2,6 +2,10 @@ import {
   Members,
   PasswordResets,
   UserSessionHistory,
+  Comments,
+  LikesDislikes,
+  ReviewsAndRatings,
+  CommentReplies,
 } from "../../models/index.js";
 import {
   encrypt,
@@ -21,7 +25,7 @@ import {
 } from "../Utilities/helpers.js";
 import validationSchemas from "../Utilities/validationSchemas.js";
 
-const { userSignupSchema, loginSchema } = validationSchemas;
+const { userSignupSchema, loginSchema, createMemberSchema, updateMemberSchema } = validationSchemas;
 // import validateAndSanitizeUserInput from "../Utilities/validator.js";
 
 // Handle user signup
@@ -139,7 +143,6 @@ export const logout = async (req, res, next) => {
       return next(createError(400, "No active session found"));
     }
     const decryptedToken = await extractAndDecryptToken(req);
-    console.log(decryptedToken);
     await blacklistToken(decryptedToken);
 
     // Clear cookies
@@ -190,5 +193,342 @@ export const forgotPassword = async (req, res, next) => {
     });
   } catch (error) {
     next(createError(500, "Something went wrong. Please try again."));
+  }
+};
+
+// --- Unified User Management Logic (formerly Members) ---
+
+export const getAllUsers = async (req, res, next) => {
+  try {
+    const users = await Members.find().sort({ createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      message: "Users retrieved successfully",
+      data: users,
+    });
+  } catch (error) {
+    logger.error("Error fetching all users:", error);
+    next(createError(500, error.message));
+  }
+};
+
+export const getPaginatedUsers = async (req, res, next) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      sort = "createdAt",
+      order = "DESC",
+    } = req.query;
+
+    const currentPage = parseInt(page, 10);
+    const itemsPerPage = parseInt(limit, 10);
+
+    if (isNaN(currentPage) || isNaN(itemsPerPage)) {
+      return next(createError(400, "Invalid pagination parameters"));
+    }
+
+    const skip = (currentPage - 1) * itemsPerPage;
+    const sortOrder = order === "ASC" ? 1 : -1;
+
+    // Determine sort field
+    let sortField = sort;
+    if (sort === "Plan") sortField = "subscription_plan";
+    else if (sort === "Status") sortField = "status";
+    else if (sort === "Date") sortField = "createdAt";
+
+    // Build aggregation pipeline
+    const pipeline = [
+      // Lookup comments count
+      {
+        $lookup: {
+          from: "comments",
+          localField: "_id",
+          foreignField: "member_id",
+          as: "comments",
+        },
+      },
+      // Lookup reviews count
+      {
+        $lookup: {
+          from: "reviewsandratings",
+          localField: "_id",
+          foreignField: "member_id",
+          as: "reviews",
+        },
+      },
+      // Lookup comment replies count
+      {
+        $lookup: {
+          from: "commentreplies",
+          localField: "_id",
+          foreignField: "member_id",
+          as: "commentReplies",
+        },
+      },
+      // Add computed fields
+      {
+        $addFields: {
+          commentsCount: { $size: "$comments" },
+          reviewsCount: { $size: "$reviews" },
+          commentRepliesCount: { $size: "$commentReplies" },
+        },
+      },
+      // Project fields
+      {
+        $project: {
+          _id: 1,
+          profile_pic: 1,
+          email: 1,
+          first_name: 1,
+          last_name: 1,
+          username: 1,
+          subscription_plan: 1,
+          status: 1,
+          createdAt: 1,
+          commentsCount: 1,
+          reviewsCount: 1,
+          commentRepliesCount: 1,
+        },
+      },
+      // Sort
+      { $sort: { [sortField]: sortOrder } },
+    ];
+
+    // Use $facet to get both count and data
+    pipeline.push({
+      $facet: {
+        total: [{ $count: "count" }],
+        users: [{ $skip: skip }, { $limit: itemsPerPage }],
+      },
+    });
+
+    const result = await Members.aggregate(pipeline);
+    const totalItems = result[0]?.total[0]?.count || 0;
+    const users = result[0]?.users || [];
+
+    res.status(200).json({
+      currentPage,
+      totalPages: Math.ceil(totalItems / itemsPerPage),
+      totalItems,
+      users,
+    });
+  } catch (error) {
+    logger.error("Error fetching paginated users:", error);
+    next(createError(500, error.message || "Error fetching users"));
+  }
+};
+
+export const getUserById = async (req, res, next) => {
+  try {
+    const member = await Members.findById(req.params.id).select(
+      "username email profile_pic first_name last_name subscription_plan role status createdAt updatedAt"
+    );
+
+    if (!member) {
+      return next(createError(404, "User not found"));
+    }
+
+    // Check if the requester is the owner or an admin
+    let isOwnerOrAdmin = false;
+    if (req.user) {
+      isOwnerOrAdmin =
+        req.user.id === req.params.id || req.user.role === "admin";
+    }
+
+    // If not owner/admin, filter sensitive fields
+    let memberData = member.toObject();
+    if (!isOwnerOrAdmin) {
+      const { email, subscription_plan, role, status, ...publicData } =
+        memberData;
+      memberData = publicData;
+    }
+
+    // Get related data
+    const [memberComments, memberReviews, memberReplies, userSessionHistory] =
+      await Promise.all([
+        Comments.find({ member_id: req.params.id })
+          .select("content createdAt")
+          .populate("video_id", "title"),
+        ReviewsAndRatings.find({ member_id: req.params.id })
+          .select("review_content rating createdAt")
+          .populate("video_id", "title"),
+        CommentReplies.find({ member_id: req.params.id })
+          .select("reply_content createdAt")
+          .populate("comment_id", "content"),
+        isOwnerOrAdmin
+          ? UserSessionHistory.find({ user_id: req.params.id }).select(
+              "login_time logout_time ip_address device_info"
+            )
+          : Promise.resolve([]),
+      ]);
+
+    // Get likes/dislikes for comments, reviews, and replies using aggregation
+    memberData.memberComments = memberComments;
+    memberData.memberReviews = memberReviews;
+    memberData.memberReplies = memberReplies;
+    if (isOwnerOrAdmin) {
+      memberData.userSessionHistory = userSessionHistory;
+    }
+
+    // Helper to add likes/dislikes
+    const addLikesDislikes = async (items, type) => {
+      if (!items || items.length === 0) return items;
+      const ids = items.map((i) => i._id);
+      const counts = await LikesDislikes.aggregate([
+        { $match: { target_id: { $in: ids }, target_type: type } },
+        {
+          $group: {
+            _id: "$target_id",
+            likes: { $sum: { $cond: ["$is_like", 1, 0] } },
+            dislikes: { $sum: { $cond: ["$is_like", 0, 1] } },
+          },
+        },
+      ]);
+      const map = {};
+      counts.forEach((c) => {
+        map[c._id.toString()] = { likes: c.likes, dislikes: c.dislikes };
+      });
+      return items.map((item) => ({
+        ...item,
+        likes: map[item._id.toString()]?.likes || 0,
+        dislikes: map[item._id.toString()]?.dislikes || 0,
+      }));
+    };
+
+    memberData.memberComments = await addLikesDislikes(
+      memberData.memberComments,
+      "comment"
+    );
+    memberData.memberReviews = await addLikesDislikes(
+      memberData.memberReviews,
+      "review"
+    );
+    memberData.memberReplies = await addLikesDislikes(
+      memberData.memberReplies,
+      "comment_reply"
+    );
+
+    res.status(200).json(memberData);
+  } catch (error) {
+    logger.error("Error fetching user details:", error);
+    next(createError(500, error.message));
+  }
+};
+
+export const createUser = async (req, res, next) => {
+  try {
+    const {
+      username,
+      email,
+      password,
+      subscription_plan = "Free",
+      role = "user",
+      profile_pic,
+      first_name,
+      last_name,
+      status = "Active",
+    } = req.body;
+
+    // Check for required fields
+    if (!username || !email || !password) {
+      return next(
+        createError(400, "Username, email, and password are required.")
+      );
+    }
+    const { error, value: validatedData } = createMemberSchema.validate(
+      req.body
+    );
+    if (error) return next(createError(400, error.details[0].message));
+
+    // Check if email or username already exists
+    const existingMember = await Members.findOne({
+      $or: [{ email }, { username }],
+    });
+    if (existingMember) {
+      return next(createError(409, "Email or username already exists."));
+    }
+    // Hash the password
+    const hashedPassword = await hashPassword(password);
+
+    const newMember = await Members.create({
+      ...validatedData,
+      password: hashedPassword, // Save the hashed password
+    });
+    res.status(201).json({
+      message: "User created successfully",
+      user: newMember,
+    });
+  } catch (error) {
+    if (error.name === "ValidationError") {
+      return next(
+        createError(400, {
+          message: "Validation error",
+          details: Object.values(error.errors).map((e) => e.message),
+        })
+      );
+    }
+    logger.error("Error creating user:", error);
+    next(createError(500, error.message));
+  }
+};
+
+export const updateUserById = async (req, res, next) => {
+  try {
+    // Security Check: Ensure user is updating their own profile or is admin
+    if (req.user.id !== req.params.id && req.user.role !== "admin") {
+      return next(
+        createError(403, "You are not authorized to update this profile.")
+      );
+    }
+
+    const { error } = updateMemberSchema.validate(req.body);
+    if (error) {
+      return next(createError(400, error.details[0].message));
+    }
+
+    const updatedMember = await Members.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedMember) {
+      return next(createError(404, "User not found"));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+      data: updatedMember,
+    });
+  } catch (error) {
+    logger.error("Error updating user:", error);
+    next(createError(500, error.message));
+  }
+};
+
+export const deleteUserById = async (req, res, next) => {
+  const { id } = req.params;
+
+  try {
+    const member = await Members.findByIdAndDelete(id);
+    if (!member) {
+      return next(createError(404, "User not found."));
+    }
+
+    // Delete associated data
+    await Comments.deleteMany({ member_id: id });
+    await ReviewsAndRatings.deleteMany({ member_id: id });
+    await CommentReplies.deleteMany({ member_id: id });
+    await UserSessionHistory.deleteMany({ user_id: id });
+
+    res.status(200).json({
+      success: true,
+      message: "User and associated data deleted successfully.",
+    });
+  } catch (error) {
+    logger.error("Error deleting user:", error);
+    next(createError(500, "Failed to delete user."));
   }
 };

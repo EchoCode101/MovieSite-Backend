@@ -11,6 +11,10 @@ export const extractAndDecryptToken = async (req) => {
   if (req.path && req.path.includes("/refresh")) {
     token = req.cookies?.encryptedRefreshToken;
     if (!token) {
+      logger.error("DEBUG: Refresh token missing in cookies", {
+        cookies: req.cookies,
+        path: req.path,
+      });
       // Fallback to Authorization header if cookie not found
       try {
         token = extractToken(req);
@@ -22,8 +26,20 @@ export const extractAndDecryptToken = async (req) => {
       }
     }
   } else {
-    // For other endpoints, use Authorization header
-    token = extractToken(req);
+    // For other endpoints, try cookie first (if available), then Authorization header
+    token = req.cookies?.encryptedAccessToken;
+    if (!token) {
+      try {
+        token = extractToken(req);
+      } catch (err) {
+        logger.error("DEBUG: Access token missing", {
+          cookies: req.cookies,
+          headers: req.headers,
+          path: req.path,
+        });
+        throw err;
+      }
+    }
   }
 
   return await decrypt(token); // Decrypt the token

@@ -147,6 +147,22 @@ export const getMemberById = async (req, res, next) => {
       return next(createError(404, "Member not found"));
     }
 
+    // Check if the requester is the owner or an admin
+    // Note: This route is public, so req.user might be undefined
+    let isOwnerOrAdmin = false;
+    if (req.user) {
+      isOwnerOrAdmin =
+        req.user.id === req.params.id || req.user.role === "admin";
+    }
+
+    // If not owner/admin, filter sensitive fields
+    let memberData = member.toObject();
+    if (!isOwnerOrAdmin) {
+      const { email, subscription_plan, role, status, ...publicData } =
+        memberData;
+      memberData = publicData;
+    }
+
     // Get related data
     const [memberComments, memberReviews, memberReplies, userSessionHistory] =
       await Promise.all([
@@ -159,21 +175,25 @@ export const getMemberById = async (req, res, next) => {
         CommentReplies.find({ member_id: req.params.id })
           .select("reply_content createdAt")
           .populate("comment_id", "content"),
-        UserSessionHistory.find({ user_id: req.params.id }).select(
-          "login_time logout_time ip_address device_info"
-        ),
+        // Only fetch session history if owner/admin
+        isOwnerOrAdmin
+          ? UserSessionHistory.find({ user_id: req.params.id }).select(
+              "login_time logout_time ip_address device_info"
+            )
+          : Promise.resolve([]),
       ]);
 
     // Get likes/dislikes for comments, reviews, and replies using aggregation
-    const memberObj = member.toObject();
-    memberObj.memberComments = memberComments;
-    memberObj.memberReviews = memberReviews;
-    memberObj.memberReplies = memberReplies;
-    memberObj.userSessionHistory = userSessionHistory;
+    memberData.memberComments = memberComments;
+    memberData.memberReviews = memberReviews;
+    memberData.memberReplies = memberReplies;
+    if (isOwnerOrAdmin) {
+      memberData.userSessionHistory = userSessionHistory;
+    }
 
     // Get likes/dislikes for comments
-    if (memberObj.memberComments && memberObj.memberComments.length > 0) {
-      const commentIds = memberObj.memberComments.map((c) => c._id);
+    if (memberData.memberComments && memberData.memberComments.length > 0) {
+      const commentIds = memberData.memberComments.map((c) => c._id);
       const commentLikesDislikes = await LikesDislikes.aggregate([
         {
           $match: {
@@ -198,7 +218,7 @@ export const getMemberById = async (req, res, next) => {
         };
       });
 
-      memberObj.memberComments = memberObj.memberComments.map((comment) => ({
+      memberData.memberComments = memberData.memberComments.map((comment) => ({
         ...comment,
         likes: likesMap[comment._id.toString()]?.likes || 0,
         dislikes: likesMap[comment._id.toString()]?.dislikes || 0,
@@ -206,8 +226,8 @@ export const getMemberById = async (req, res, next) => {
     }
 
     // Get likes/dislikes for reviews
-    if (memberObj.memberReviews && memberObj.memberReviews.length > 0) {
-      const reviewIds = memberObj.memberReviews.map((r) => r._id);
+    if (memberData.memberReviews && memberData.memberReviews.length > 0) {
+      const reviewIds = memberData.memberReviews.map((r) => r._id);
       const reviewLikesDislikes = await LikesDislikes.aggregate([
         {
           $match: {
@@ -232,7 +252,7 @@ export const getMemberById = async (req, res, next) => {
         };
       });
 
-      memberObj.memberReviews = memberObj.memberReviews.map((review) => ({
+      memberData.memberReviews = memberData.memberReviews.map((review) => ({
         ...review,
         likes: likesMap[review._id.toString()]?.likes || 0,
         dislikes: likesMap[review._id.toString()]?.dislikes || 0,
@@ -240,8 +260,8 @@ export const getMemberById = async (req, res, next) => {
     }
 
     // Get likes/dislikes for replies
-    if (memberObj.memberReplies && memberObj.memberReplies.length > 0) {
-      const replyIds = memberObj.memberReplies.map((r) => r._id);
+    if (memberData.memberReplies && memberData.memberReplies.length > 0) {
+      const replyIds = memberData.memberReplies.map((r) => r._id);
       const replyLikesDislikes = await LikesDislikes.aggregate([
         {
           $match: {
@@ -266,14 +286,14 @@ export const getMemberById = async (req, res, next) => {
         };
       });
 
-      memberObj.memberReplies = memberObj.memberReplies.map((reply) => ({
+      memberData.memberReplies = memberData.memberReplies.map((reply) => ({
         ...reply,
         likes: likesMap[reply._id.toString()]?.likes || 0,
         dislikes: likesMap[reply._id.toString()]?.dislikes || 0,
       }));
     }
 
-    res.status(200).json(memberObj);
+    res.status(200).json(memberData);
   } catch (error) {
     logger.error("Error fetching member details:", error);
     next(createError(500, error.message));
@@ -339,6 +359,13 @@ export const createMember = async (req, res, next) => {
 
 export const updateMember = async (req, res, next) => {
   try {
+    // Security Check: Ensure user is updating their own profile or is admin
+    if (req.user.id !== req.params.id && req.user.role !== "admin") {
+      return next(
+        createError(403, "You are not authorized to update this profile.")
+      );
+    }
+
     const { updateMemberSchema } = validationSchemas;
     const { error } = updateMemberSchema.validate(req.body);
     if (error) {

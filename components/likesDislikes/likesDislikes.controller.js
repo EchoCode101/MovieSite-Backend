@@ -3,6 +3,8 @@ import {
   ReviewsAndRatings,
   Members,
   Videos,
+  Comments,
+  Notifications,
 } from "../../models/index.js";
 import logger from "../Utilities/logger.js";
 import createError from "http-errors";
@@ -100,7 +102,11 @@ export const getReviewsWithLikesDislikes = async (req, res, next) => {
     ];
 
     const reviews = await ReviewsAndRatings.aggregate(pipeline);
-    res.status(200).json(reviews);
+    res.status(200).json({
+      success: true,
+      message: "Reviews with likes/dislikes retrieved successfully",
+      data: reviews,
+    });
   } catch (error) {
     logger.error("Error fetching reviews with likes/dislikes:", error);
     next(createError(500, error.message));
@@ -110,7 +116,7 @@ export const getReviewsWithLikesDislikes = async (req, res, next) => {
 // Add or update like/dislike
 export const addOrUpdateLikeDislike = async (req, res, next) => {
   const { target_id, target_type, is_like } = req.body;
-  const user_id = req.user.id; // Extract from authenticated token
+  const member_id = req.user.id; // Extract from authenticated token
 
   if (!target_id || !target_type || typeof is_like !== "boolean") {
     return next(
@@ -132,14 +138,21 @@ export const addOrUpdateLikeDislike = async (req, res, next) => {
   }
 
   try {
+    // Check for existing interaction to determine if it's a new like or an update
+    const existingInteraction = await LikesDislikes.findOne({
+      user_id: member_id,
+      target_id,
+      target_type,
+    });
+
     const likeDislike = await LikesDislikes.findOneAndUpdate(
       {
-        user_id,
+        user_id: member_id,
         target_id,
         target_type,
       },
       {
-        user_id,
+        user_id: member_id,
         target_id,
         target_type,
         is_like,
@@ -150,6 +163,50 @@ export const addOrUpdateLikeDislike = async (req, res, next) => {
         runValidators: true,
       }
     );
+
+    // Notification Logic
+    // Only notify on new likes, not un-likes or toggles to dislike (unless we want to notify on dislike too, usually not)
+    // Also check if user is liking their own content
+    if (is_like && (!existingInteraction || existingInteraction.is_like === false)) {
+      let recipientId = null;
+      let message = "";
+
+      if (target_type === "video") {
+        const video = await Videos.findById(target_id);
+        if (video && video.uploader_id.toString() !== member_id) {
+          recipientId = video.uploader_id;
+          message = `liked your video "${video.title}"`;
+        }
+      } else if (target_type === "comment") {
+        const comment = await Comments.findById(target_id);
+        if (comment && comment.member_id.toString() !== member_id) {
+          recipientId = comment.member_id;
+          message = `liked your comment: "${comment.content.substring(0, 30)}..."`;
+        }
+      } else if (target_type === "review") {
+        const review = await ReviewsAndRatings.findById(target_id);
+        if (review && review.member_id.toString() !== member_id) {
+          recipientId = review.member_id;
+          message = `liked your review on "${review.video_id}"`; // Ideally fetch video title, but ID is okay for now
+        }
+      }
+
+      if (recipientId) {
+        await Notifications.create({
+          recipient_id: recipientId,
+          sender_id: member_id,
+          type: "like",
+          reference_id: target_id,
+          reference_type:
+            target_type === "video"
+              ? "Videos"
+              : target_type === "comment"
+              ? "Comments"
+              : "ReviewsAndRatings",
+          message,
+        });
+      }
+    }
 
     res.status(201).json({
       success: true,
@@ -192,7 +249,11 @@ export const getLikesDislikesCount = async (req, res, next) => {
     ]);
 
     const result = counts[0] || { likes: 0, dislikes: 0 };
-    res.status(200).json(result);
+    res.status(200).json({
+      success: true,
+      message: "Likes/dislikes count retrieved successfully",
+      data: result,
+    });
   } catch (error) {
     logger.error("Error getting likes/dislikes count:", error);
     next(createError(500, error.message));

@@ -12,20 +12,24 @@ import TokenBlacklist from "./TokenBlacklist.js";
 import UserSessionHistory from "./UserSessionHistory.js";
 import ReviewsAndRatings from "./ReviewsAndRatings.js";
 import VideoTags from "./VideoTags.js";
+import Reports from "./Reports.js";
+import Notifications from "./Notifications.js";
 
 // Export all models
 export {
-  Tags,
-  Admins,
-  Videos,
   Members,
+  Videos,
   Comments,
-  CommentReplies,
-  VideoMetrics,
-  LikesDislikes,
-  TokenBlacklist,
-  PasswordResets,
-  UserSessionHistory,
   ReviewsAndRatings,
+  LikesDislikes,
+  VideoMetrics,
+  UserSessionHistory,
+  PasswordResets,
+  TokenBlacklist,
+  Admins,
+  CommentReplies,
+  Tags,
   VideoTags,
+  Reports,
+  Notifications,
 };
