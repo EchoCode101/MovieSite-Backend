@@ -46,6 +46,7 @@ export class SubscriptionsRepository {
     return SubscriptionModel.findOne({
       user_id: new Types.ObjectId(userId),
       status: "active",
+      ends_at: { $gt: new Date() }, // Ensure subscription hasn't expired
     })
       .populate("plan_id")
       .exec();

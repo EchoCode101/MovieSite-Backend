@@ -9,6 +9,11 @@ import { cleanupJobInstance } from "./utils/cleanupJob.js";
 async function bootstrap(): Promise<void> {
   await initializeDatabase();
 
+  // Log access control status at startup
+  logger.info(
+    `🔒 Access Control: ${config.enableAccessControl ? "ENABLED" : "DISABLED"} (ENABLE_ACCESS_CONTROL=${process.env.ENABLE_ACCESS_CONTROL ?? "not set"})`
+  );
+
   // Initialize cleanup job (runs in all environments)
   cleanupJobInstance.start();
 

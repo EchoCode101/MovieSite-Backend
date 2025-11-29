@@ -1,6 +1,6 @@
 import mongoose, { type Document, Schema, type Types } from "mongoose";
 
-export type ReportTargetType = "video" | "comment" | "review" | "user";
+export type ReportTargetType = "video" | "movie" | "tvshow" | "episode" | "comment" | "review" | "user";
 export type ReportStatus = "Pending" | "Reviewed" | "Resolved" | "Dismissed";
 
 export interface Report extends Document {
@@ -27,7 +27,7 @@ const reportsSchema = new Schema<Report>(
     },
     target_type: {
       type: String,
-      enum: ["video", "comment", "review", "user"],
+      enum: ["video", "movie", "tvshow", "episode", "comment", "review", "user"],
       required: true,
     },
     reason: {

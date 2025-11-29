@@ -2,6 +2,9 @@ import { Types } from "mongoose";
 import createError from "http-errors";
 import { CommentsRepository } from "./comments.repository.js";
 import { VideoModel } from "../../models/video.model.js";
+import { MovieModel } from "../../models/movie.model.js";
+import { TvShowModel } from "../../models/tvShow.model.js";
+import { EpisodeModel } from "../../models/episode.model.js";
 import { NotificationModel } from "../../models/notification.model.js";
 import type {
   CreateCommentInput,
@@ -40,10 +43,13 @@ export class CommentsService {
   }
 
   /**
-   * Get comments by video ID
+   * Get comments by target type and ID
    */
-  async getCommentsByVideoId(videoId: string): Promise<CommentWithUser[]> {
-    return await this.repository.findByVideoId(videoId);
+  async getCommentsByTarget(
+    targetType: "video" | "movie" | "tvshow" | "episode",
+    targetId: string
+  ): Promise<CommentWithUser[]> {
+    return await this.repository.findByTarget(targetType, targetId);
   }
 
   /**
@@ -69,19 +75,43 @@ export class CommentsService {
   async createComment(
     input: CreateCommentInput,
     userId: string
-  ): Promise<Comment> {
-    if (!input.video_id || !input.content) {
-      throw createError(400, "video_id and content are required");
+  ): Promise<CommentWithUser> {
+    if (!input.target_type || !input.target_id || !input.content) {
+      throw createError(400, "target_type, target_id, and content are required");
     }
 
     if (typeof input.content !== "string" || input.content.trim().length === 0) {
       throw createError(400, "Content must be a non-empty string");
     }
 
-    // Verify video exists
-    const video = await VideoModel.findById(input.video_id);
-    if (!video) {
-      throw createError(404, "Video not found");
+    // Verify target exists based on type
+    let target: any = null;
+    let targetTitle = "";
+
+    if (input.target_type === "video") {
+      target = await VideoModel.findById(input.target_id);
+      if (!target) {
+        throw createError(404, "Video not found");
+      }
+      targetTitle = target.title;
+    } else if (input.target_type === "movie") {
+      target = await MovieModel.findById(input.target_id);
+      if (!target) {
+        throw createError(404, "Movie not found");
+      }
+      targetTitle = target.title;
+    } else if (input.target_type === "tvshow") {
+      target = await TvShowModel.findById(input.target_id);
+      if (!target) {
+        throw createError(404, "TV Show not found");
+      }
+      targetTitle = target.title;
+    } else if (input.target_type === "episode") {
+      target = await EpisodeModel.findById(input.target_id);
+      if (!target) {
+        throw createError(404, "Episode not found");
+      }
+      targetTitle = target.title;
     }
 
     const comment = await this.repository.create({
@@ -89,19 +119,27 @@ export class CommentsService {
       member_id: userId,
     });
 
-    // Notification Logic
-    if (video.created_by && video.created_by.toString() !== userId) {
+    // Notification Logic - notify content creator
+    const createdBy = (target as any)?.created_by;
+    if (createdBy && createdBy.toString() !== userId) {
       await NotificationModel.create({
-        recipient_id: video.created_by,
+        recipient_id: createdBy,
         sender_id: new Types.ObjectId(userId),
         type: "comment",
         reference_id: comment._id,
         reference_type: "Comments",
-        message: `commented on your video "${video.title}"`,
+        message: `commented on your ${input.target_type} "${targetTitle}"`,
       });
     }
 
-    return comment;
+    // Populate member_id before returning
+    const commentId = (comment._id as Types.ObjectId).toString();
+    const populatedComment = await this.repository.findById(commentId);
+    if (!populatedComment) {
+      throw createError(500, "Failed to retrieve created comment");
+    }
+
+    return populatedComment;
   }
 
   /**

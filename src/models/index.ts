@@ -24,3 +24,27 @@ export { TokenBlacklistModel, type TokenBlacklist } from "./tokenBlacklist.model
 export { TagModel, type Tag } from "./tag.model.js";
 export { VideoTagModel, type VideoTag } from "./videoTag.model.js";
 
+// Content domain models
+export { GenreModel, type Genre } from "./genre.model.js";
+export { CastCrewModel, type CastCrew, type CastCrewType } from "./castCrew.model.js";
+export { MovieModel, type Movie, type AccessType, type PurchaseType, type TrailerUrlType, type ContentStatus } from "./movie.model.js";
+export { TvShowModel, type TvShow } from "./tvShow.model.js";
+export { SeasonModel, type Season } from "./season.model.js";
+export { EpisodeModel, type Episode } from "./episode.model.js";
+export { ChannelModel, type Channel } from "./channel.model.js";
+
+// User/Profile domain models
+export { DeviceModel, type Device } from "./device.model.js";
+
+// Monetization domain models
+export { CouponModel, type Coupon, type DiscountType } from "./coupon.model.js";
+export { TaxModel, type Tax } from "./tax.model.js";
+export { PaymentMethodModel, type PaymentMethod } from "./paymentMethod.model.js";
+export { TransactionModel, type Transaction, type TransactionType, type TransactionStatus } from "./transaction.model.js";
+export { PayPerViewModel, type PayPerView, type PayPerViewTargetType } from "./payPerView.model.js";
+
+// CMS/Config domain models
+export { BannerModel, type Banner } from "./banner.model.js";
+export { SettingModel, type Setting, type SettingGroup } from "./setting.model.js";
+export { PageModel, type Page } from "./page.model.js";
+

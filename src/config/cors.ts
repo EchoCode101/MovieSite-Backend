@@ -3,13 +3,14 @@ import config from "./env.js";
 import logger from "./logger.js";
 
 export function getCorsOptions(): CorsOptions {
-  const allowedOrigins = [config.originMain, config.originAdmin].filter(Boolean);
+  const allowedOrigins = [config.originMain, config.originAdmin, config.originVia].filter(Boolean);
 
   // Log allowed origins on startup
   logger.info("CORS Configuration", {
     allowedOrigins,
     mainOrigin: config.originMain,
     adminOrigin: config.originAdmin,
+    viaOrigin: config.originVia,
   });
 
   return {

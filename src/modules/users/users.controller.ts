@@ -1,4 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
+import { Types } from "mongoose";
+import createError from "http-errors";
 import { UsersService } from "./users.service.js";
 import logger from "../../config/logger.js";
 
@@ -46,7 +48,11 @@ export const getPaginatedUsersController = async (req: Request, res: Response, n
             order,
         });
 
-        res.status(200).json(result);
+        res.status(200).json({
+            success: true,
+            message: "Users retrieved successfully",
+            data: result,
+        });
     } catch (error) {
         logger.error("Error fetching paginated users (TS controller):", error);
         next(error);
@@ -82,9 +88,17 @@ export const deleteUserByIdController = async (req: Request, res: Response, next
 
 export const getUserByIdController = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const { id } = req.params;
+
+        // Validate that id is a valid MongoDB ObjectId
+        // This prevents errors when routes like /forgotPassword are incorrectly matched
+        if (!Types.ObjectId.isValid(id)) {
+            throw createError(400, `Invalid user ID format: ${id}`);
+        }
+
         const currentUser = (req as any).user as { id?: string; role?: string } | undefined;
 
-        const memberData = await usersService.getUserByIdDetailed(req.params.id, {
+        const memberData = await usersService.getUserByIdDetailed(id, {
             id: currentUser?.id,
             role: currentUser?.role,
         });
@@ -110,7 +124,7 @@ export const profileController = async (req: Request, res: Response, next: NextF
             return res.status(401).json({ success: false, message: "Unauthorized" });
         }
 
-        logger.debug("Fetching profile", { email, userId });
+        // logger.debug("Fetching profile", { email, userId });
         const profile = await usersService.getProfile(email);
 
         res.status(200).json({

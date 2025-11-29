@@ -1,0 +1,63 @@
+[
+  {
+    "slug": "about-us",
+    "title": "About Us",
+    "content": "<h1>About Vidstie</h1><p>Vidstie is a premium streaming platform dedicated to bringing you the best entertainment experience. We offer a vast library of movies, TV shows, and exclusive content.</p><p>Our mission is to provide high-quality streaming services with an intuitive user experience.</p>",
+    "is_active": true
+  },
+  {
+    "slug": "terms-of-service",
+    "title": "Terms of Service",
+    "content": "<h1>Terms of Service</h1><p>By using Vidstie, you agree to these terms and conditions. Please read them carefully.</p><h2>1. Acceptance of Terms</h2><p>By accessing and using this service, you accept and agree to be bound by the terms and provision of this agreement.</p><h2>2. Use License</h2><p>Permission is granted to temporarily use Vidstie for personal, non-commercial transitory viewing only.</p>",
+    "is_active": true
+  },
+  {
+    "slug": "privacy-policy",
+    "title": "Privacy Policy",
+    "content": "<h1>Privacy Policy</h1><p>Your privacy is important to us. This privacy policy explains how we collect, use, and protect your personal information.</p><h2>Information We Collect</h2><p>We collect information that you provide directly to us, such as when you create an account, make a purchase, or contact us for support.</p><h2>How We Use Your Information</h2><p>We use the information we collect to provide, maintain, and improve our services.</p>",
+    "is_active": true
+  },
+  {
+    "slug": "contact-us",
+    "title": "Contact Us",
+    "content": "<h1>Contact Us</h1><p>We'd love to hear from you! Get in touch with us through any of the following methods:</p><p><strong>Email:</strong> support@vidstie.com</p><p><strong>Phone:</strong> 1-800-VIDSTIE</p><p><strong>Address:</strong> 123 Streaming Street, Entertainment City, EC 12345</p>",
+    "is_active": true
+  },
+  {
+    "slug": "faq",
+    "title": "Frequently Asked Questions",
+    "content": "<h1>FAQ</h1><h2>How do I sign up?</h2><p>Click on the Sign Up button and fill in your details to create an account.</p><h2>What payment methods do you accept?</h2><p>We accept all major credit cards, PayPal, and other payment methods.</p><h2>Can I cancel my subscription anytime?</h2><p>Yes, you can cancel your subscription at any time from your account settings.</p>",
+    "is_active": true
+  },
+  {
+    "slug": "help",
+    "title": "Help Center",
+    "content": "<h1>Help Center</h1><p>Find answers to common questions and get help with your account.</p><h2>Getting Started</h2><p>Learn how to set up your account and start streaming.</p><h2>Account Management</h2><p>Manage your subscription, profiles, and preferences.</p><h2>Technical Support</h2><p>Get help with streaming issues and technical problems.</p>",
+    "is_active": true
+  },
+  {
+    "slug": "refund-policy",
+    "title": "Refund Policy",
+    "content": "<h1>Refund Policy</h1><p>We offer refunds for subscriptions within 30 days of purchase if you're not satisfied with our service.</p><h2>Eligibility</h2><p>Refunds are available for first-time subscribers within 30 days of their initial purchase.</p><h2>How to Request</h2><p>Contact our support team to request a refund.</p>",
+    "is_active": true
+  },
+  {
+    "slug": "accessibility",
+    "title": "Accessibility",
+    "content": "<h1>Accessibility Statement</h1><p>Vidstie is committed to ensuring digital accessibility for people with disabilities.</p><p>We are continually improving the user experience for everyone and applying relevant accessibility standards.</p>",
+    "is_active": true
+  },
+  {
+    "slug": "copyright",
+    "title": "Copyright Notice",
+    "content": "<h1>Copyright Notice</h1><p>All content on Vidstie is protected by copyright laws. Unauthorized copying, distribution, or use of content is strictly prohibited.</p>",
+    "is_active": true
+  },
+  {
+    "slug": "careers",
+    "title": "Careers",
+    "content": "<h1>Join Our Team</h1><p>We're always looking for talented individuals to join our team. Check out our open positions and apply today!</p><p>Current openings include positions in engineering, design, marketing, and customer support.</p>",
+    "is_active": true
+  }
+]
+

@@ -1,0 +1,23 @@
+[
+  { "tag_name": "blockbuster" },
+  { "tag_name": "award-winning" },
+  { "tag_name": "indie" },
+  { "tag_name": "classic" },
+  { "tag_name": "new-release" },
+  { "tag_name": "trending" },
+  { "tag_name": "popular" },
+  { "tag_name": "exclusive" },
+  { "tag_name": "original" },
+  { "tag_name": "remake" },
+  { "tag_name": "sequel" },
+  { "tag_name": "prequel" },
+  { "tag_name": "based-on-book" },
+  { "tag_name": "true-story" },
+  { "tag_name": "biographical" },
+  { "tag_name": "historical" },
+  { "tag_name": "sci-fi" },
+  { "tag_name": "superhero" },
+  { "tag_name": "zombie" },
+  { "tag_name": "vampire" }
+]
+

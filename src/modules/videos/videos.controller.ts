@@ -73,10 +73,17 @@ export async function getPaginatedVideos(
             limit: req.query.limit ? Number(req.query.limit) : undefined,
             sort: req.query.sort as string | undefined,
             order: req.query.order as "ASC" | "DESC" | undefined,
+            genre: req.query.genre as string | undefined,
+            year: req.query.year ? Number(req.query.year) : undefined,
         };
 
         const result = await videosService.getPaginatedVideos(params);
-        res.status(200).json(result);
+        const response: ApiResponse<typeof result> = {
+            success: true,
+            message: "Videos retrieved successfully",
+            data: result,
+        };
+        res.status(200).json(response);
     } catch (error: unknown) {
         const err = error as Error;
         next(createError(500, err.message || "Error fetching videos"));

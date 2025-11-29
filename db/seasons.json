@@ -1,0 +1,263 @@
+[
+  {
+    "tv_show_index": 0,
+    "season_number": 1,
+    "name": "Season 1",
+    "description": "The beginning of the epic journey",
+    "poster_url": "https://placehold.co/500x750?text=Chronicles+S1",
+    "release_date": "2020-01-15T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 0,
+    "season_number": 2,
+    "name": "Season 2",
+    "description": "The quest continues",
+    "poster_url": "https://placehold.co/500x750?text=Chronicles+S2",
+    "release_date": "2021-01-15T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 0,
+    "season_number": 3,
+    "name": "Season 3",
+    "description": "The final battle",
+    "poster_url": "https://placehold.co/500x750?text=Chronicles+S3",
+    "release_date": "2022-01-15T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 1,
+    "season_number": 1,
+    "name": "Season 1",
+    "description": "First cases",
+    "poster_url": "https://placehold.co/500x750?text=Detectives+S1",
+    "release_date": "2019-03-10T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 1,
+    "season_number": 2,
+    "name": "Season 2",
+    "description": "More complex cases",
+    "poster_url": "https://placehold.co/500x750?text=Detectives+S2",
+    "release_date": "2020-03-10T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 2,
+    "season_number": 1,
+    "name": "Season 1",
+    "description": "First mission",
+    "poster_url": "https://placehold.co/500x750?text=Space+S1",
+    "release_date": "2021-04-01T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 2,
+    "season_number": 2,
+    "name": "Season 2",
+    "description": "New discoveries",
+    "poster_url": "https://placehold.co/500x750?text=Space+S2",
+    "release_date": "2022-04-01T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 3,
+    "season_number": 1,
+    "name": "Season 1",
+    "description": "Meet the friends",
+    "poster_url": "https://placehold.co/500x750?text=Comedy+S1",
+    "release_date": "2018-09-15T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 3,
+    "season_number": 2,
+    "name": "Season 2",
+    "description": "More laughs",
+    "poster_url": "https://placehold.co/500x750?text=Comedy+S2",
+    "release_date": "2019-09-15T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 3,
+    "season_number": 3,
+    "name": "Season 3",
+    "description": "The gang's back",
+    "poster_url": "https://placehold.co/500x750?text=Comedy+S3",
+    "release_date": "2020-09-15T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 4,
+    "season_number": 1,
+    "name": "Season 1",
+    "description": "Terrifying tales",
+    "poster_url": "https://placehold.co/500x750?text=Horror+S1",
+    "release_date": "2022-10-01T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 5,
+    "season_number": 1,
+    "name": "Season 1",
+    "description": "Love stories begin",
+    "poster_url": "https://placehold.co/500x750?text=Romance+S1",
+    "release_date": "2020-02-14T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 5,
+    "season_number": 2,
+    "name": "Season 2",
+    "description": "New relationships",
+    "poster_url": "https://placehold.co/500x750?text=Romance+S2",
+    "release_date": "2021-02-14T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 6,
+    "season_number": 1,
+    "name": "Season 1",
+    "description": "First mission",
+    "poster_url": "https://placehold.co/500x750?text=Action+S1",
+    "release_date": "2021-06-01T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 6,
+    "season_number": 2,
+    "name": "Season 2",
+    "description": "Bigger threats",
+    "poster_url": "https://placehold.co/500x750?text=Action+S2",
+    "release_date": "2022-06-01T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 7,
+    "season_number": 1,
+    "name": "Season 1",
+    "description": "First case",
+    "poster_url": "https://placehold.co/500x750?text=Mystery+S1",
+    "release_date": "2019-05-10T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 7,
+    "season_number": 2,
+    "name": "Season 2",
+    "description": "Second case",
+    "poster_url": "https://placehold.co/500x750?text=Mystery+S2",
+    "release_date": "2020-05-10T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 7,
+    "season_number": 3,
+    "name": "Season 3",
+    "description": "Third case",
+    "poster_url": "https://placehold.co/500x750?text=Mystery+S3",
+    "release_date": "2021-05-10T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 8,
+    "season_number": 1,
+    "name": "Season 1",
+    "description": "The beginning",
+    "poster_url": "https://placehold.co/500x750?text=Drama+S1",
+    "release_date": "2020-08-20T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 8,
+    "season_number": 2,
+    "name": "Season 2",
+    "description": "Moving forward",
+    "poster_url": "https://placehold.co/500x750?text=Drama+S2",
+    "release_date": "2021-08-20T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 9,
+    "season_number": 1,
+    "name": "Season 1",
+    "description": "The edge begins",
+    "poster_url": "https://placehold.co/500x750?text=Thriller+S1",
+    "release_date": "2022-01-10T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 10,
+    "season_number": 1,
+    "name": "Season 1",
+    "description": "First quest",
+    "poster_url": "https://placehold.co/500x750?text=Adventure+S1",
+    "release_date": "2021-07-01T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 10,
+    "season_number": 2,
+    "name": "Season 2",
+    "description": "New quests",
+    "poster_url": "https://placehold.co/500x750?text=Adventure+S2",
+    "release_date": "2022-07-01T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 11,
+    "season_number": 1,
+    "name": "Season 1",
+    "description": "World exploration",
+    "poster_url": "https://placehold.co/500x750?text=Doc+S1",
+    "release_date": "2019-01-01T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 11,
+    "season_number": 2,
+    "name": "Season 2",
+    "description": "More discoveries",
+    "poster_url": "https://placehold.co/500x750?text=Doc+S2",
+    "release_date": "2020-01-01T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 11,
+    "season_number": 3,
+    "name": "Season 3",
+    "description": "Deep dive",
+    "poster_url": "https://placehold.co/500x750?text=Doc+S3",
+    "release_date": "2021-01-01T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 12,
+    "season_number": 1,
+    "name": "Season 1",
+    "description": "Animation begins",
+    "poster_url": "https://placehold.co/500x750?text=Animation+S1",
+    "release_date": "2020-03-15T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 12,
+    "season_number": 2,
+    "name": "Season 2",
+    "description": "More adventures",
+    "poster_url": "https://placehold.co/500x750?text=Animation+S2",
+    "release_date": "2021-03-15T00:00:00.000Z",
+    "status": "published"
+  },
+  {
+    "tv_show_index": 13,
+    "season_number": 1,
+    "name": "Season 1",
+    "description": "Western tales begin",
+    "poster_url": "https://placehold.co/500x750?text=Western+S1",
+    "release_date": "2021-09-01T00:00:00.000Z",
+    "status": "published"
+  }
+]

@@ -7,16 +7,16 @@ import {
 } from "../middlewares/auth.middleware.js";
 
 import {
-    signupController,
-    loginController,
+  signupController,
+  loginController,
 } from "../modules/auth/auth.controller.js";
 
 import {
-    createUserController,
-    getAllUsersController,
-    getPaginatedUsersController,
-    updateUserByIdController,
-    deleteUserByIdController,
+  createUserController,
+  getAllUsersController,
+  getPaginatedUsersController,
+  updateUserByIdController,
+  deleteUserByIdController,
 } from "../modules/users/users.controller.js";
 
 import { authValidators } from "../modules/auth/auth.validators.js";
@@ -45,20 +45,22 @@ const router = Router();
 
 // --- Auth Routes ---
 router.post(
-    "/signup",
-    limiter,
-    validate(authValidators.userSignupSchema),
-    signupController,
+  "/signup",
+  limiter,
+  validate(authValidators.userSignupSchema),
+  signupController,
 );
 
 router.post(
-    "/login",
-    limiter,
-    validate(authValidators.loginSchema),
-    loginController,
+  "/login",
+  limiter,
+  validate(authValidators.loginSchema),
+  loginController,
 );
 
 router.post("/logout", authenticateToken, limiter, logoutController);
+// Forgot password routes - MUST be before /:id route to avoid route conflicts
+// Express matches routes in order, so specific routes must come before parameterized routes
 router.post("/forgotPassword", limiter, forgotPasswordController);
 router.post("/forgotPassword/reset/:token", limiter, resetPasswordController);
 
@@ -76,44 +78,44 @@ router.put(
 
 // --- My Videos Routes ---
 router.post(
-    "/saveVideoUrl",
-    authenticateToken,
-    limiter,
+  "/saveVideoUrl",
+  authenticateToken,
+  limiter,
   saveUserVideoController,
 );
 router.get("/videos", authenticateToken, limiter, getUserVideosController);
 router.delete("/videos/:id", authenticateToken, limiter, deleteUserVideoController);
 router.get(
-    "/fetchVideoUrl/:video_id",
-    authenticateToken,
-    limiter,
+  "/fetchVideoUrl/:video_id",
+  authenticateToken,
+  limiter,
   fetchVideoUrlController,
 );
 
 // --- User Management Routes (Public/Admin) ---
 router.get("/", authenticateAdminToken, getAllUsersController); // Admin only
 router.get(
-    "/paginated",
-    authenticateToken,
-    getPaginatedUsersController,
+  "/paginated",
+  authenticateToken,
+  getPaginatedUsersController,
 ); // Auth required
 router.post(
-    "/",
-    authenticateAdminToken,
-    validate(usersValidators.createMemberSchema),
-    createUserController,
+  "/",
+  authenticateAdminToken,
+  validate(usersValidators.createMemberSchema),
+  createUserController,
 ); // Admin only
 router.get("/:id", getUserByIdController); // Public (with sensitive data filtering)
 router.put(
-    "/:id",
-    authenticateToken,
-    validate(usersValidators.updateMemberSchema),
-    updateUserByIdController,
+  "/:id",
+  authenticateToken,
+  validate(usersValidators.updateMemberSchema),
+  updateUserByIdController,
 ); // Owner/Admin only
 router.delete(
-    "/:id",
-    authenticateAdminToken,
-    deleteUserByIdController,
+  "/:id",
+  authenticateAdminToken,
+  deleteUserByIdController,
 ); // Admin only
 
 export default router;

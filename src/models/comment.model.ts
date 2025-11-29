@@ -1,8 +1,11 @@
 import mongoose, { type Document, Schema, type Types } from "mongoose";
 
+export type CommentTargetType = "video" | "movie" | "tvshow" | "episode";
+
 export interface Comment extends Document {
   member_id: Types.ObjectId;
-  video_id: Types.ObjectId;
+  target_type: CommentTargetType;
+  target_id: Types.ObjectId;
   content: string;
   is_active: boolean;
   createdAt: Date;
@@ -16,9 +19,13 @@ const commentSchema = new Schema<Comment>(
       ref: "Members",
       required: true,
     },
-    video_id: {
+    target_type: {
+      type: String,
+      enum: ["video", "movie", "tvshow", "episode"],
+      required: true,
+    },
+    target_id: {
       type: Schema.Types.ObjectId,
-      ref: "Videos",
       required: true,
     },
     content: {
@@ -36,7 +43,7 @@ const commentSchema = new Schema<Comment>(
   },
 );
 
-commentSchema.index({ video_id: 1 });
+commentSchema.index({ target_type: 1, target_id: 1 });
 commentSchema.index({ member_id: 1 });
 commentSchema.index({ createdAt: -1 });
 

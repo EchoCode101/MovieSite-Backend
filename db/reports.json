@@ -1,0 +1,23 @@
+[
+  { "reporter_index": 0, "target_type": "video", "target_index": 0, "reason": "Spam", "description": "This video contains spam content", "status": "Pending" },
+  { "reporter_index": 1, "target_type": "comment", "target_index": 0, "reason": "Inappropriate Content", "description": "Inappropriate language used", "status": "Pending" },
+  { "reporter_index": 2, "target_type": "movie", "target_index": 0, "reason": "Other", "description": "Content doesn't match description", "status": "Reviewed" },
+  { "reporter_index": 3, "target_type": "review", "target_index": 0, "reason": "Spam", "description": "Fake review", "status": "Resolved" },
+  { "reporter_index": 4, "target_type": "video", "target_index": 5, "reason": "Harassment", "description": "Harassing content", "status": "Pending" },
+  { "reporter_index": 5, "target_type": "comment", "target_index": 10, "reason": "Hate Speech", "description": "Contains hate speech", "status": "Pending" },
+  { "reporter_index": 6, "target_type": "episode", "target_index": 0, "reason": "Inappropriate Content", "description": "Inappropriate scenes", "status": "Reviewed" },
+  { "reporter_index": 7, "target_type": "movie", "target_index": 4, "reason": "Other", "description": "Misleading title", "status": "Dismissed" },
+  { "reporter_index": 8, "target_type": "comment_reply", "target_index": 0, "reason": "Spam", "description": "Spam reply", "status": "Resolved" },
+  { "reporter_index": 9, "target_type": "video", "target_index": 10, "reason": "Inappropriate Content", "description": "Inappropriate content", "status": "Pending" },
+  { "reporter_index": 10, "target_type": "review", "target_index": 5, "reason": "Spam", "description": "Fake review", "status": "Reviewed" },
+  { "reporter_index": 11, "target_type": "comment", "target_index": 15, "reason": "Harassment", "description": "Harassing comment", "status": "Pending" },
+  { "reporter_index": 12, "target_type": "movie", "target_index": 10, "reason": "Other", "description": "Content issue", "status": "Dismissed" },
+  { "reporter_index": 13, "target_type": "video", "target_index": 15, "reason": "Spam", "description": "Spam video", "status": "Resolved" },
+  { "reporter_index": 14, "target_type": "episode", "target_index": 20, "reason": "Inappropriate Content", "description": "Inappropriate episode content", "status": "Pending" },
+  { "reporter_index": 0, "target_type": "comment", "target_index": 20, "reason": "Hate Speech", "description": "Hate speech in comment", "status": "Pending" },
+  { "reporter_index": 1, "target_type": "review", "target_index": 10, "reason": "Spam", "description": "Fake review", "status": "Reviewed" },
+  { "reporter_index": 2, "target_type": "video", "target_index": 18, "reason": "Harassment", "description": "Harassing video", "status": "Pending" },
+  { "reporter_index": 3, "target_type": "movie", "target_index": 15, "reason": "Other", "description": "Content mismatch", "status": "Dismissed" },
+  { "reporter_index": 4, "target_type": "comment_reply", "target_index": 10, "reason": "Inappropriate Content", "description": "Inappropriate reply", "status": "Resolved" }
+]
+

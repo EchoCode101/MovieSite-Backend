@@ -1,0 +1,202 @@
+[
+  {
+    "title": "Featured Movie Banner",
+    "device": "web",
+    "position": "home",
+    "target_type": "movie",
+    "target_id": "movie_index_0",
+    "image_url": "https://placehold.co/1920x600?text=Featured+Movie",
+    "sort_order": 1,
+    "is_active": true
+  },
+  {
+    "title": "Trending TV Show",
+    "device": "web",
+    "position": "home",
+    "target_type": "tvshow",
+    "target_id": "tvshow_index_0",
+    "image_url": "https://placehold.co/1920x600?text=Trending+TV+Show",
+    "sort_order": 2,
+    "is_active": true
+  },
+  {
+    "title": "New Release Movie",
+    "device": "web",
+    "position": "movie",
+    "target_type": "movie",
+    "target_id": "movie_index_1",
+    "image_url": "https://placehold.co/1920x400?text=New+Release",
+    "sort_order": 1,
+    "is_active": true
+  },
+  {
+    "title": "Popular TV Series",
+    "device": "web",
+    "position": "tv",
+    "target_type": "tvshow",
+    "target_id": "tvshow_index_1",
+    "image_url": "https://placehold.co/1920x400?text=Popular+Series",
+    "sort_order": 1,
+    "is_active": true
+  },
+  {
+    "title": "Mobile Featured Content",
+    "device": "mobile",
+    "position": "home",
+    "target_type": "movie",
+    "target_id": "movie_index_2",
+    "image_url": "https://placehold.co/800x400?text=Mobile+Banner",
+    "sort_order": 1,
+    "is_active": true
+  },
+  {
+    "title": "TV App Banner",
+    "device": "tv",
+    "position": "home",
+    "target_type": "tvshow",
+    "target_id": "tvshow_index_2",
+    "image_url": "https://placehold.co/1920x1080?text=TV+Banner",
+    "sort_order": 1,
+    "is_active": true
+  },
+  {
+    "title": "Action Movies Collection",
+    "device": "web",
+    "position": "movie",
+    "target_type": "movie",
+    "target_id": "movie_index_3",
+    "image_url": "https://placehold.co/1920x400?text=Action+Movies",
+    "sort_order": 2,
+    "is_active": true
+  },
+  {
+    "title": "Drama Series Banner",
+    "device": "web",
+    "position": "tv",
+    "target_type": "tvshow",
+    "target_id": "tvshow_index_3",
+    "image_url": "https://placehold.co/1920x400?text=Drama+Series",
+    "sort_order": 2,
+    "is_active": true
+  },
+  {
+    "title": "Mobile Movie Banner",
+    "device": "mobile",
+    "position": "movie",
+    "target_type": "movie",
+    "target_id": "movie_index_4",
+    "image_url": "https://placehold.co/800x400?text=Mobile+Movie",
+    "sort_order": 1,
+    "is_active": true
+  },
+  {
+    "title": "TV Series Banner",
+    "device": "tv",
+    "position": "tv",
+    "target_type": "tvshow",
+    "target_id": "tvshow_index_4",
+    "image_url": "https://placehold.co/1920x1080?text=TV+Series",
+    "sort_order": 1,
+    "is_active": true
+  },
+  {
+    "title": "Video Content Banner",
+    "device": "web",
+    "position": "video",
+    "target_type": "movie",
+    "target_id": "movie_index_5",
+    "image_url": "https://placehold.co/1920x400?text=Video+Content",
+    "sort_order": 1,
+    "is_active": true
+  },
+  {
+    "title": "Premium Content",
+    "device": "web",
+    "position": "home",
+    "target_type": "movie",
+    "target_id": "movie_index_6",
+    "image_url": "https://placehold.co/1920x600?text=Premium+Content",
+    "sort_order": 3,
+    "is_active": true
+  },
+  {
+    "title": "Mobile Home Banner",
+    "device": "mobile",
+    "position": "home",
+    "target_type": "tvshow",
+    "target_id": "tvshow_index_5",
+    "image_url": "https://placehold.co/800x400?text=Mobile+Home",
+    "sort_order": 2,
+    "is_active": true
+  },
+  {
+    "title": "TV Home Banner",
+    "device": "tv",
+    "position": "home",
+    "target_type": "movie",
+    "target_id": "movie_index_7",
+    "image_url": "https://placehold.co/1920x1080?text=TV+Home",
+    "sort_order": 2,
+    "is_active": true
+  },
+  {
+    "title": "Exclusive Content",
+    "device": "web",
+    "position": "home",
+    "target_type": "tvshow",
+    "target_id": "tvshow_index_6",
+    "image_url": "https://placehold.co/1920x600?text=Exclusive",
+    "sort_order": 4,
+    "is_active": true
+  },
+  {
+    "title": "Coming Soon Banner",
+    "device": "web",
+    "position": "movie",
+    "target_type": "movie",
+    "target_id": "movie_index_8",
+    "image_url": "https://placehold.co/1920x400?text=Coming+Soon",
+    "sort_order": 3,
+    "is_active": true
+  },
+  {
+    "title": "Inactive Banner",
+    "device": "web",
+    "position": "home",
+    "target_type": "movie",
+    "target_id": "movie_index_9",
+    "image_url": "https://placehold.co/1920x600?text=Inactive",
+    "sort_order": 5,
+    "is_active": false
+  },
+  {
+    "title": "Mobile TV Banner",
+    "device": "mobile",
+    "position": "tv",
+    "target_type": "tvshow",
+    "target_id": "tvshow_index_7",
+    "image_url": "https://placehold.co/800x400?text=Mobile+TV",
+    "sort_order": 1,
+    "is_active": true
+  },
+  {
+    "title": "TV Movie Banner",
+    "device": "tv",
+    "position": "movie",
+    "target_type": "movie",
+    "target_id": "movie_index_10",
+    "image_url": "https://placehold.co/1920x1080?text=TV+Movie",
+    "sort_order": 1,
+    "is_active": true
+  },
+  {
+    "title": "Special Promotion",
+    "device": "web",
+    "position": "home",
+    "target_type": "tvshow",
+    "target_id": "tvshow_index_8",
+    "image_url": "https://placehold.co/1920x600?text=Promotion",
+    "sort_order": 6,
+    "is_active": true
+  }
+]

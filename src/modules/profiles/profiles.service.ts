@@ -44,6 +44,29 @@ export class ProfilesService {
     }
     await this.repo.deleteById(profileId);
   }
+
+  /**
+   * Validate PIN for a profile
+   * @param userId - User ID
+   * @param profileId - Profile ID
+   * @param pin - PIN to validate
+   * @returns true if PIN is valid, false otherwise
+   */
+  async validatePin(userId: string, profileId: string, pin: string): Promise<boolean> {
+    const profile = await this.repo.findById(profileId);
+    if (!profile || profile.user_id.toString() !== userId) {
+      throw createError(404, "Profile not found");
+    }
+    
+    // Check if profile is a kids profile with PIN
+    if (!profile.is_kid || !profile.pin) {
+      return false;
+    }
+    
+    // Compare PIN (assuming PINs are stored as plain text for now)
+    // In production, PINs should be hashed and compared using bcrypt
+    return profile.pin === pin;
+  }
 }
 
 

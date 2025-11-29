@@ -2,6 +2,9 @@ import { Types } from "mongoose";
 import createError from "http-errors";
 import { ReviewsRepository } from "./reviews.repository.js";
 import { VideoModel } from "../../models/video.model.js";
+import { MovieModel } from "../../models/movie.model.js";
+import { TvShowModel } from "../../models/tvShow.model.js";
+import { EpisodeModel } from "../../models/episode.model.js";
 import { NotificationModel } from "../../models/notification.model.js";
 import type {
   CreateReviewInput,
@@ -45,40 +48,68 @@ export class ReviewsService {
   }
 
   /**
-   * Get reviews by video ID
+   * Get reviews by target type and ID
    */
-  async getReviewsByVideoId(videoId: string): Promise<ReviewWithUser[]> {
-    return await this.repository.findByVideoId(videoId);
+  async getReviewsByTarget(
+    targetType: "video" | "movie" | "tvshow" | "episode",
+    targetId: string
+  ): Promise<ReviewWithUser[]> {
+    return await this.repository.findByTarget(targetType, targetId);
   }
 
   /**
-   * Create a new review (one per user per video)
+   * Create a new review (one per user per target)
    */
   async createReview(
     input: CreateReviewInput,
     userId: string
-  ): Promise<Review> {
-    if (!input.video_id || !input.rating || !input.content) {
-      throw createError(400, "video_id, rating, and content are required");
+  ): Promise<ReviewWithUser> {
+    if (!input.target_type || !input.target_id || !input.rating || !input.content) {
+      throw createError(400, "target_type, target_id, rating, and content are required");
     }
 
-    if (input.rating < 1 || input.rating > 5) {
-      throw createError(400, "Rating must be between 1 and 5");
+    if (input.rating < 1 || input.rating > 10) {
+      throw createError(400, "Rating must be between 1 and 10");
     }
 
-    // Check if video exists
-    const video = await VideoModel.findById(input.video_id);
-    if (!video) {
-      throw createError(404, "Video not found");
+    // Verify target exists based on type
+    let target: any = null;
+    let targetTitle = "";
+
+    if (input.target_type === "video") {
+      target = await VideoModel.findById(input.target_id);
+      if (!target) {
+        throw createError(404, "Video not found");
+      }
+      targetTitle = target.title;
+    } else if (input.target_type === "movie") {
+      target = await MovieModel.findById(input.target_id);
+      if (!target) {
+        throw createError(404, "Movie not found");
+      }
+      targetTitle = target.title;
+    } else if (input.target_type === "tvshow") {
+      target = await TvShowModel.findById(input.target_id);
+      if (!target) {
+        throw createError(404, "TV Show not found");
+      }
+      targetTitle = target.title;
+    } else if (input.target_type === "episode") {
+      target = await EpisodeModel.findById(input.target_id);
+      if (!target) {
+        throw createError(404, "Episode not found");
+      }
+      targetTitle = target.title;
     }
 
-    // Check if user already reviewed this video
-    const existingReview = await this.repository.findByVideoAndMember(
-      input.video_id,
+    // Check if user already reviewed this target
+    const existingReview = await this.repository.findByTargetAndMember(
+      input.target_type,
+      input.target_id,
       userId
     );
     if (existingReview) {
-      throw createError(409, "You have already reviewed this video");
+      throw createError(409, `You have already reviewed this ${input.target_type}`);
     }
 
     const review = await this.repository.create({
@@ -86,19 +117,27 @@ export class ReviewsService {
       member_id: userId,
     });
 
-    // Notification Logic
-    if (video.created_by && video.created_by.toString() !== userId) {
+    // Populate member_id before returning
+    const reviewId = (review._id as Types.ObjectId).toString();
+    const populatedReview = await this.repository.findById(reviewId);
+    if (!populatedReview) {
+      throw createError(500, "Failed to retrieve created review");
+    }
+
+    // Notification Logic - notify content creator
+    const createdBy = (target as any)?.created_by;
+    if (createdBy && createdBy.toString() !== userId) {
       await NotificationModel.create({
-        recipient_id: video.created_by,
+        recipient_id: createdBy,
         sender_id: new Types.ObjectId(userId),
         type: "review",
         reference_id: review._id,
         reference_type: "ReviewsAndRatings",
-        message: `reviewed your video "${video.title}"`,
+        message: `reviewed your ${input.target_type} "${targetTitle}"`,
       });
     }
 
-    return review;
+    return populatedReview;
   }
 
   /**

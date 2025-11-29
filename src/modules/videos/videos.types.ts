@@ -50,6 +50,8 @@ export interface PaginatedVideosParams {
     limit?: number;
     sort?: string;
     order?: "ASC" | "DESC";
+    genre?: string;
+    year?: number;
 }
 
 /**

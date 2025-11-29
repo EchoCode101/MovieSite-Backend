@@ -8,6 +8,8 @@ import type {
 } from "./subscriptions.types.js";
 import { mapPlanToDto, mapSubscriptionToDto } from "./subscriptions.types.js";
 import createError from "http-errors";
+import { MemberModel } from "../../models/member.model.js";
+import { findPlanBySubscriptionPlan } from "../../utils/planMapping.js";
 
 export class SubscriptionsService {
   private subscriptionsRepository: SubscriptionsRepository;
@@ -49,8 +51,73 @@ export class SubscriptionsService {
   }
 
   async getActiveSubscription(userId: string): Promise<SubscriptionDto | null> {
+    // First, try to find an active subscription record
     const subscription = await this.subscriptionsRepository.findActiveSubscriptionByUserId(userId);
-    return subscription ? mapSubscriptionToDto(subscription) : null;
+    if (subscription) {
+      const dto = mapSubscriptionToDto(subscription);
+      // Populate plan info if available
+      if (subscription.plan_id && typeof subscription.plan_id === "object") {
+        dto.plan = mapPlanToDto(subscription.plan_id as any);
+      }
+      return dto;
+    }
+
+    // Fallback: Check user's subscription_plan field
+    // This handles cases where user has subscription_plan set but no subscription record
+    const user = await MemberModel.findById(userId).select("subscription_plan");
+    if (user && user.subscription_plan && user.subscription_plan !== "Free") {
+      // Find matching plan in database
+      const plan = await findPlanBySubscriptionPlan(user.subscription_plan);
+      if (plan) {
+        // Return synthetic subscription object
+        // This allows frontend to work with subscription_plan field
+        const syntheticSubscription: SubscriptionDto = {
+          id: "", // No subscription ID since it's synthetic
+          user_id: userId,
+          plan_id: plan._id.toString(),
+          status: "active", // Treat as active
+          started_at: new Date(), // Use current date
+          ends_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+          base_amount: 0,
+          tax_amount: 0,
+          discount_amount: 0,
+          total_amount: 0,
+          currency: "USD",
+          payment_status: "paid",
+          is_manual: true, // Mark as manual since it's based on subscription_plan field
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          plan: {
+            id: plan._id.toString(),
+            name: plan.name,
+            slug: "", // Will be populated if needed
+            price: 0,
+            billing_cycle: "monthly",
+            max_profiles: 1,
+            max_devices: 1,
+            allow_download: false,
+            allow_cast: false,
+            ad_supported: false,
+            is_featured: false,
+            is_active: true,
+            tax_included: false,
+            available_for_ppv: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        };
+
+        // Try to get full plan details
+        const fullPlan = await this.subscriptionsRepository.findPlanById(plan._id.toString());
+        if (fullPlan) {
+          syntheticSubscription.plan = mapPlanToDto(fullPlan);
+        }
+
+        return syntheticSubscription;
+      }
+    }
+
+    return null;
   }
 
   async createSubscription(userId: string, input: CreateSubscriptionInput): Promise<SubscriptionDto> {

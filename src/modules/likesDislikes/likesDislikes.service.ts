@@ -35,7 +35,7 @@ export class LikesDislikesService {
       );
     }
 
-    const validTargetTypes: TargetType[] = ["video", "comment", "review", "comment_reply"];
+    const validTargetTypes: TargetType[] = ["video", "movie", "tvshow", "episode", "comment", "review", "comment_reply"];
     if (!validTargetTypes.includes(input.target_type)) {
       throw createError(
         400,

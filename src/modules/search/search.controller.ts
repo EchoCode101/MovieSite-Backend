@@ -18,7 +18,7 @@ export async function search(
   try {
     const params: SearchParams = {
       q: req.query.q as string,
-      type: req.query.type as "all" | "video" | "user" | undefined,
+      type: req.query.type as "all" | "video" | "movie" | "tvshow" | "episode" | "season" | "user" | undefined,
       page: req.query.page ? Number(req.query.page) : undefined,
       limit: req.query.limit ? Number(req.query.limit) : undefined,
     };

@@ -84,6 +84,40 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
-export { authenticateToken, authenticateAdminToken, limiter };
+/**
+ * Optional authentication middleware - sets req.user if token is valid,
+ * but doesn't fail if token is missing or invalid (for public routes)
+ * This allows public routes to work with or without authentication
+ */
+const optionalAuthenticateToken = async (req: Request, _res: Response, next: NextFunction) => {
+  try {
+    // extractAndDecryptToken throws if token is missing, so we catch that
+    const decryptedToken = await extractAndDecryptToken(req);
+    
+    if (!decryptedToken) {
+      // No token provided - continue as anonymous user
+      return next();
+    }
+
+    const verifiedToken = verifyAccessToken(decryptedToken);
+    req.user = verifiedToken;
+    next();
+  } catch (error: any) {
+    // Token is invalid, missing, or expired - continue as anonymous user (don't fail)
+    // This allows public routes to work with or without authentication
+    // Only log in development to avoid noise in production
+    if (config.nodeEnv === "development") {
+      logger.debug("Optional auth: Token invalid or missing, continuing as anonymous", {
+        path: req.path,
+        error: error?.message,
+        hasAuthHeader: !!req.headers.authorization,
+        hasCookie: !!req.cookies?.encryptedAccessToken,
+      });
+    }
+    next();
+  }
+};
+
+export { authenticateToken, authenticateAdminToken, optionalAuthenticateToken, limiter };
 
 

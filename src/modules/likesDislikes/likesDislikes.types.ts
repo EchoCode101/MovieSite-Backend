@@ -3,7 +3,7 @@ import type { LikeDislike } from "../../models/likeDislike.model.js";
 /**
  * Target type for likes/dislikes
  */
-export type TargetType = "video" | "comment" | "review" | "comment_reply";
+export type TargetType = "video" | "movie" | "tvshow" | "episode" | "comment" | "review" | "comment_reply";
 
 /**
  * Input for creating/updating a like/dislike

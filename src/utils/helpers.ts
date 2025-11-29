@@ -165,6 +165,40 @@ export async function sendPasswordResetEmail(
             error: err.message,
             stack: err.stack,
         });
+        
+        // Check for Gmail-specific authentication errors
+        if (err.message.includes("Application-specific password required") || 
+            err.message.includes("534-5.7.9") ||
+            (err.message.includes("Invalid login") && err.message.includes("Application-specific"))) {
+            const errorMessage = config.nodeEnv === "development"
+                ? "Email service configuration error: Gmail requires an Application-specific password when 2FA is enabled. Generate one at https://myaccount.google.com/apppasswords and use it in MY_PASSWORD_TS"
+                : "Email service configuration error. Please contact support.";
+            
+            logger.error("Gmail authentication error detected. This usually means:");
+            logger.error("1. Gmail account has 2FA enabled and requires an App Password");
+            logger.error("2. Go to: https://myaccount.google.com/apppasswords");
+            logger.error("3. Generate an App Password and use it in MY_PASSWORD_TS env variable");
+            logger.error("4. The App Password is a 16-character code (no spaces)");
+            
+            throw new Error(errorMessage);
+        }
+        
+        // Check for other authentication errors
+        if (err.message.includes("Invalid login") || 
+            err.message.includes("authentication failed") ||
+            err.message.includes("535") ||
+            err.message.includes("534")) {
+            const errorMessage = config.nodeEnv === "development"
+                ? "Email service authentication failed. Please verify MY_EMAIL_TS and MY_PASSWORD_TS in your .env file."
+                : "Email service authentication failed. Please contact support.";
+            
+            logger.error("Email authentication failed. Check:");
+            logger.error("1. MY_EMAIL_TS is set correctly");
+            logger.error("2. MY_PASSWORD_TS is set correctly (use App Password if 2FA is enabled)");
+            
+            throw new Error(errorMessage);
+        }
+        
         throw new Error(
             "Failed to send password reset email. Please try again later."
         );

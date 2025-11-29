@@ -60,10 +60,17 @@ export async function getPaginatedComments(
       limit: req.query.limit ? Number(req.query.limit) : undefined,
       sort: req.query.sort as string | undefined,
       order: req.query.order as "ASC" | "DESC" | undefined,
+      target_type: req.query.target_type as "video" | "movie" | "tvshow" | "episode" | undefined,
+      target_id: req.query.target_id as string | undefined,
     };
 
     const result = await commentsService.getPaginatedComments(params);
-    res.status(200).json(result);
+    const response: ApiResponse<typeof result> = {
+      success: true,
+      message: "Comments retrieved successfully",
+      data: result,
+    };
+    res.status(200).json(response);
   } catch (error: unknown) {
     const err = error as Error;
     logger.error("Error fetching paginated comments:", error);
@@ -227,15 +234,21 @@ export async function bulkDeleteComments(
 }
 
 /**
- * Get comments by video ID (public)
+ * Get comments by video ID (public) - legacy endpoint
  */
-export async function getCommentsByVideoId(
+export async function getCommentsByVideo(
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
-    const comments = await commentsService.getCommentsByVideoId(req.params.videoId);
+    const videoId = req.params.videoId;
+    
+    if (!videoId) {
+      return next(createError(400, "Video ID is required"));
+    }
+
+    const comments = await commentsService.getCommentsByTarget("video", videoId);
     const response: ApiResponse<typeof comments> = {
       success: true,
       message: "Comments retrieved successfully",
@@ -244,7 +257,37 @@ export async function getCommentsByVideoId(
     res.status(200).json(response);
   } catch (error: unknown) {
     const err = error as Error;
-    logger.error("Error fetching comments by video ID:", error);
+    logger.error("Error fetching comments by video:", error);
+    next(createError(500, err.message || "Failed to fetch comments"));
+  }
+}
+
+/**
+ * Get comments by target type and ID (public)
+ */
+export async function getCommentsByTarget(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const targetType = req.params.targetType as "video" | "movie" | "tvshow" | "episode";
+    const targetId = req.params.targetId;
+    
+    if (!["video", "movie", "tvshow", "episode"].includes(targetType)) {
+      return next(createError(400, "Invalid target type. Must be one of: video, movie, tvshow, episode"));
+    }
+
+    const comments = await commentsService.getCommentsByTarget(targetType, targetId);
+    const response: ApiResponse<typeof comments> = {
+      success: true,
+      message: "Comments retrieved successfully",
+      data: comments,
+    };
+    res.status(200).json(response);
+  } catch (error: unknown) {
+    const err = error as Error;
+    logger.error("Error fetching comments by target:", error);
     next(createError(500, err.message || "Failed to fetch comments"));
   }
 }

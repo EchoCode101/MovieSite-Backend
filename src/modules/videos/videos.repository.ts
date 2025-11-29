@@ -34,13 +34,40 @@ export class VideosRepository {
             limit = 10,
             sort = "updatedAt",
             order = "DESC",
+            genre,
+            year,
         } = params;
 
         const skip = (Number(page) - 1) * Number(limit);
         const sortOrder = order === "ASC" ? 1 : -1;
 
+        // Build match stage for filters
+        const matchStage: Record<string, unknown> = {};
+        
+        // Filter by genre (using category field)
+        if (genre && genre !== "All" && genre.trim() !== "") {
+            matchStage.category = { $regex: new RegExp(genre, "i") };
+        }
+        
+        // Filter by year (extract from createdAt)
+        if (year) {
+            const startOfYear = new Date(year, 0, 1);
+            const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
+            matchStage.createdAt = {
+                $gte: startOfYear,
+                $lte: endOfYear,
+            };
+        }
+
         // Build aggregation pipeline
-        const pipeline: PipelineStage[] = [
+        const pipeline: PipelineStage[] = [];
+
+        // Add match stage if filters exist
+        if (Object.keys(matchStage).length > 0) {
+            pipeline.push({ $match: matchStage });
+        }
+
+        pipeline.push(
             {
                 $lookup: {
                     from: "videometrics",
@@ -115,8 +142,8 @@ export class VideosRepository {
                         },
                     },
                 },
-            },
-        ];
+            }
+        );
 
         // Add sorting
         let sortField = sort;
@@ -130,13 +157,16 @@ export class VideosRepository {
             sortField = "average_rating";
         } else if (sort === "video_id") {
             sortField = "_id";
+        } else if (sort === "featured") {
+            // Featured can be sorted by views or likes, defaulting to views_count
+            sortField = "metrics.views_count";
         }
 
         pipeline.push({ $sort: { [sortField as string]: sortOrder } });
         pipeline.push({ $skip: skip });
         pipeline.push({ $limit: Number(limit) });
 
-        // Get total count
+        // Get total count (before skip and limit)
         const countPipeline = [
             ...pipeline.slice(0, -2), // Remove skip and limit
             { $count: "total" },

@@ -122,7 +122,8 @@ export const createVideoSchema = Joi.object({
 
 // Comment validation schemas
 export const createCommentSchema = Joi.object({
-    video_id: Joi.string().required(),
+    target_type: Joi.string().valid("video", "movie", "tvshow", "episode").required(),
+    target_id: Joi.string().required(),
     content: Joi.string().min(1).max(1000).required(),
 });
 
@@ -132,8 +133,9 @@ export const updateCommentSchema = Joi.object({
 
 // Review validation schemas
 export const createReviewSchema = Joi.object({
-    video_id: Joi.string().required(),
-    rating: Joi.number().integer().min(1).max(5).required(),
+    target_type: Joi.string().valid("video", "movie", "tvshow", "episode").required(),
+    target_id: Joi.string().required(),
+    rating: Joi.number().integer().min(1).max(10).required(),
     content: Joi.string().min(1).max(2000).required(),
 });
 
@@ -156,7 +158,7 @@ export const updateReplySchema = Joi.object({
 export const likeDislikeSchema = Joi.object({
     target_id: Joi.string().required(),
     target_type: Joi.string()
-        .valid("video", "comment", "review", "comment_reply")
+        .valid("video", "movie", "tvshow", "episode", "comment", "review", "comment_reply")
         .required(),
     is_like: Joi.boolean().required(),
 });

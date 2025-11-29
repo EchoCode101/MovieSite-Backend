@@ -1,0 +1,93 @@
+[
+  {
+    "username": "admin1",
+    "email": "admin1@vidstie.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "role": "admin",
+    "first_name": "Admin",
+    "last_name": "One",
+    "status": true
+  },
+  {
+    "username": "admin2",
+    "email": "admin2@vidstie.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "role": "admin",
+    "first_name": "Admin",
+    "last_name": "Two",
+    "status": true
+  },
+  {
+    "username": "admin3",
+    "email": "admin3@vidstie.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "role": "admin",
+    "first_name": "Admin",
+    "last_name": "Three",
+    "status": true
+  },
+  {
+    "username": "admin4",
+    "email": "admin4@vidstie.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "role": "admin",
+    "first_name": "Admin",
+    "last_name": "Four",
+    "status": true
+  },
+  {
+    "username": "admin5",
+    "email": "admin5@vidstie.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "role": "admin",
+    "first_name": "Admin",
+    "last_name": "Five",
+    "status": true
+  },
+  {
+    "username": "admin6",
+    "email": "admin6@vidstie.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "role": "admin",
+    "first_name": "Admin",
+    "last_name": "Six",
+    "status": true
+  },
+  {
+    "username": "admin7",
+    "email": "admin7@vidstie.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "role": "admin",
+    "first_name": "Admin",
+    "last_name": "Seven",
+    "status": true
+  },
+  {
+    "username": "admin8",
+    "email": "admin8@vidstie.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "role": "admin",
+    "first_name": "Admin",
+    "last_name": "Eight",
+    "status": true
+  },
+  {
+    "username": "admin9",
+    "email": "admin9@vidstie.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "role": "admin",
+    "first_name": "Admin",
+    "last_name": "Nine",
+    "status": true
+  },
+  {
+    "username": "admin10",
+    "email": "admin10@vidstie.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "role": "admin",
+    "first_name": "Admin",
+    "last_name": "Ten",
+    "status": true
+  }
+]
+

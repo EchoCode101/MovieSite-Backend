@@ -1,4 +1,4 @@
-import mongoose, { type Document, Schema } from "mongoose";
+import mongoose, { type Document, Schema, type Types } from "mongoose";
 
 export interface Member extends Document {
   username: string;
@@ -11,6 +11,9 @@ export interface Member extends Document {
   last_name?: string;
   status: string;
   lastLogin?: Date;
+  current_subscription_id?: Types.ObjectId;
+  profiles_count: number;
+  device_limit: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -64,6 +67,18 @@ const memberSchema = new Schema<Member>(
     },
     lastLogin: {
       type: Date,
+    },
+    current_subscription_id: {
+      type: Schema.Types.ObjectId,
+      ref: "Subscriptions",
+    },
+    profiles_count: {
+      type: Number,
+      default: 1,
+    },
+    device_limit: {
+      type: Number,
+      default: 1,
     },
   },
   {

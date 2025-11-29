@@ -13,7 +13,8 @@ import {
   deleteComment,
   bulkDeleteComments,
   getPaginatedComments,
-  getCommentsByVideoId,
+  getCommentsByVideo,
+  getCommentsByTarget,
 } from "../modules/comments/comments.controller.js";
 import {
   createCommentSchema,
@@ -43,7 +44,13 @@ router.get(
   getPaginatedComments,
 );
 
-// Get comment by ID (public)
+// Get comments by video ID (public) - legacy endpoint
+router.get("/video/:videoId", getCommentsByVideo);
+
+// Get comments by target type and ID (public)
+router.get("/target/:targetType/:targetId", getCommentsByTarget);
+
+// Get comment by ID (public) - must be after /video/:videoId to avoid conflicts
 router.get("/:id", getCommentById);
 
 // Update comment (authenticated - owner only)
@@ -64,9 +71,6 @@ router.delete(
 
 // Delete comment (authenticated - owner only)
 router.delete("/:id", authenticateToken, deleteComment);
-
-// Get comments by video ID (public)
-router.get("/video/:videoId", getCommentsByVideoId);
 
 export default router;
 

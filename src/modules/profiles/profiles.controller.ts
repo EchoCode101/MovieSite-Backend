@@ -114,4 +114,51 @@ export const deleteProfileByIdController = async (
   }
 };
 
+export const validateProfilePinController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const currentUser = (req as any).user as { id?: string } | undefined;
+    const userId = currentUser?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const { pin } = req.body;
+    if (!pin || typeof pin !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: "PIN is required",
+      });
+    }
+
+    const isValid = await profilesService.validatePin(userId, req.params.id, pin);
+    
+    if (isValid) {
+      res.status(200).json({
+        success: true,
+        message: "PIN validated successfully",
+        data: { isValid: true },
+      });
+    } else {
+      res.status(200).json({
+        success: false,
+        message: "Invalid PIN",
+        data: { isValid: false },
+      });
+    }
+  } catch (error: any) {
+    if (error.status === 404) {
+      return res.status(404).json({
+        success: false,
+        message: error.message || "Profile not found",
+      });
+    }
+    logger.error("Error validating profile PIN (TS controller):", error);
+    next(error);
+  }
+};
+
 

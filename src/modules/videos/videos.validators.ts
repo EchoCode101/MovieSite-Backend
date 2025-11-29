@@ -8,10 +8,12 @@ export const paginatedVideosSchema = Joi.object({
     page: Joi.number().integer().min(1).optional().default(1),
     limit: Joi.number().integer().min(1).max(100).optional().default(10),
     sort: Joi.string()
-        .valid("updatedAt", "createdAt", "views_count", "likes.length", "dislikes.length", "rating", "title", "_id", "video_id")
+        .valid("updatedAt", "createdAt", "views_count", "likes.length", "dislikes.length", "rating", "title", "_id", "video_id", "featured")
         .optional()
         .default("updatedAt"),
     order: Joi.string().valid("ASC", "DESC").optional().default("DESC"),
+    genre: Joi.string().optional().allow("", null),
+    year: Joi.number().integer().min(1900).max(2100).optional(),
 });
 
 /**

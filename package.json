@@ -7,8 +7,8 @@
     "dev": "tsc && cross-env NODE_ENV=development nodemon dist/server.js",
     "prod": "npm run build && cross-env NODE_ENV=production node dist/server.js",
     "build": "tsc",
-    "seed": "npm run build && node dist/src/seeds/importData.js",
-    "seed:reset": "npm run build && node dist/src/seeds/importData.js --reset",
+    "seed": "npm run build && node dist/seeds/importData.js",
+    "seed:reset": "npm run build && node dist/seeds/importData.js --reset",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "postinstall": "patch-package"
   },

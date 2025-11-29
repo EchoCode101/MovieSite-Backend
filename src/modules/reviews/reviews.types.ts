@@ -2,12 +2,13 @@ import type { Review } from "../../models/review.model.js";
 import type { Types } from "mongoose";
 
 /**
- * Review with user and video information
+ * Review with user and target information
  */
-export interface ReviewWithUser extends Omit<Review, "video_id" | "member_id"> {
-  video_id: {
+export interface ReviewWithUser extends Omit<Review, "target_id" | "member_id"> {
+  target?: {
     _id: Types.ObjectId;
-    title: string;
+    title?: string;
+    name?: string;
     category?: string;
   };
   member_id: {
@@ -34,9 +35,10 @@ export interface ReviewWithStats {
     first_name?: string;
     last_name?: string;
   };
-  video: {
+  target?: {
     _id: Types.ObjectId;
-    title: string;
+    title?: string;
+    name?: string;
     description?: string;
     thumbnail_url?: string;
   };
@@ -50,6 +52,8 @@ export interface PaginatedReviewsParams {
   limit?: number;
   sort?: string;
   order?: "ASC" | "DESC";
+  target_type?: "video" | "movie" | "tvshow" | "episode";
+  target_id?: string;
 }
 
 /**
@@ -74,7 +78,8 @@ export interface RecentReviewsParams {
  * Input for creating a review
  */
 export interface CreateReviewInput {
-  video_id: string;
+  target_type: "video" | "movie" | "tvshow" | "episode";
+  target_id: string;
   rating: number;
   content: string;
 }

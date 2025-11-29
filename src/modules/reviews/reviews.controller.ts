@@ -54,10 +54,17 @@ export async function getPaginatedReviews(
       limit: req.query.limit ? Number(req.query.limit) : undefined,
       sort: req.query.sort as string | undefined,
       order: req.query.order as "ASC" | "DESC" | undefined,
+      target_type: req.query.target_type as "video" | "movie" | "tvshow" | "episode" | undefined,
+      target_id: req.query.target_id as string | undefined,
     };
 
     const result = await reviewsService.getPaginatedReviews(params);
-    res.status(200).json(result);
+    const response: ApiResponse<typeof result> = {
+      success: true,
+      message: "Reviews retrieved successfully",
+      data: result,
+    };
+    res.status(200).json(response);
   } catch (error: unknown) {
     const err = error as Error;
     logger.error("Error fetching paginated reviews:", error);
@@ -66,15 +73,21 @@ export async function getPaginatedReviews(
 }
 
 /**
- * Get reviews by video ID (public)
+ * Get reviews by video ID (public) - legacy endpoint
  */
-export async function getReviewsByVideoId(
+export async function getReviewsByVideo(
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
-    const reviews = await reviewsService.getReviewsByVideoId(req.params.videoId);
+    const videoId = req.params.videoId;
+    
+    if (!videoId) {
+      return next(createError(400, "Video ID is required"));
+    }
+
+    const reviews = await reviewsService.getReviewsByTarget("video", videoId);
     const response: ApiResponse<typeof reviews> = {
       success: true,
       message: "Reviews retrieved successfully",
@@ -83,7 +96,37 @@ export async function getReviewsByVideoId(
     res.status(200).json(response);
   } catch (error: unknown) {
     const err = error as Error;
-    logger.error("Error fetching reviews by video ID:", error);
+    logger.error("Error fetching reviews by video:", error);
+    next(createError(500, err.message || "Failed to fetch reviews"));
+  }
+}
+
+/**
+ * Get reviews by target type and ID (public)
+ */
+export async function getReviewsByTarget(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const targetType = req.params.targetType as "video" | "movie" | "tvshow" | "episode";
+    const targetId = req.params.targetId;
+    
+    if (!["video", "movie", "tvshow", "episode"].includes(targetType)) {
+      return next(createError(400, "Invalid target type. Must be one of: video, movie, tvshow, episode"));
+    }
+
+    const reviews = await reviewsService.getReviewsByTarget(targetType, targetId);
+    const response: ApiResponse<typeof reviews> = {
+      success: true,
+      message: "Reviews retrieved successfully",
+      data: reviews,
+    };
+    res.status(200).json(response);
+  } catch (error: unknown) {
+    const err = error as Error;
+    logger.error("Error fetching reviews by target:", error);
     next(createError(500, err.message));
   }
 }

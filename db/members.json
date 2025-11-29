@@ -1,0 +1,168 @@
+[
+  {
+    "username": "johndoe",
+    "email": "john.doe@example.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "subscription_plan": "Premium",
+    "role": "user",
+    "profile_pic": "https://i.pravatar.cc/150?img=1",
+    "first_name": "John",
+    "last_name": "Doe",
+    "status": "Active"
+  },
+  {
+    "username": "janedoe",
+    "email": "jane.doe@example.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO8K",
+    "subscription_plan": "Basic",
+    "role": "user",
+    "profile_pic": "https://i.pravatar.cc/150?img=2",
+    "first_name": "Jane",
+    "last_name": "Doe",
+    "status": "Active"
+  },
+  {
+    "username": "bobsmith",
+    "email": "bob.smith@example.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "subscription_plan": "Free",
+    "role": "user",
+    "profile_pic": "https://i.pravatar.cc/150?img=3",
+    "first_name": "Bob",
+    "last_name": "Smith",
+    "status": "Active"
+  },
+  {
+    "username": "alicejohnson",
+    "email": "alice.johnson@example.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "subscription_plan": "Ultimate",
+    "role": "user",
+    "profile_pic": "https://i.pravatar.cc/150?img=4",
+    "first_name": "Alice",
+    "last_name": "Johnson",
+    "status": "Active"
+  },
+  {
+    "username": "charliebrown",
+    "email": "charlie.brown@example.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "subscription_plan": "Premium",
+    "role": "user",
+    "profile_pic": "https://i.pravatar.cc/150?img=5",
+    "first_name": "Charlie",
+    "last_name": "Brown",
+    "status": "Active"
+  },
+  {
+    "username": "dianawilson",
+    "email": "diana.wilson@example.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "subscription_plan": "Basic",
+    "role": "user",
+    "profile_pic": "https://i.pravatar.cc/150?img=6",
+    "first_name": "Diana",
+    "last_name": "Wilson",
+    "status": "Active"
+  },
+  {
+    "username": "edwardmiller",
+    "email": "edward.miller@example.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "subscription_plan": "Free",
+    "role": "user",
+    "profile_pic": "https://i.pravatar.cc/150?img=7",
+    "first_name": "Edward",
+    "last_name": "Miller",
+    "status": "Active"
+  },
+  {
+    "username": "fionadavis",
+    "email": "fiona.davis@example.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "subscription_plan": "Premium",
+    "role": "user",
+    "profile_pic": "https://i.pravatar.cc/150?img=8",
+    "first_name": "Fiona",
+    "last_name": "Davis",
+    "status": "Active"
+  },
+  {
+    "username": "georgegarcia",
+    "email": "george.garcia@example.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "subscription_plan": "Basic",
+    "role": "user",
+    "profile_pic": "https://i.pravatar.cc/150?img=9",
+    "first_name": "George",
+    "last_name": "Garcia",
+    "status": "Active"
+  },
+  {
+    "username": "hannahrodriguez",
+    "email": "hannah.rodriguez@example.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "subscription_plan": "Ultimate",
+    "role": "user",
+    "profile_pic": "https://i.pravatar.cc/150?img=10",
+    "first_name": "Hannah",
+    "last_name": "Rodriguez",
+    "status": "Active"
+  },
+  {
+    "username": "ianmartinez",
+    "email": "ian.martinez@example.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "subscription_plan": "Premium",
+    "role": "user",
+    "profile_pic": "https://i.pravatar.cc/150?img=11",
+    "first_name": "Ian",
+    "last_name": "Martinez",
+    "status": "Active"
+  },
+  {
+    "username": "jessicalopez",
+    "email": "jessica.lopez@example.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "subscription_plan": "Free",
+    "role": "user",
+    "profile_pic": "https://i.pravatar.cc/150?img=12",
+    "first_name": "Jessica",
+    "last_name": "Lopez",
+    "status": "Active"
+  },
+  {
+    "username": "kevinlee",
+    "email": "kevin.lee@example.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "subscription_plan": "Basic",
+    "role": "user",
+    "profile_pic": "https://i.pravatar.cc/150?img=13",
+    "first_name": "Kevin",
+    "last_name": "Lee",
+    "status": "Active"
+  },
+  {
+    "username": "lindawalker",
+    "email": "linda.walker@example.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "subscription_plan": "Premium",
+    "role": "user",
+    "profile_pic": "https://i.pravatar.cc/150?img=14",
+    "first_name": "Linda",
+    "last_name": "Walker",
+    "status": "Active"
+  },
+  {
+    "username": "michaelhall",
+    "email": "michael.hall@example.com",
+    "password": "$2b$10$J56LfPJsyOS7u.h12l9L2.FCJxFjTNT90li.nDz6WGIuJLyS3Y6lO",
+    "subscription_plan": "Ultimate",
+    "role": "user",
+    "profile_pic": "https://i.pravatar.cc/150?img=15",
+    "first_name": "Michael",
+    "last_name": "Hall",
+    "status": "Active"
+  }
+]
+

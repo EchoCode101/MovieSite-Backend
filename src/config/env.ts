@@ -6,6 +6,7 @@ export interface AppConfig {
     myEmail: string;
     nodeEnv: string;
     mongoUri: string;
+    originVia: string;
     jwtSecret: string;
     originMain: string;
     myPassword: string;
@@ -15,12 +16,20 @@ export interface AppConfig {
     tokenExpiryTime: string;
     refreshTokenSecret: string;
     refreshTokenExpiryTime: string;
+    enableAccessControl: boolean;
+
 }
 
 const nodeEnv = process.env.NODE_ENV ?? "development";
 
 // Load the appropriate .env file, mirroring the existing index.js behavior
-dotenv.config({ path: `.env.${nodeEnv}` });
+const envPath = `.env.${nodeEnv}`;
+const result = dotenv.config({ path: envPath });
+
+// Also try loading .env as fallback if .env.{nodeEnv} doesn't exist
+if (result.error && nodeEnv !== "production") {
+  dotenv.config({ path: ".env" });
+}
 
 function getRequiredEnv(name: string): string {
     const value = process.env[name];
@@ -42,6 +51,7 @@ const config: AppConfig = {
     mongoUri: getRequiredEnv("MONGO_URI_TS"),
     jwtSecret: getRequiredEnv("JWT_SECRET_TS"),
     originMain: getRequiredEnv("ORIGIN_LINK_TS_MAIN"),
+    originVia: getRequiredEnv("ORIGIN_LINK_TS_VIA"),
     myPassword: getRequiredEnv("MY_PASSWORD_TS"),
     tokenSecret: getRequiredEnv("TOKEN_SECRECT_TS"),
     originAdmin: getRequiredEnv("ORIGIN_LINK_TS_ADMIN"),
@@ -49,6 +59,13 @@ const config: AppConfig = {
     tokenExpiryTime: getRequiredEnv("TOKEN_EXPIRY_TIME_TS"),
     refreshTokenSecret: getRequiredEnv("REFRESH_TOKEN_SECRET_TS"),
     refreshTokenExpiryTime: getRequiredEnv("REFRESH_TOKEN_EXPIRY_TIME_TS"),
+    enableAccessControl: (() => {
+      const value = process.env.ENABLE_ACCESS_CONTROL;
+      if (!value) return true; // Default to true if not set
+      // Handle various string representations of false (case-insensitive, trimmed)
+      const normalized = String(value).trim().toLowerCase();
+      return normalized !== "false" && normalized !== "0" && normalized !== "no";
+    })(),
 
 };
 

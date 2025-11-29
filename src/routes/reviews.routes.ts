@@ -4,7 +4,8 @@ import { validateRequest } from "../middlewares/validation.middleware.js";
 import {
   getRecentReviews,
   getPaginatedReviews,
-  getReviewsByVideoId,
+  getReviewsByVideo,
+  getReviewsByTarget,
   createReview,
   updateReview,
   deleteReview,
@@ -32,8 +33,11 @@ router.get(
   getPaginatedReviews,
 );
 
-// Get reviews by video ID (public)
-router.get("/video/:videoId", getReviewsByVideoId);
+// Get reviews by video ID (public) - legacy endpoint
+router.get("/video/:videoId", getReviewsByVideo);
+
+// Get reviews by target type and ID (public)
+router.get("/target/:targetType/:targetId", getReviewsByTarget);
 
 // Create review (authenticated)
 router.post(

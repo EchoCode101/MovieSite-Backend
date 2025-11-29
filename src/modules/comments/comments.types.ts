@@ -2,9 +2,9 @@ import type { Comment } from "../../models/comment.model.js";
 import type { Types } from "mongoose";
 
 /**
- * Comment with user and video information
+ * Comment with user and target information
  */
-export interface CommentWithUser extends Omit<Comment, "member_id" | "video_id"> {
+export interface CommentWithUser extends Omit<Comment, "member_id" | "target_id"> {
   member_id: {
     _id: Types.ObjectId;
     first_name?: string;
@@ -12,9 +12,10 @@ export interface CommentWithUser extends Omit<Comment, "member_id" | "video_id">
     username?: string;
     avatar_url?: string;
   };
-  video_id: {
+  target?: {
     _id: Types.ObjectId;
-    title: string;
+    title?: string;
+    name?: string;
     description?: string;
     thumbnail_url?: string;
   };
@@ -34,9 +35,10 @@ export interface CommentWithStats {
     first_name?: string;
     last_name?: string;
   };
-  video: {
+  target?: {
     _id: Types.ObjectId;
-    title: string;
+    title?: string;
+    name?: string;
     description?: string;
     thumbnail_url?: string;
   };
@@ -50,6 +52,8 @@ export interface PaginatedCommentsParams {
   limit?: number;
   sort?: string;
   order?: "ASC" | "DESC";
+  target_type?: "video" | "movie" | "tvshow" | "episode";
+  target_id?: string;
 }
 
 /**
@@ -66,7 +70,8 @@ export interface PaginatedCommentsResponse {
  * Input for creating a comment
  */
 export interface CreateCommentInput {
-  video_id: string;
+  target_type: "video" | "movie" | "tvshow" | "episode";
+  target_id: string;
   content: string;
 }
 

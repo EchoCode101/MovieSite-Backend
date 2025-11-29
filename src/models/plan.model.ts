@@ -1,4 +1,4 @@
-import mongoose, { type Document, Schema } from "mongoose";
+import mongoose, { type Document, Schema, type Types } from "mongoose";
 
 export type BillingCycle = "weekly" | "monthly" | "quarterly" | "yearly";
 
@@ -17,6 +17,9 @@ export interface Plan extends Document {
   is_active: boolean;
   tax_included: boolean;
   available_for_ppv: boolean;
+  created_by?: Types.ObjectId;
+  updated_by?: Types.ObjectId;
+  deleted_at?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +44,17 @@ const planSchema = new Schema<Plan>(
     is_active: { type: Boolean, default: true },
     tax_included: { type: Boolean, default: false },
     available_for_ppv: { type: Boolean, default: false },
+    created_by: {
+      type: Schema.Types.ObjectId,
+      ref: "Admins",
+    },
+    updated_by: {
+      type: Schema.Types.ObjectId,
+      ref: "Admins",
+    },
+    deleted_at: {
+      type: Date,
+    },
   },
   { timestamps: true, collection: "plans" },
 );

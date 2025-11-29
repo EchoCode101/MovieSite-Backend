@@ -1,0 +1,177 @@
+[
+  {
+    "name": "Tom Hanks",
+    "type": "actor",
+    "bio": "Academy Award-winning actor known for roles in Forrest Gump, Cast Away, and Saving Private Ryan.",
+    "image_url": "https://i.pravatar.cc/150?img=20"
+  },
+  {
+    "name": "Meryl Streep",
+    "type": "actor",
+    "bio": "Most nominated actor in Academy Award history, known for The Devil Wears Prada and Sophie's Choice.",
+    "image_url": "https://i.pravatar.cc/150?img=21"
+  },
+  {
+    "name": "Christopher Nolan",
+    "type": "director",
+    "bio": "Acclaimed director known for Inception, The Dark Knight trilogy, and Interstellar.",
+    "image_url": "https://i.pravatar.cc/150?img=22"
+  },
+  {
+    "name": "Quentin Tarantino",
+    "type": "director",
+    "bio": "Award-winning director and screenwriter known for Pulp Fiction, Kill Bill, and Django Unchained.",
+    "image_url": "https://i.pravatar.cc/150?img=23"
+  },
+  {
+    "name": "Leonardo DiCaprio",
+    "type": "actor",
+    "bio": "Oscar-winning actor known for The Revenant, Titanic, and Inception.",
+    "image_url": "https://i.pravatar.cc/150?img=24"
+  },
+  {
+    "name": "Emma Stone",
+    "type": "actor",
+    "bio": "Academy Award-winning actress known for La La Land, The Favourite, and Easy A.",
+    "image_url": "https://i.pravatar.cc/150?img=25"
+  },
+  {
+    "name": "Steven Spielberg",
+    "type": "director",
+    "bio": "Legendary director known for Jaws, E.T., Jurassic Park, and Schindler's List.",
+    "image_url": "https://i.pravatar.cc/150?img=26"
+  },
+  {
+    "name": "Scarlett Johansson",
+    "type": "actor",
+    "bio": "Actress known for Lost in Translation, The Avengers series, and Marriage Story.",
+    "image_url": "https://i.pravatar.cc/150?img=27"
+  },
+  {
+    "name": "Martin Scorsese",
+    "type": "director",
+    "bio": "Acclaimed director known for Goodfellas, Taxi Driver, and The Departed.",
+    "image_url": "https://i.pravatar.cc/150?img=28"
+  },
+  {
+    "name": "Jennifer Lawrence",
+    "type": "actor",
+    "bio": "Oscar-winning actress known for Silver Linings Playbook, The Hunger Games, and Winter's Bone.",
+    "image_url": "https://i.pravatar.cc/150?img=29"
+  },
+  {
+    "name": "Aaron Sorkin",
+    "type": "writer",
+    "bio": "Academy Award-winning screenwriter known for The Social Network, A Few Good Men, and The West Wing.",
+    "image_url": "https://i.pravatar.cc/150?img=30"
+  },
+  {
+    "name": "Ryan Gosling",
+    "type": "actor",
+    "bio": "Actor known for La La Land, Drive, and The Notebook.",
+    "image_url": "https://i.pravatar.cc/150?img=31"
+  },
+  {
+    "name": "Denis Villeneuve",
+    "type": "director",
+    "bio": "Director known for Arrival, Blade Runner 2049, and Dune.",
+    "image_url": "https://i.pravatar.cc/150?img=32"
+  },
+  {
+    "name": "Cate Blanchett",
+    "type": "actor",
+    "bio": "Two-time Oscar winner known for Blue Jasmine, The Aviator, and Elizabeth.",
+    "image_url": "https://i.pravatar.cc/150?img=33"
+  },
+  {
+    "name": "David Fincher",
+    "type": "director",
+    "bio": "Director known for Fight Club, The Social Network, and Gone Girl.",
+    "image_url": "https://i.pravatar.cc/150?img=34"
+  },
+  {
+    "name": "Brad Pitt",
+    "type": "actor",
+    "bio": "Oscar-winning actor and producer known for Once Upon a Time in Hollywood, Fight Club, and 12 Years a Slave.",
+    "image_url": "https://i.pravatar.cc/150?img=35"
+  },
+  {
+    "name": "Greta Gerwig",
+    "type": "director",
+    "bio": "Director and writer known for Lady Bird, Little Women, and Barbie.",
+    "image_url": "https://i.pravatar.cc/150?img=36"
+  },
+  {
+    "name": "Timothée Chalamet",
+    "type": "actor",
+    "bio": "Actor known for Call Me by Your Name, Dune, and Little Women.",
+    "image_url": "https://i.pravatar.cc/150?img=37"
+  },
+  {
+    "name": "Jordan Peele",
+    "type": "director",
+    "bio": "Director and writer known for Get Out, Us, and Nope.",
+    "image_url": "https://i.pravatar.cc/150?img=38"
+  },
+  {
+    "name": "Zendaya",
+    "type": "actor",
+    "bio": "Actress known for Euphoria, Dune, and Spider-Man: No Way Home.",
+    "image_url": "https://i.pravatar.cc/150?img=39"
+  },
+  {
+    "name": "Taika Waititi",
+    "type": "director",
+    "bio": "Director known for Jojo Rabbit, Thor: Ragnarok, and What We Do in the Shadows.",
+    "image_url": "https://i.pravatar.cc/150?img=40"
+  },
+  {
+    "name": "Florence Pugh",
+    "type": "actor",
+    "bio": "Actress known for Little Women, Midsommar, and Black Widow.",
+    "image_url": "https://i.pravatar.cc/150?img=41"
+  },
+  {
+    "name": "Bong Joon-ho",
+    "type": "director",
+    "bio": "Oscar-winning director known for Parasite, Snowpiercer, and Memories of Murder.",
+    "image_url": "https://i.pravatar.cc/150?img=42"
+  },
+  {
+    "name": "Adam Driver",
+    "type": "actor",
+    "bio": "Actor known for Marriage Story, Star Wars sequel trilogy, and BlacKkKlansman.",
+    "image_url": "https://i.pravatar.cc/150?img=43"
+  },
+  {
+    "name": "Chloé Zhao",
+    "type": "director",
+    "bio": "Oscar-winning director known for Nomadland and Eternals.",
+    "image_url": "https://i.pravatar.cc/150?img=44"
+  },
+  {
+    "name": "Lupita Nyong'o",
+    "type": "actor",
+    "bio": "Oscar-winning actress known for 12 Years a Slave, Black Panther, and Us.",
+    "image_url": "https://i.pravatar.cc/150?img=45"
+  },
+  {
+    "name": "Charlie Kaufman",
+    "type": "writer",
+    "bio": "Academy Award-winning screenwriter known for Eternal Sunshine of the Spotless Mind, Adaptation, and Being John Malkovich.",
+    "image_url": "https://i.pravatar.cc/150?img=46"
+  },
+  {
+    "name": "Saoirse Ronan",
+    "type": "actor",
+    "bio": "Actress known for Lady Bird, Little Women, and Brooklyn.",
+    "image_url": "https://i.pravatar.cc/150?img=47"
+  },
+  {
+    "name": "Ari Aster",
+    "type": "director",
+    "bio": "Director known for Hereditary, Midsommar, and Beau Is Afraid.",
+    "image_url": "https://i.pravatar.cc/150?img=48"
+  }
+]
+

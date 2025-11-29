@@ -16,7 +16,7 @@ const passwordResetSchema = new Schema<PasswordReset>(
       type: String,
       required: true,
       unique: true,
-      maxlength: 255,
+      maxlength: 512,
     },
     reset_token_expiration: {
       type: Date,

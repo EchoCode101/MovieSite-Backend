@@ -1,0 +1,93 @@
+[
+  {
+    "name": "US Sales Tax",
+    "country": "US",
+    "rate_percent": 8.5,
+    "is_active": true
+  },
+  {
+    "name": "California Sales Tax",
+    "country": "US",
+    "rate_percent": 7.25,
+    "is_active": true
+  },
+  {
+    "name": "New York Sales Tax",
+    "country": "US",
+    "rate_percent": 8.0,
+    "is_active": true
+  },
+  {
+    "name": "Texas Sales Tax",
+    "country": "US",
+    "rate_percent": 6.25,
+    "is_active": true
+  },
+  {
+    "name": "UK VAT",
+    "country": "GB",
+    "rate_percent": 20.0,
+    "is_active": true
+  },
+  {
+    "name": "Canada GST",
+    "country": "CA",
+    "rate_percent": 5.0,
+    "is_active": true
+  },
+  {
+    "name": "Canada HST (Ontario)",
+    "country": "CA",
+    "rate_percent": 13.0,
+    "is_active": true
+  },
+  {
+    "name": "Australia GST",
+    "country": "AU",
+    "rate_percent": 10.0,
+    "is_active": true
+  },
+  {
+    "name": "Germany VAT",
+    "country": "DE",
+    "rate_percent": 19.0,
+    "is_active": true
+  },
+  {
+    "name": "France VAT",
+    "country": "FR",
+    "rate_percent": 20.0,
+    "is_active": true
+  },
+  {
+    "name": "Japan Consumption Tax",
+    "country": "JP",
+    "rate_percent": 10.0,
+    "is_active": true
+  },
+  {
+    "name": "India GST",
+    "country": "IN",
+    "rate_percent": 18.0,
+    "is_active": true
+  },
+  {
+    "name": "Brazil ICMS",
+    "country": "BR",
+    "rate_percent": 17.0,
+    "is_active": true
+  },
+  {
+    "name": "Mexico VAT",
+    "country": "MX",
+    "rate_percent": 16.0,
+    "is_active": true
+  },
+  {
+    "name": "Singapore GST",
+    "country": "SG",
+    "rate_percent": 7.0,
+    "is_active": true
+  }
+]
+

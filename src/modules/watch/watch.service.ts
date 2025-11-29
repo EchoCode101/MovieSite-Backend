@@ -8,6 +8,9 @@ import type {
 } from "./watch.types.js";
 import { mapWatchHistoryItemToDto, mapWatchlistItemToDto } from "./watch.types.js";
 import createError from "http-errors";
+import { checkContentAccess } from "../../utils/accessControl.js";
+import { MovieModel } from "../../models/movie.model.js";
+import { EpisodeModel } from "../../models/episode.model.js";
 
 export class WatchService {
   private watchRepository: WatchRepository;
@@ -17,6 +20,42 @@ export class WatchService {
   }
 
   async addToWatchlist(userId: string, input: AddToWatchlistInput): Promise<WatchlistItemDto> {
+    // Verify content exists and user has access
+    if (input.target_type === "movie") {
+      const movie = await MovieModel.findById(input.target_id);
+      if (!movie) {
+        throw createError(404, "Movie not found");
+      }
+      const hasAccess = await checkContentAccess(
+        userId,
+        movie.access_type,
+        movie.plan_ids,
+        "movie",
+        input.target_id,
+      );
+      if (!hasAccess) {
+        throw createError(403, "You do not have access to this movie");
+      }
+    } else if (input.target_type === "tvshow") {
+      // TV shows don't have direct access control, but episodes do
+      // For now, allow adding to watchlist
+    } else if (input.target_type === "episode") {
+      const episode = await EpisodeModel.findById(input.target_id);
+      if (!episode) {
+        throw createError(404, "Episode not found");
+      }
+      const hasAccess = await checkContentAccess(
+        userId,
+        episode.access_type,
+        episode.plan_ids,
+        "episode",
+        input.target_id,
+      );
+      if (!hasAccess) {
+        throw createError(403, "You do not have access to this episode");
+      }
+    }
+
     const item = await this.watchRepository.addToWatchlist(
       userId,
       input.profile_id,
@@ -70,6 +109,39 @@ export class WatchService {
   ): Promise<WatchHistoryItemDto> {
     if (input.watched_seconds > input.total_seconds) {
       throw createError(400, "watched_seconds cannot exceed total_seconds");
+    }
+
+    // Verify content exists and user has access
+    if (input.target_type === "movie") {
+      const movie = await MovieModel.findById(input.target_id);
+      if (!movie) {
+        throw createError(404, "Movie not found");
+      }
+      const hasAccess = await checkContentAccess(
+        userId,
+        movie.access_type,
+        movie.plan_ids,
+        "movie",
+        input.target_id,
+      );
+      if (!hasAccess) {
+        throw createError(403, "You do not have access to this movie");
+      }
+    } else if (input.target_type === "episode") {
+      const episode = await EpisodeModel.findById(input.target_id);
+      if (!episode) {
+        throw createError(404, "Episode not found");
+      }
+      const hasAccess = await checkContentAccess(
+        userId,
+        episode.access_type,
+        episode.plan_ids,
+        "episode",
+        input.target_id,
+      );
+      if (!hasAccess) {
+        throw createError(403, "You do not have access to this episode");
+      }
     }
 
     const item = await this.watchRepository.upsertWatchHistory(

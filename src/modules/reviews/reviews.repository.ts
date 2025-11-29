@@ -1,4 +1,4 @@
-import type { Types, PipelineStage } from "mongoose";
+import { Types, type PipelineStage } from "mongoose";
 import { ReviewModel, type Review } from "../../models/review.model.js";
 import type {
   CreateReviewInput,
@@ -11,24 +11,28 @@ import type {
 
 export class ReviewsRepository {
   /**
-   * Find all reviews with populated user and video
+   * Find all reviews with populated user
    */
   async findAll(): Promise<ReviewWithUser[]> {
     return (await ReviewModel.find()
       .sort({ createdAt: -1 })
-      .populate("video_id", "title")
       .populate("member_id", "username first_name last_name")
       .exec()) as unknown as ReviewWithUser[];
   }
 
   /**
-   * Find reviews by video ID
+   * Find reviews by target type and ID
    */
-  async findByVideoId(videoId: string): Promise<ReviewWithUser[]> {
-    return (await ReviewModel.find({ video_id: videoId })
+  async findByTarget(targetType: "video" | "movie" | "tvshow" | "episode", targetId: string): Promise<ReviewWithUser[]> {
+    // Convert targetId to ObjectId if it's a valid ObjectId string
+    const targetObjectId = Types.ObjectId.isValid(targetId)
+      ? new Types.ObjectId(targetId)
+      : targetId;
+
+    return (await ReviewModel.find({ target_type: targetType, target_id: targetObjectId })
       .sort({ createdAt: -1 })
-      .populate("video_id", "title category")
-      .populate("member_id", "username email first_name last_name")
+      .populate("member_id", "username email first_name last_name profile_pic")
+      .lean()
       .exec()) as unknown as ReviewWithUser[];
   }
 
@@ -46,7 +50,6 @@ export class ReviewsRepository {
 
     return (await ReviewModel.find(query)
       .sort({ createdAt: -1 })
-      .populate("video_id", "title")
       .populate("member_id", "username first_name last_name")
       .exec()) as unknown as ReviewWithUser[];
   }
@@ -62,6 +65,8 @@ export class ReviewsRepository {
       limit = 10,
       sort = "createdAt",
       order = "DESC",
+      target_type,
+      target_id,
     } = params;
 
     const skip = (Number(page) - 1) * Number(limit);
@@ -69,6 +74,13 @@ export class ReviewsRepository {
 
     // Build aggregation pipeline (similar to comments)
     const pipeline: PipelineStage[] = [
+      // Match by target if provided
+      ...(target_type && target_id ? [{
+        $match: {
+          target_type: target_type,
+          target_id: new Types.ObjectId(target_id),
+        },
+      }] : []),
       {
         $lookup: {
           from: "likesdislikes",
@@ -117,12 +129,105 @@ export class ReviewsRepository {
           as: "member",
         },
       },
+      // Lookup target based on target_type
       {
         $lookup: {
           from: "videos",
-          localField: "video_id",
-          foreignField: "_id",
-          as: "video",
+          let: { targetId: "$target_id", targetType: "$target_type" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$targetId"] },
+                    { $eq: ["$$targetType", "video"] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "videoTarget",
+        },
+      },
+      {
+        $lookup: {
+          from: "movies",
+          let: { targetId: "$target_id", targetType: "$target_type" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$targetId"] },
+                    { $eq: ["$$targetType", "movie"] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "movieTarget",
+        },
+      },
+      {
+        $lookup: {
+          from: "tvshows",
+          let: { targetId: "$target_id", targetType: "$target_type" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$targetId"] },
+                    { $eq: ["$$targetType", "tvshow"] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "tvshowTarget",
+        },
+      },
+      {
+        $lookup: {
+          from: "episodes",
+          let: { targetId: "$target_id", targetType: "$target_type" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$targetId"] },
+                    { $eq: ["$$targetType", "episode"] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "episodeTarget",
+        },
+      },
+      // Combine all targets into one field
+      {
+        $addFields: {
+          target: {
+            $cond: {
+              if: { $gt: [{ $size: "$videoTarget" }, 0] },
+              then: { $arrayElemAt: ["$videoTarget", 0] },
+              else: {
+                $cond: {
+                  if: { $gt: [{ $size: "$movieTarget" }, 0] },
+                  then: { $arrayElemAt: ["$movieTarget", 0] },
+                  else: {
+                    $cond: {
+                      if: { $gt: [{ $size: "$tvshowTarget" }, 0] },
+                      then: { $arrayElemAt: ["$tvshowTarget", 0] },
+                      else: { $arrayElemAt: ["$episodeTarget", 0] },
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
       {
@@ -130,7 +235,6 @@ export class ReviewsRepository {
           likesCount: { $size: "$likes" },
           dislikesCount: { $size: "$dislikes" },
           member: { $arrayElemAt: ["$member", 0] },
-          video: { $arrayElemAt: ["$video", 0] },
         },
       },
       {
@@ -146,11 +250,11 @@ export class ReviewsRepository {
             first_name: "$member.first_name",
             last_name: "$member.last_name",
           },
-          video: {
-            _id: "$video._id",
-            title: "$video.title",
-            description: "$video.description",
-            thumbnail_url: "$video.thumbnail_url",
+          target: {
+            _id: "$target._id",
+            title: { $ifNull: ["$target.title", "$target.name"] },
+            description: "$target.description",
+            thumbnail_url: "$target.thumbnail_url",
           },
         },
       },
@@ -182,14 +286,16 @@ export class ReviewsRepository {
   }
 
   /**
-   * Find review by video and member (for duplicate check)
+   * Find review by target and member (for duplicate check)
    */
-  async findByVideoAndMember(
-    videoId: string,
+  async findByTargetAndMember(
+    targetType: "video" | "movie" | "tvshow" | "episode",
+    targetId: string,
     memberId: string
   ): Promise<Review | null> {
     return await ReviewModel.findOne({
-      video_id: videoId,
+      target_type: targetType,
+      target_id: targetId,
       member_id: memberId,
     }).exec();
   }
@@ -201,7 +307,8 @@ export class ReviewsRepository {
     data: CreateReviewInput & { member_id: string }
   ): Promise<Review> {
     return await ReviewModel.create({
-      video_id: data.video_id,
+      target_type: data.target_type,
+      target_id: data.target_id,
       member_id: data.member_id,
       rating: data.rating,
       review_content: data.content,
@@ -227,6 +334,16 @@ export class ReviewsRepository {
    */
   async deleteById(id: string): Promise<Review | null> {
     return await ReviewModel.findByIdAndDelete(id).exec();
+  }
+
+  /**
+   * Find review by ID with populated user
+   */
+  async findById(id: string): Promise<ReviewWithUser | null> {
+    return (await ReviewModel.findById(id)
+      .populate("member_id", "username email first_name last_name profile_pic")
+      .lean()
+      .exec()) as unknown as ReviewWithUser | null;
   }
 
   /**

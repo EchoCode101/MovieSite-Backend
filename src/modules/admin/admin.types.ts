@@ -48,8 +48,17 @@ export interface UpdateSubscriptionInput {
 export interface DashboardStats {
     uniqueViews: number;
     itemsAdded: number;
+    moviesCount: number;
+    tvShowsCount: number;
+    episodesCount: number;
+    channelsCount: number;
     newComments: number;
     newReviews: number;
+    activeSubscriptions: number;
+    totalTransactions: number;
+    totalRevenue: number;
+    activeUsers: number;
+    totalUsers: number;
 }
 
 /**

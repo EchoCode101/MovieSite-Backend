@@ -1,9 +1,15 @@
 import { AdminModel, type Admin } from "../../models/admin.model.js";
 import { MemberModel } from "../../models/member.model.js";
 import { VideoModel } from "../../models/video.model.js";
+import { MovieModel } from "../../models/movie.model.js";
+import { TvShowModel } from "../../models/tvShow.model.js";
+import { EpisodeModel } from "../../models/episode.model.js";
+import { ChannelModel } from "../../models/channel.model.js";
 import { CommentModel } from "../../models/comment.model.js";
 import { ReviewModel } from "../../models/review.model.js";
 import { VideoMetricModel } from "../../models/videoMetric.model.js";
+import { SubscriptionModel } from "../../models/subscription.model.js";
+import { TransactionModel } from "../../models/transaction.model.js";
 import type {
     AdminSignupInput,
     UpdateSubscriptionInput,
@@ -112,6 +118,14 @@ export class AdminRepository {
             createdAt: { $gte: startOfMonth },
         });
 
+        // Content counts (all time)
+        const [moviesCount, tvShowsCount, episodesCount, channelsCount] = await Promise.all([
+            MovieModel.countDocuments({ deleted_at: null }),
+            TvShowModel.countDocuments({ deleted_at: null }),
+            EpisodeModel.countDocuments({ deleted_at: null }),
+            ChannelModel.countDocuments({ deleted_at: null, is_active: true }),
+        ]);
+
         // New comments this month
         const commentsThisMonth = await CommentModel.countDocuments({
             createdAt: { $gte: startOfMonth },
@@ -122,11 +136,51 @@ export class AdminRepository {
             createdAt: { $gte: startOfMonth },
         });
 
+        // Subscription stats
+        const activeSubscriptions = await SubscriptionModel.countDocuments({
+            status: "active",
+            ends_at: { $gt: new Date() },
+        });
+
+        // Transaction stats
+        const [totalTransactions, revenueResult] = await Promise.all([
+            TransactionModel.countDocuments({ status: "paid" }),
+            TransactionModel.aggregate([
+                {
+                    $match: { status: "paid" },
+                },
+                {
+                    $group: {
+                        _id: null,
+                        totalRevenue: { $sum: "$amount" },
+                    },
+                },
+            ]),
+        ]);
+        const totalRevenue = revenueResult[0]?.totalRevenue || 0;
+
+        // User stats
+        const [totalUsers, activeUsers] = await Promise.all([
+            MemberModel.countDocuments(),
+            MemberModel.countDocuments({
+                status: "Active",
+            }),
+        ]);
+
         return {
             uniqueViews: viewsThisMonth,
             itemsAdded: itemsThisMonth,
+            moviesCount,
+            tvShowsCount,
+            episodesCount,
+            channelsCount,
             newComments: commentsThisMonth,
             newReviews: reviewsThisMonth,
+            activeSubscriptions,
+            totalTransactions,
+            totalRevenue,
+            activeUsers,
+            totalUsers,
         };
     }
 }

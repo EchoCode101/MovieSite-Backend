@@ -3,7 +3,7 @@ import mongoose, { type Document, Schema, type Types } from "mongoose";
 export interface LikeDislike extends Document {
   user_id: Types.ObjectId;
   target_id: Types.ObjectId;
-  target_type: "comment" | "review" | "video" | "comment_reply";
+  target_type: "comment" | "review" | "video" | "movie" | "tvshow" | "episode" | "comment_reply";
   is_like: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -23,7 +23,7 @@ const likesDislikesSchema = new Schema<LikeDislike>(
     target_type: {
       type: String,
       required: true,
-      enum: ["comment", "review", "video", "comment_reply"],
+      enum: ["comment", "review", "video", "movie", "tvshow", "episode", "comment_reply"],
     },
     is_like: {
       type: Boolean,
