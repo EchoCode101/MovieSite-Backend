@@ -9,12 +9,15 @@ import {
   createReview,
   updateReview,
   deleteReview,
+  getMyReviews,
+  bulkDeleteReviews,
 } from "../modules/reviews/reviews.controller.js";
 import {
   createReviewSchema,
   updateReviewSchema,
   paginatedReviewsSchema,
   recentReviewsSchema,
+  bulkDeleteReviewsSchema,
 } from "../modules/reviews/reviews.validators.js";
 
 const router = Router();
@@ -39,6 +42,14 @@ router.get("/video/:videoId", getReviewsByVideo);
 // Get reviews by target type and ID (public)
 router.get("/target/:targetType/:targetId", getReviewsByTarget);
 
+// Get user's own reviews (authenticated) - must be before parameterized routes
+router.get(
+  "/my",
+  authenticateToken,
+  validateRequest(paginatedReviewsSchema, "query"),
+  getMyReviews,
+);
+
 // Create review (authenticated)
 router.post(
   "/",
@@ -53,6 +64,14 @@ router.put(
   authenticateToken,
   validateRequest(updateReviewSchema, "body"),
   updateReview,
+);
+
+// Bulk delete reviews (authenticated - admin or owner)
+router.delete(
+  "/bulk",
+  authenticateToken,
+  validateRequest(bulkDeleteReviewsSchema, "body"),
+  bulkDeleteReviews,
 );
 
 // Delete review (authenticated - owner only)

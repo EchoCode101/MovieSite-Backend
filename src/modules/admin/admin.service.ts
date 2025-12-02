@@ -14,6 +14,11 @@ import type {
     UpdateSubscriptionInput,
     DashboardStats,
     ResetPasswordInput,
+    RevenuePoint,
+    UserGrowthPoint,
+    ContentStats,
+    RecentActivityItem,
+    TopContentItem,
 } from "./admin.types.js";
 import type { Admin } from "../../models/admin.model.js";
 import config from "../../config/env.js";
@@ -197,6 +202,52 @@ export class AdminService {
      */
     async getDashboardStats(): Promise<DashboardStats> {
         return await this.repository.getDashboardStats();
+    }
+
+    /**
+     * Get revenue data by period
+     */
+    async getRevenueData(period: string): Promise<RevenuePoint[]> {
+        return await this.repository.getRevenueData(period);
+    }
+
+    /**
+     * Get user growth data by period
+     */
+    async getUserGrowth(period: string): Promise<UserGrowthPoint[]> {
+        return await this.repository.getUserGrowth(period);
+    }
+
+    /**
+     * Get content statistics
+     */
+    async getContentStats(): Promise<ContentStats> {
+        return await this.repository.getContentStats();
+    }
+
+    /**
+     * Get recent activity
+     */
+    async getRecentActivity(limit: number): Promise<RecentActivityItem[]> {
+        return await this.repository.getRecentActivity(limit);
+    }
+
+    /**
+     * Get top content by type
+     */
+    async getTopContent(type: string, limit: number): Promise<TopContentItem[]> {
+        return await this.repository.getTopContent(type, limit);
+    }
+
+    /**
+     * Get current admin by ID
+     */
+    async getCurrentAdmin(adminId: string): Promise<Admin> {
+        const admin = await this.repository.findById(adminId);
+        if (!admin) {
+            throw createError(404, "Admin not found");
+        }
+        return admin;
     }
 }
 

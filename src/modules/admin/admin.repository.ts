@@ -10,10 +10,17 @@ import { ReviewModel } from "../../models/review.model.js";
 import { VideoMetricModel } from "../../models/videoMetric.model.js";
 import { SubscriptionModel } from "../../models/subscription.model.js";
 import { TransactionModel } from "../../models/transaction.model.js";
+import { LikeDislikeModel } from "../../models/likeDislike.model.js";
 import type {
     AdminSignupInput,
     UpdateSubscriptionInput,
     DashboardStats,
+    RevenuePoint,
+    UserGrowthPoint,
+    ContentStats,
+    ContentStatsItem,
+    RecentActivityItem,
+    TopContentItem,
 } from "./admin.types.js";
 
 export class AdminRepository {
@@ -182,6 +189,435 @@ export class AdminRepository {
             activeUsers,
             totalUsers,
         };
+    }
+
+    /**
+     * Get revenue data by period
+     */
+    async getRevenueData(period: string): Promise<RevenuePoint[]> {
+        const now = new Date();
+        let startDate: Date;
+        let groupFormat: Record<string, unknown>;
+
+        switch (period) {
+            case 'day':
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                groupFormat = {
+                    year: { $year: '$createdAt' },
+                    month: { $month: '$createdAt' },
+                    day: { $dayOfMonth: '$createdAt' },
+                };
+                break;
+            case 'week':
+                startDate = new Date(now);
+                startDate.setDate(now.getDate() - 7);
+                groupFormat = {
+                    year: { $year: '$createdAt' },
+                    month: { $month: '$createdAt' },
+                    day: { $dayOfMonth: '$createdAt' },
+                };
+                break;
+            case 'month':
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                groupFormat = {
+                    year: { $year: '$createdAt' },
+                    month: { $month: '$createdAt' },
+                };
+                break;
+            case 'year':
+                startDate = new Date(now.getFullYear(), 0, 1);
+                groupFormat = {
+                    year: { $year: '$createdAt' },
+                    month: { $month: '$createdAt' },
+                };
+                break;
+            default:
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                groupFormat = {
+                    year: { $year: '$createdAt' },
+                    month: { $month: '$createdAt' },
+                };
+        }
+
+        const results = await TransactionModel.aggregate([
+            {
+                $match: {
+                    status: 'paid',
+                    createdAt: { $gte: startDate },
+                },
+            },
+            {
+                $group: {
+                    _id: groupFormat,
+                    amount: { $sum: '$amount' },
+                },
+            },
+            {
+                $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 },
+            },
+        ]);
+
+        return results.map((item) => {
+            let label = '';
+            if (period === 'day' || period === 'week') {
+                label = `${item._id.month}/${item._id.day}/${item._id.year}`;
+            } else if (period === 'month') {
+                label = `${item._id.month}/${item._id.year}`;
+            } else {
+                label = `${item._id.year}`;
+            }
+
+            return {
+                label,
+                amount: item.amount,
+                currency: 'USD',
+            };
+        });
+    }
+
+    /**
+     * Get user growth data by period
+     */
+    async getUserGrowth(period: string): Promise<UserGrowthPoint[]> {
+        const now = new Date();
+        let startDate: Date;
+        let groupFormat: Record<string, unknown>;
+
+        switch (period) {
+            case 'day':
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                groupFormat = {
+                    year: { $year: '$createdAt' },
+                    month: { $month: '$createdAt' },
+                    day: { $dayOfMonth: '$createdAt' },
+                };
+                break;
+            case 'week':
+                startDate = new Date(now);
+                startDate.setDate(now.getDate() - 7);
+                groupFormat = {
+                    year: { $year: '$createdAt' },
+                    month: { $month: '$createdAt' },
+                    day: { $dayOfMonth: '$createdAt' },
+                };
+                break;
+            case 'month':
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                groupFormat = {
+                    year: { $year: '$createdAt' },
+                    month: { $month: '$createdAt' },
+                };
+                break;
+            case 'year':
+                startDate = new Date(now.getFullYear(), 0, 1);
+                groupFormat = {
+                    year: { $year: '$createdAt' },
+                    month: { $month: '$createdAt' },
+                };
+                break;
+            default:
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                groupFormat = {
+                    year: { $year: '$createdAt' },
+                    month: { $month: '$createdAt' },
+                };
+        }
+
+        const results = await MemberModel.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: startDate },
+                },
+            },
+            {
+                $group: {
+                    _id: groupFormat,
+                    newUsers: { $sum: 1 },
+                },
+            },
+            {
+                $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 },
+            },
+        ]);
+
+        // Get active users count for each period
+        const points: UserGrowthPoint[] = [];
+        for (const item of results) {
+            let label = '';
+            if (period === 'day' || period === 'week') {
+                label = `${item._id.month}/${item._id.day}/${item._id.year}`;
+            } else if (period === 'month') {
+                label = `${item._id.month}/${item._id.year}`;
+            } else {
+                label = `${item._id.year}`;
+            }
+
+            // Count active users up to this period
+            const periodEnd = new Date(
+                item._id.year || now.getFullYear(),
+                (item._id.month || 1) - 1,
+                item._id.day || 1,
+            );
+            const activeUsers = await MemberModel.countDocuments({
+                status: 'Active',
+                createdAt: { $lte: periodEnd },
+            });
+
+            points.push({
+                label,
+                newUsers: item.newUsers,
+                activeUsers,
+            });
+        }
+
+        return points;
+    }
+
+    /**
+     * Get content statistics
+     */
+    async getContentStats(): Promise<ContentStats> {
+        const [videosCount, moviesCount, tvShowsCount, episodesCount] = await Promise.all([
+            VideoModel.countDocuments({ deleted_at: null }),
+            MovieModel.countDocuments({ deleted_at: null }),
+            TvShowModel.countDocuments({ deleted_at: null }),
+            EpisodeModel.countDocuments({ deleted_at: null }),
+        ]);
+
+        const items: ContentStatsItem[] = [
+            { type: 'videos', label: 'Videos', count: videosCount },
+            { type: 'movies', label: 'Movies', count: moviesCount },
+            { type: 'tvShows', label: 'TV Shows', count: tvShowsCount },
+            { type: 'episodes', label: 'Episodes', count: episodesCount },
+        ];
+
+        return { items };
+    }
+
+    /**
+     * Get recent activity
+     */
+    async getRecentActivity(limit: number): Promise<RecentActivityItem[]> {
+        const activities: RecentActivityItem[] = [];
+
+        // Get recent users
+        const recentUsers = await MemberModel.find()
+            .sort({ createdAt: -1 })
+            .limit(Math.floor(limit / 2))
+            .select('_id username email first_name last_name createdAt')
+            .exec();
+
+        for (const user of recentUsers) {
+            activities.push({
+                id: (user._id as any).toString(),
+                type: 'user-created',
+                description: `New user ${user.username} registered`,
+                createdAt: user.createdAt.toISOString(),
+                user: {
+                    id: (user._id as any).toString(),
+                    name: user.first_name && user.last_name
+                        ? `${user.first_name} ${user.last_name}`
+                        : user.username,
+                    email: user.email,
+                },
+            });
+        }
+
+        // Get recent subscriptions
+        const recentSubscriptions = await SubscriptionModel.find()
+            .sort({ createdAt: -1 })
+            .limit(Math.floor(limit / 2))
+            .populate('user_id', 'username email first_name last_name')
+            .exec();
+
+        for (const sub of recentSubscriptions) {
+            const user = sub.user_id as any;
+            activities.push({
+                id: (sub._id as any).toString(),
+                type: sub.status === 'active' ? 'subscription-started' : 'subscription-cancelled',
+                description: `Subscription ${sub.status === 'active' ? 'started' : 'cancelled'} for ${user?.username || 'user'}`,
+                createdAt: sub.createdAt.toISOString(),
+                user: user
+                    ? {
+                          id: (user._id as any).toString(),
+                          name: user.first_name && user.last_name
+                              ? `${user.first_name} ${user.last_name}`
+                              : user.username,
+                          email: user.email,
+                      }
+                    : undefined,
+            });
+        }
+
+        // Get recent comments
+        const recentComments = await CommentModel.find()
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .populate('member_id', 'username email first_name last_name')
+            .exec();
+
+        for (const comment of recentComments) {
+            const user = comment.member_id as any;
+            activities.push({
+                id: (comment._id as any).toString(),
+                type: 'comment-created',
+                description: `${user?.username || 'User'} commented`,
+                createdAt: comment.createdAt.toISOString(),
+                user: user
+                    ? {
+                          id: (user._id as any).toString(),
+                          name: user.first_name && user.last_name
+                              ? `${user.first_name} ${user.last_name}`
+                              : user.username,
+                          email: user.email,
+                      }
+                    : undefined,
+            });
+        }
+
+        // Sort by createdAt and limit
+        return activities
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, limit);
+    }
+
+    /**
+     * Get top content by type
+     */
+    async getTopContent(type: string, limit: number): Promise<TopContentItem[]> {
+        const items: TopContentItem[] = [];
+
+        if (type === 'all' || type === 'movie') {
+            const movies = await MovieModel.find({ deleted_at: null })
+                .sort({ createdAt: -1 })
+                .limit(limit)
+                .select('_id title thumbnail_url createdAt')
+                .exec();
+
+            for (const movie of movies) {
+                const movieId = (movie._id as any).toString();
+                const likesCount = await LikeDislikeModel.countDocuments({
+                    target_type: 'movie',
+                    target_id: movieId,
+                    is_like: true,
+                });
+
+                // For now, use 0 for views as VideoMetricModel tracks videos, not movies
+                // This can be enhanced later with a proper views tracking system
+                const views = 0;
+
+                items.push({
+                    id: movieId,
+                    type: 'movie',
+                    title: movie.title,
+                    views,
+                    likes: likesCount,
+                    thumbnailUrl: movie.thumbnail_url,
+                });
+            }
+        }
+
+        if (type === 'all' || type === 'tv-show') {
+            const tvShows = await TvShowModel.find({ deleted_at: null })
+                .sort({ createdAt: -1 })
+                .limit(limit)
+                .select('_id title thumbnail_url createdAt')
+                .exec();
+
+            for (const tvShow of tvShows) {
+                const tvShowId = (tvShow._id as any).toString();
+                const likesCount = await LikeDislikeModel.countDocuments({
+                    target_type: 'tvshow',
+                    target_id: tvShowId,
+                    is_like: true,
+                });
+
+                // For now, use 0 for views as VideoMetricModel tracks videos, not tv shows
+                // This can be enhanced later with a proper views tracking system
+                const views = 0;
+
+                items.push({
+                    id: tvShowId,
+                    type: 'tv-show',
+                    title: tvShow.title,
+                    views,
+                    likes: likesCount,
+                    thumbnailUrl: tvShow.thumbnail_url,
+                });
+            }
+        }
+
+        if (type === 'all' || type === 'episode') {
+            const episodes = await EpisodeModel.find({ deleted_at: null })
+                .sort({ createdAt: -1 })
+                .limit(limit)
+                .select('_id title thumbnail_url createdAt')
+                .exec();
+
+            for (const episode of episodes) {
+                const episodeId = (episode._id as any).toString();
+                const likesCount = await LikeDislikeModel.countDocuments({
+                    target_type: 'episode',
+                    target_id: episodeId,
+                    is_like: true,
+                });
+
+                // For now, use 0 for views as VideoMetricModel tracks videos, not episodes
+                // This can be enhanced later with a proper views tracking system
+                const views = 0;
+
+                items.push({
+                    id: episodeId,
+                    type: 'episode',
+                    title: episode.title,
+                    views,
+                    likes: likesCount,
+                    thumbnailUrl: episode.thumbnail_url,
+                });
+            }
+        }
+
+        if (type === 'all' || type === 'video') {
+            const videos = await VideoModel.find({ deleted_at: null })
+                .sort({ createdAt: -1 })
+                .limit(limit)
+                .select('_id title thumbnail_url createdAt')
+                .exec();
+
+            for (const video of videos) {
+                const videoId = (video._id as any).toString();
+                const likesCount = await LikeDislikeModel.countDocuments({
+                    target_type: 'video',
+                    target_id: videoId,
+                    is_like: true,
+                });
+
+                // Get views from VideoMetricModel
+                const videoMetric = await VideoMetricModel.findOne({
+                    video_id: videoId,
+                }).exec();
+                const views = videoMetric?.views_count || 0;
+
+                items.push({
+                    id: videoId,
+                    type: 'video',
+                    title: video.title,
+                    views,
+                    likes: likesCount,
+                    thumbnailUrl: video.thumbnail_url,
+                });
+            }
+        }
+
+        // Sort by views and limit
+        return items.sort((a, b) => b.views - a.views).slice(0, limit);
+    }
+
+    /**
+     * Find admin by ID
+     */
+    async findById(id: string): Promise<Admin | null> {
+        return await AdminModel.findById(id).select('-password').exec();
     }
 }
 

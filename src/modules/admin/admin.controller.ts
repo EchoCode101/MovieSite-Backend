@@ -8,7 +8,7 @@ import type {
     UpdateSubscriptionInput,
     ResetPasswordInput,
 } from "./admin.types.js";
-import type { ApiResponse } from "../../types/api.types.js";
+import type { ApiResponse, AuthApiResponse } from "../../types/api.types.js";
 import config from "../../config/env.js";
 const adminService = new AdminService();
 
@@ -62,7 +62,16 @@ export async function adminLogin(
             maxAge: 24 * 60 * 60 * 1000,
         });
 
-        res.json(result);
+        // Standardized auth response format with tokens, as per backend docs
+        const response: AuthApiResponse<(typeof result)["admin"]> = {
+            success: true,
+            message: result.message,
+            data: result.admin,
+            token: result.token,
+            refreshToken: result.refreshToken,
+        };
+
+        res.status(200).json(response);
     } catch (error: unknown) {
         const err = error as Error & { statusCode?: number };
         logger.error("Admin login error:", error);
@@ -210,11 +219,181 @@ export async function getDashboardStats(
 ): Promise<void> {
     try {
         const stats = await adminService.getDashboardStats();
-        res.status(200).json(stats);
+        const response: ApiResponse<typeof stats> = {
+            success: true,
+            message: "Dashboard stats retrieved successfully",
+            data: stats,
+        };
+        res.status(200).json(response);
     } catch (error: unknown) {
         const err = error as Error;
         logger.error("Error fetching dashboard stats:", error);
         next(createError(500, "Error fetching dashboard statistics"));
+    }
+}
+
+/**
+ * Get revenue data by period (admin only)
+ */
+export async function getRevenueData(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> {
+    try {
+        const period = (req.query.period as string) || 'month';
+        const revenueData = await adminService.getRevenueData(period);
+        const response: ApiResponse<typeof revenueData> = {
+            success: true,
+            message: "Revenue data retrieved successfully",
+            data: revenueData,
+        };
+        res.status(200).json(response);
+    } catch (error: unknown) {
+        const err = error as Error;
+        logger.error("Error fetching revenue data:", error);
+        next(createError(500, "Error fetching revenue data"));
+    }
+}
+
+/**
+ * Get user growth data by period (admin only)
+ */
+export async function getUserGrowth(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> {
+    try {
+        const period = (req.query.period as string) || 'month';
+        const userGrowth = await adminService.getUserGrowth(period);
+        const response: ApiResponse<typeof userGrowth> = {
+            success: true,
+            message: "User growth data retrieved successfully",
+            data: userGrowth,
+        };
+        res.status(200).json(response);
+    } catch (error: unknown) {
+        const err = error as Error;
+        logger.error("Error fetching user growth data:", error);
+        next(createError(500, "Error fetching user growth data"));
+    }
+}
+
+/**
+ * Get content statistics (admin only)
+ */
+export async function getContentStats(
+    _req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> {
+    try {
+        const contentStats = await adminService.getContentStats();
+        const response: ApiResponse<typeof contentStats> = {
+            success: true,
+            message: "Content statistics retrieved successfully",
+            data: contentStats,
+        };
+        res.status(200).json(response);
+    } catch (error: unknown) {
+        const err = error as Error;
+        logger.error("Error fetching content statistics:", error);
+        next(createError(500, "Error fetching content statistics"));
+    }
+}
+
+/**
+ * Get recent activity (admin only)
+ */
+export async function getRecentActivity(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> {
+    try {
+        const limit = parseInt((req.query.limit as string) || '10', 10);
+        const recentActivity = await adminService.getRecentActivity(limit);
+        const response: ApiResponse<typeof recentActivity> = {
+            success: true,
+            message: "Recent activity retrieved successfully",
+            data: recentActivity,
+        };
+        res.status(200).json(response);
+    } catch (error: unknown) {
+        const err = error as Error;
+        logger.error("Error fetching recent activity:", error);
+        next(createError(500, "Error fetching recent activity"));
+    }
+}
+
+/**
+ * Get top content by type (admin only)
+ */
+export async function getTopContent(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> {
+    try {
+        const type = (req.query.type as string) || 'all';
+        const limit = parseInt((req.query.limit as string) || '5', 10);
+        const topContent = await adminService.getTopContent(type, limit);
+        const response: ApiResponse<typeof topContent> = {
+            success: true,
+            message: "Top content retrieved successfully",
+            data: topContent,
+        };
+        res.status(200).json(response);
+    } catch (error: unknown) {
+        const err = error as Error;
+        logger.error("Error fetching top content:", error);
+        next(createError(500, "Error fetching top content"));
+    }
+}
+
+/**
+ * Get current admin (admin only)
+ */
+export async function getCurrentAdmin(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> {
+    try {
+        const adminId = (req as any).user?.id;
+        if (!adminId) {
+            throw createError(401, "Unauthorized");
+        }
+        const admin = await adminService.getCurrentAdmin(adminId);
+        const response: ApiResponse<{
+            id: string;
+            username: string;
+            email: string;
+            first_name?: string;
+            last_name?: string;
+            role: string;
+        }> = {
+            success: true,
+            message: "Admin profile retrieved successfully",
+            data: {
+                id: (admin._id as any).toString(),
+                username: admin.username,
+                email: admin.email,
+                first_name: admin.first_name,
+                last_name: admin.last_name,
+                role: admin.role,
+            },
+        };
+        res.status(200).json(response);
+    } catch (error: unknown) {
+        const err = error as Error & { statusCode?: number };
+        logger.error("Error fetching current admin:", error);
+        next(
+            err.statusCode
+                ? err
+                : createError(500, "Error fetching admin profile")
+        );
     }
 }
 

@@ -203,7 +203,7 @@ export async function updateReview(
 }
 
 /**
- * Delete review (authenticated - owner only)
+ * Delete review (authenticated - owner or admin)
  */
 export async function deleteReview(
   req: Request,
@@ -212,11 +212,12 @@ export async function deleteReview(
 ): Promise<void> {
   try {
     const userId = req.user?.id;
+    const isAdmin = req.user?.role === "admin";
     if (!userId) {
       return next(createError(401, "Unauthorized"));
     }
 
-    await reviewsService.deleteReview(req.params.reviewId, userId);
+    await reviewsService.deleteReview(req.params.reviewId, userId, isAdmin);
     const response: ApiResponse = {
       success: true,
       message: "Review deleted successfully",
@@ -229,6 +230,82 @@ export async function deleteReview(
       err.statusCode
         ? err
         : createError(500, err.message || "Failed to delete review")
+    );
+  }
+}
+
+/**
+ * Get user's own reviews (authenticated)
+ */
+export async function getMyReviews(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return next(createError(401, "Unauthorized"));
+    }
+
+    const params: PaginatedReviewsParams = {
+      page: req.query.page ? Number(req.query.page) : undefined,
+      limit: req.query.limit ? Number(req.query.limit) : undefined,
+      sort: req.query.sort as string | undefined,
+      order: req.query.order as "ASC" | "DESC" | undefined,
+      target_type: req.query.target_type as "video" | "movie" | "tvshow" | "episode" | undefined,
+      target_id: req.query.target_id as string | undefined,
+    };
+
+    const result = await reviewsService.getMyReviews(userId, params);
+    const response: ApiResponse<typeof result> = {
+      success: true,
+      message: "Reviews retrieved successfully",
+      data: result,
+    };
+    res.status(200).json(response);
+  } catch (error: unknown) {
+    const err = error as Error;
+    logger.error("Error fetching user reviews:", error);
+    next(createError(500, err.message || "Error fetching user reviews"));
+  }
+}
+
+/**
+ * Bulk delete reviews (authenticated - admin or owner)
+ */
+export async function bulkDeleteReviews(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const userId = req.user?.id;
+    const isAdmin = req.user?.role === "admin";
+
+    if (!userId) {
+      return next(createError(401, "Unauthorized"));
+    }
+
+    const { ids } = req.body as { ids: string[] };
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return next(createError(400, "ids array is required and must not be empty"));
+    }
+
+    const result = await reviewsService.bulkDeleteReviews(ids, userId, isAdmin);
+    const response: ApiResponse<typeof result> = {
+      success: true,
+      message: `${result.deletedCount} reviews deleted successfully`,
+      data: result,
+    };
+    res.status(200).json(response);
+  } catch (error: unknown) {
+    const err = error as Error & { statusCode?: number };
+    logger.error("Error bulk deleting reviews:", error);
+    next(
+      err.statusCode
+        ? err
+        : createError(500, err.message || "Failed to delete reviews")
     );
   }
 }

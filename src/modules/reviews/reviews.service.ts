@@ -174,19 +174,52 @@ export class ReviewsService {
   }
 
   /**
-   * Delete review (owner only)
+   * Delete review (owner or admin)
    */
-  async deleteReview(id: string, userId: string): Promise<void> {
+  async deleteReview(id: string, userId: string, isAdmin = false): Promise<void> {
     const review = await this.repository.findByIdForOwnership(id);
     if (!review) {
       throw createError(404, "Review not found");
     }
 
-    if (review.member_id.toString() !== userId) {
+    // Check ownership or admin role
+    if (!isAdmin && review.member_id.toString() !== userId) {
       throw createError(403, "You can only delete your own reviews");
     }
 
     await this.repository.deleteById(id);
+  }
+
+  /**
+   * Get user's own reviews with pagination
+   */
+  async getMyReviews(
+    userId: string,
+    params: PaginatedReviewsParams
+  ): Promise<PaginatedReviewsResponse> {
+    const { page = 1, limit = 10 } = params;
+    const { reviews, totalItems } = await this.repository.findUserReviews(
+      userId,
+      params
+    );
+
+    return {
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalItems / Number(limit)),
+      totalItems,
+      reviews,
+    };
+  }
+
+  /**
+   * Bulk delete reviews (admin or owner)
+   */
+  async bulkDeleteReviews(
+    ids: string[],
+    userId: string,
+    isAdmin: boolean
+  ): Promise<{ deletedCount: number }> {
+    return await this.repository.bulkDelete(ids, userId, isAdmin);
   }
 }
 

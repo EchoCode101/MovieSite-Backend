@@ -27,6 +27,13 @@ export const recentReviewsSchema = Joi.object({
   return value;
 });
 
+/**
+ * Schema for bulk delete reviews
+ */
+export const bulkDeleteReviewsSchema = Joi.object({
+  ids: Joi.array().items(Joi.string().required()).min(1).required(),
+});
+
 // Re-export create and update schemas
 export { createReviewSchema, updateReviewSchema };
 

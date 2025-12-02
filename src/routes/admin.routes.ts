@@ -10,6 +10,12 @@ import {
     getAllUsers,
     updateSubscription,
     getDashboardStats,
+    getRevenueData,
+    getUserGrowth,
+    getContentStats,
+    getRecentActivity,
+    getTopContent,
+    getCurrentAdmin,
 } from "../modules/admin/admin.controller.js";
 import {
     adminSignupSchema,
@@ -51,8 +57,19 @@ router.post("/logout", authenticateAdminToken, adminLogout);
 // Get all users (admin only)
 router.get("/users", authenticateAdminToken, limiter, getAllUsers);
 
+// Get current admin (authenticated - admin)
+router.get("/me", authenticateAdminToken, getCurrentAdmin);
+
 // Get dashboard stats (admin only)
 router.get("/stats", authenticateAdminToken, getDashboardStats);
+
+// Dashboard endpoints (admin only)
+router.get("/dashboard/stats", authenticateAdminToken, getDashboardStats);
+router.get("/dashboard/revenue", authenticateAdminToken, getRevenueData);
+router.get("/dashboard/user-growth", authenticateAdminToken, getUserGrowth);
+router.get("/dashboard/content-stats", authenticateAdminToken, getContentStats);
+router.get("/dashboard/recent-activity", authenticateAdminToken, getRecentActivity);
+router.get("/dashboard/top-content", authenticateAdminToken, getTopContent);
 
 // Update user subscription (admin only)
 router.put(

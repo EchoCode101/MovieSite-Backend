@@ -177,16 +177,16 @@ export class CommentsService {
   }
 
   /**
-   * Delete comment (owner only)
+   * Delete comment (owner or admin)
    */
-  async deleteComment(id: string, userId: string): Promise<void> {
+  async deleteComment(id: string, userId: string, isAdmin = false): Promise<void> {
     const comment = await this.repository.findByIdForOwnership(id);
     if (!comment) {
       throw createError(404, "Comment not found");
     }
 
-    // Check ownership
-    if (comment.member_id.toString() !== userId) {
+    // Check ownership or admin role
+    if (!isAdmin && comment.member_id.toString() !== userId) {
       throw createError(403, "You can only delete your own comments");
     }
 
@@ -202,6 +202,27 @@ export class CommentsService {
     isAdmin: boolean
   ): Promise<{ deletedCount: number }> {
     return await this.repository.bulkDelete(input.ids, userId, isAdmin);
+  }
+
+  /**
+   * Get user's own comments with pagination
+   */
+  async getMyComments(
+    userId: string,
+    params: PaginatedCommentsParams
+  ): Promise<PaginatedCommentsResponse> {
+    const { page = 1, limit = 10 } = params;
+    const { comments, totalItems } = await this.repository.findUserComments(
+      userId,
+      params
+    );
+
+    return {
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalItems / Number(limit)),
+      totalItems,
+      comments,
+    };
   }
 }
 

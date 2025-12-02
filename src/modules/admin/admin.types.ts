@@ -68,3 +68,85 @@ export interface ResetPasswordInput {
     password: string;
 }
 
+/**
+ * Revenue data point for charts
+ */
+export interface RevenuePoint {
+    label: string;
+    amount: number;
+    currency: string;
+}
+
+/**
+ * User growth data point for charts
+ */
+export interface UserGrowthPoint {
+    label: string;
+    newUsers: number;
+    activeUsers: number;
+}
+
+/**
+ * Content statistics item
+ */
+export interface ContentStatsItem {
+    type: 'videos' | 'movies' | 'tvShows' | 'episodes';
+    label: string;
+    count: number;
+}
+
+/**
+ * Content statistics response
+ */
+export interface ContentStats {
+    items: ContentStatsItem[];
+}
+
+/**
+ * Recent activity type
+ */
+export type RecentActivityType =
+    | 'user-created'
+    | 'subscription-started'
+    | 'subscription-cancelled'
+    | 'content-played'
+    | 'comment-created'
+    | 'review-created';
+
+/**
+ * Recent activity item
+ */
+export interface RecentActivityItem {
+    id: string;
+    type: RecentActivityType;
+    description: string;
+    createdAt: string;
+    user?: {
+        id: string;
+        name?: string;
+        email?: string;
+    };
+    target?: {
+        id: string;
+        type: 'video' | 'movie' | 'tv-show' | 'episode';
+        title: string;
+    };
+}
+
+/**
+ * Top content type
+ */
+export type TopContentType = 'video' | 'movie' | 'tv-show' | 'episode' | 'all';
+
+/**
+ * Top content item
+ */
+export interface TopContentItem {
+    id: string;
+    type: TopContentType;
+    title: string;
+    views: number;
+    likes: number;
+    thumbnailUrl?: string;
+}
+

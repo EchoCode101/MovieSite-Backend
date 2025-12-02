@@ -1,6 +1,6 @@
 # Vidstie Backend API Documentation
 
-**Version:** 2.2  
+**Version:** 2.3  
 **Last Updated:** 2025  
 **Base URL:** `http://localhost:3000/api` (Development)
 
@@ -1496,6 +1496,66 @@ Base Path: `/api/comments`
 
 ---
 
+### 3.5a Get My Comments (User-Specific)
+
+**Endpoint:** `GET /api/comments/my`  
+**Authentication:** Required
+
+**Query Parameters:**
+
+```typescript
+{
+  page?: number;    // Default: 1, Min: 1
+  limit?: number;   // Default: 10, Min: 1, Max: 100
+  sort?: string;    // "createdAt" | "updatedAt" | "likes" | "dislikes" | "_id" (default: "createdAt")
+  order?: "ASC" | "DESC"; // Default: "DESC"
+  target_type?: "video" | "movie" | "tvshow" | "episode"; // Filter by target type
+  target_id?: string; // Filter by target ID
+}
+```
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "message": "Comments retrieved successfully",
+  "data": {
+    "currentPage": 1,
+    "totalPages": 5,
+    "totalItems": 50,
+    "comments": [
+      {
+        "_id": "comment_id",
+        "content": "Great video!",
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "likesCount": 10,
+        "dislikesCount": 2,
+        "member": {
+          "_id": "user_id",
+          "first_name": "John",
+          "last_name": "Doe"
+        },
+        "target": {
+          "_id": "video_id",
+          "title": "Video Title",
+          "description": "Description",
+          "thumbnail_url": "https://example.com/thumb.jpg"
+        }
+      }
+    ]
+  }
+}
+```
+
+**Note:** Returns only the authenticated user's own comments with pagination support. This endpoint is designed for user profile pages where users can view and manage their own comments.
+
+**Error Responses:**
+
+- `401`: Unauthorized
+
+---
+
 ### 3.6 Update Comment
 
 **Endpoint:** `PUT /api/comments/:id`  
@@ -1969,6 +2029,69 @@ Base Path: `/api/reviews`
 
 ---
 
+### 5.4a Get My Reviews (User-Specific)
+
+**Endpoint:** `GET /api/reviews/my`  
+**Authentication:** Required
+
+**Query Parameters:**
+
+```typescript
+{
+  page?: number;    // Default: 1, Min: 1
+  limit?: number;   // Default: 10, Min: 1, Max: 100
+  sort?: string;    // "createdAt" | "updatedAt" | "rating" | "_id" (default: "createdAt")
+  order?: "ASC" | "DESC"; // Default: "DESC"
+  target_type?: "video" | "movie" | "tvshow" | "episode"; // Filter by target type
+  target_id?: string; // Filter by target ID
+}
+```
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "message": "Reviews retrieved successfully",
+  "data": {
+    "currentPage": 1,
+    "totalPages": 5,
+    "totalItems": 50,
+    "reviews": [
+      {
+        "_id": "review_id",
+        "rating": 5,
+        "review_content": "Excellent video!",
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z",
+        "likesCount": 10,
+        "dislikesCount": 2,
+        "member": {
+          "_id": "user_id",
+          "first_name": "John",
+          "last_name": "Doe",
+          "username": "johndoe"
+        },
+        "target": {
+          "_id": "video_id",
+          "title": "Video Title",
+          "description": "Description",
+          "thumbnail_url": "https://example.com/thumb.jpg"
+        }
+      }
+    ]
+  }
+}
+```
+
+**Note:** Returns only the authenticated user's own reviews with pagination support. This endpoint is designed for user profile pages where users can view and manage their own reviews.
+
+**Error Responses:**
+
+- `401`: Unauthorized
+
+---
+
 ### 5.5 Update Review
 
 **Endpoint:** `PUT /api/reviews/:reviewId`  
@@ -2033,6 +2156,41 @@ Base Path: `/api/reviews`
 - `401`: Unauthorized
 - `403`: Not the review owner
 - `404`: Review not found
+
+---
+
+### 5.7 Bulk Delete Reviews
+
+**Endpoint:** `DELETE /api/reviews/bulk`  
+**Authentication:** Required (Admin or Owner)
+
+**Request Body:**
+
+```typescript
+{
+  ids: string[]; // Array of review IDs (min 1)
+}
+```
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "message": "5 reviews deleted successfully",
+  "data": {
+    "deletedCount": 5
+  }
+}
+```
+
+**Note:** Users can only delete their own reviews. Admins can delete any reviews.
+
+**Error Responses:**
+
+- `400`: Validation error
+- `401`: Unauthorized
+- `403`: Not owner or admin
 
 ---
 
@@ -7329,7 +7487,25 @@ _Note: Webhook functionality is not currently implemented but may be added in fu
 
 ## Changelog
 
-### Version 2.2 (Current) - Documentation Update
+### Version 2.3 (Current) - User-Specific Comments & Reviews Endpoints
+
+**Added Endpoints:**
+- `GET /api/comments/my` - Get user's own comments with pagination (authenticated)
+- `GET /api/reviews/my` - Get user's own reviews with pagination (authenticated)
+- `DELETE /api/reviews/bulk` - Bulk delete reviews (authenticated, admin or owner)
+
+**Improvements:**
+- Added user-specific paginated endpoints for comments and reviews
+- Users can now access their own comments/reviews without admin privileges
+- Added bulk delete functionality for reviews
+- Fixed route ordering to prevent conflicts between `/my` and `/:id` routes
+
+**Breaking Changes:**
+- None
+
+---
+
+### Version 2.2 - Documentation Update
 
 - **Complete API Documentation**: All endpoints, query parameters, and request/response structures fully documented
 - **Enhanced Endpoint Documentation**:
@@ -7379,5 +7555,5 @@ _Note: Webhook functionality is not currently implemented but may be added in fu
 For API support, please contact the development team or refer to the project repository.
 
 **Base URL:** `http://localhost:3000/api` (Development)  
-**Documentation Version:** 2.2  
+**Documentation Version:** 2.3  
 **Last Updated:** 2025

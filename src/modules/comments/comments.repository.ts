@@ -340,5 +340,249 @@ export class CommentsRepository {
     const result = await CommentModel.deleteMany(query).exec();
     return { deletedCount: result.deletedCount || 0 };
   }
+
+  /**
+   * Find user's comments with pagination
+   */
+  async findUserComments(
+    userId: string,
+    params: PaginatedCommentsParams
+  ): Promise<{ comments: CommentWithStats[]; totalItems: number }> {
+    const {
+      page = 1,
+      limit = 10,
+      sort = "createdAt",
+      order = "DESC",
+      target_type,
+      target_id,
+    } = params;
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const sortOrder = order === "ASC" ? 1 : -1;
+
+    // Build aggregation pipeline similar to findPaginated but filter by member_id
+    const pipeline: PipelineStage[] = [
+      // Match by user and optionally by target
+      {
+        $match: {
+          member_id: new Types.ObjectId(userId),
+          ...(target_type && target_id
+            ? {
+                target_type: target_type,
+                target_id: new Types.ObjectId(target_id),
+              }
+            : {}),
+        },
+      },
+      // Lookup likes
+      {
+        $lookup: {
+          from: "likesdislikes",
+          let: { commentId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$target_id", "$$commentId"] },
+                    { $eq: ["$target_type", "comment"] },
+                    { $eq: ["$is_like", true] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "likes",
+        },
+      },
+      // Lookup dislikes
+      {
+        $lookup: {
+          from: "likesdislikes",
+          let: { commentId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$target_id", "$$commentId"] },
+                    { $eq: ["$target_type", "comment"] },
+                    { $eq: ["$is_like", false] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "dislikes",
+        },
+      },
+      // Populate member
+      {
+        $lookup: {
+          from: "members",
+          localField: "member_id",
+          foreignField: "_id",
+          as: "member",
+        },
+      },
+      // Lookup target based on target_type
+      {
+        $lookup: {
+          from: "videos",
+          let: { targetId: "$target_id", targetType: "$target_type" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$targetId"] },
+                    { $eq: ["$$targetType", "video"] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "videoTarget",
+        },
+      },
+      {
+        $lookup: {
+          from: "movies",
+          let: { targetId: "$target_id", targetType: "$target_type" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$targetId"] },
+                    { $eq: ["$$targetType", "movie"] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "movieTarget",
+        },
+      },
+      {
+        $lookup: {
+          from: "tvshows",
+          let: { targetId: "$target_id", targetType: "$target_type" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$targetId"] },
+                    { $eq: ["$$targetType", "tvshow"] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "tvshowTarget",
+        },
+      },
+      {
+        $lookup: {
+          from: "episodes",
+          let: { targetId: "$target_id", targetType: "$target_type" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$_id", "$$targetId"] },
+                    { $eq: ["$$targetType", "episode"] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "episodeTarget",
+        },
+      },
+      // Combine all targets into one field
+      {
+        $addFields: {
+          target: {
+            $cond: {
+              if: { $gt: [{ $size: "$videoTarget" }, 0] },
+              then: { $arrayElemAt: ["$videoTarget", 0] },
+              else: {
+                $cond: {
+                  if: { $gt: [{ $size: "$movieTarget" }, 0] },
+                  then: { $arrayElemAt: ["$movieTarget", 0] },
+                  else: {
+                    $cond: {
+                      if: { $gt: [{ $size: "$tvshowTarget" }, 0] },
+                      then: { $arrayElemAt: ["$tvshowTarget", 0] },
+                      else: { $arrayElemAt: ["$episodeTarget", 0] },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      // Add computed fields
+      {
+        $addFields: {
+          likesCount: { $size: "$likes" },
+          dislikesCount: { $size: "$dislikes" },
+          member: { $arrayElemAt: ["$member", 0] },
+        },
+      },
+      // Project fields
+      {
+        $project: {
+          _id: 1,
+          content: 1,
+          createdAt: 1,
+          likesCount: 1,
+          dislikesCount: 1,
+          member: {
+            _id: "$member._id",
+            first_name: "$member.first_name",
+            last_name: "$member.last_name",
+          },
+          target: {
+            _id: "$target._id",
+            title: { $ifNull: ["$target.title", "$target.name"] },
+            description: "$target.description",
+            thumbnail_url: "$target.thumbnail_url",
+          },
+        },
+      },
+    ];
+
+    // Add sorting
+    let sortField = sort;
+    if (sort === "likes") {
+      sortField = "likesCount";
+    } else if (sort === "dislikes") {
+      sortField = "dislikesCount";
+    } else if (sort === "comment_id") {
+      sortField = "_id";
+    }
+
+    pipeline.push({ $sort: { [sortField as string]: sortOrder } });
+    pipeline.push({ $skip: skip });
+    pipeline.push({ $limit: Number(limit) });
+
+    // Get total count
+    const countPipeline = [
+      ...pipeline.slice(0, -2), // Remove skip and limit
+      { $count: "total" },
+    ];
+    const countResult = await CommentModel.aggregate(countPipeline);
+    const totalItems = countResult[0]?.total || 0;
+
+    // Get comments
+    const comments = (await CommentModel.aggregate(pipeline)) as CommentWithStats[];
+
+    return { comments, totalItems };
+  }
 }
 

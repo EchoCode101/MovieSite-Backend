@@ -165,7 +165,7 @@ export async function updateComment(
 }
 
 /**
- * Delete comment (authenticated - owner only)
+ * Delete comment (authenticated - owner or admin)
  */
 export async function deleteComment(
   req: Request,
@@ -174,11 +174,12 @@ export async function deleteComment(
 ): Promise<void> {
   try {
     const userId = req.user?.id;
+    const isAdmin = req.user?.role === "admin";
     if (!userId) {
       return next(createError(401, "Unauthorized"));
     }
 
-    await commentsService.deleteComment(req.params.id, userId);
+    await commentsService.deleteComment(req.params.id, userId, isAdmin);
     const response: ApiResponse = {
       success: true,
       message: "Comment deleted successfully",
@@ -289,6 +290,43 @@ export async function getCommentsByTarget(
     const err = error as Error;
     logger.error("Error fetching comments by target:", error);
     next(createError(500, err.message || "Failed to fetch comments"));
+  }
+}
+
+/**
+ * Get user's own comments (authenticated)
+ */
+export async function getMyComments(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return next(createError(401, "Unauthorized"));
+    }
+
+    const params: PaginatedCommentsParams = {
+      page: req.query.page ? Number(req.query.page) : undefined,
+      limit: req.query.limit ? Number(req.query.limit) : undefined,
+      sort: req.query.sort as string | undefined,
+      order: req.query.order as "ASC" | "DESC" | undefined,
+      target_type: req.query.target_type as "video" | "movie" | "tvshow" | "episode" | undefined,
+      target_id: req.query.target_id as string | undefined,
+    };
+
+    const result = await commentsService.getMyComments(userId, params);
+    const response: ApiResponse<typeof result> = {
+      success: true,
+      message: "Comments retrieved successfully",
+      data: result,
+    };
+    res.status(200).json(response);
+  } catch (error: unknown) {
+    const err = error as Error;
+    logger.error("Error fetching user comments:", error);
+    next(createError(500, err.message || "Error fetching user comments"));
   }
 }
 

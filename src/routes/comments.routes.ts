@@ -15,6 +15,7 @@ import {
   getPaginatedComments,
   getCommentsByVideo,
   getCommentsByTarget,
+  getMyComments,
 } from "../modules/comments/comments.controller.js";
 import {
   createCommentSchema,
@@ -44,13 +45,21 @@ router.get(
   getPaginatedComments,
 );
 
+// Get user's own comments (authenticated) - must be before /:id route
+router.get(
+  "/my",
+  authenticateToken,
+  validateRequest(paginatedCommentsSchema, "query"),
+  getMyComments,
+);
+
 // Get comments by video ID (public) - legacy endpoint
 router.get("/video/:videoId", getCommentsByVideo);
 
 // Get comments by target type and ID (public)
 router.get("/target/:targetType/:targetId", getCommentsByTarget);
 
-// Get comment by ID (public) - must be after /video/:videoId to avoid conflicts
+// Get comment by ID (public) - must be after all specific routes to avoid conflicts
 router.get("/:id", getCommentById);
 
 // Update comment (authenticated - owner only)
